@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NEXUS · Chat</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/css/nexus.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/space_base.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/master_home.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/nx_md.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/nexus_music.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/phase2_room.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/master_redesign.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/master_reference.css?v=dedupe20261102"/>
+<link rel="stylesheet" href="/static/css/no_avatar.css?v=uiwork60"/>
+<link rel="stylesheet" href="/static/css/nexus4d.css?v=uiwork60"/><link rel="stylesheet" href="/static/css/nexus4d_dark.css?v=uiwork60"/>
+</head>
+    <body id="nxBody" class="nx-app nx-4d">
+<!-- 20261102 NEXUS 4D: Hell/Dunkel-Schalter entfernt, dunkel ist Standard (Backup: G:\meine-ki\backups\ui_4d_redesign_20261102) -->
+<div id="nxDesktopBgWrap" class="nx-desktop-bg-wrap" aria-hidden="true">
+  <video id="nxDesktopBg" class="nx-desktop-bg-video is-active" muted playsinline preload="auto">
+    <source src="/static/media/desktop-bg-loop.mp4" type="video/mp4"/>
+  </video>
+  <video id="nxDesktopBgB" class="nx-desktop-bg-video" muted playsinline preload="auto">
+    <source src="/static/media/desktop-bg-loop.mp4" type="video/mp4"/>
+  </video>
+</div>
+<div id="nxDesktopDim" class="nx-desktop-dim" aria-hidden="true"></div>
+<div id="nxStars" aria-hidden="true"></div>
+<div id="nxOverlay" aria-hidden="true"></div>
+<div id="nxApp" class="right-collapsed">
+  <aside id="nxSide">
+    <div class="side-brand">
+      <div class="logo-mark">N</div>
+      <div>
+        <div class="logo-title">NEXUS</div>
+        <div class="logo-sub">SPACE · EARTH</div>
+      </div>
+    </div>
+    <button type="button" class="btn-new" id="btnNewChat">
+      <span class="btn-new-icon">+</span> Neuer Chat
+    </button>
+    <input id="chatSearch" type="search" placeholder="Chats durchsuchen…" autocomplete="off"/>
+    <div id="sessionList"></div>
+    <details class="side-more" id="sideMore" open>
+      <summary>Mehr</summary>
+            <nav class="nav" id="sideNav">
+        <button type="button" data-view="chat" class="active">Chat</button>
+        <button type="button" data-view="crew">Agenten</button>
+        <button type="button" data-view="files">Dateien</button>
+        <button type="button" data-view="skills">Skills</button>
+        <button type="button" data-view="memory">Memory</button>
+        <button type="button" data-view="perf">System</button>
+        <button type="button" data-view="voice">Voice</button>
+        <button type="button" data-view="apps">Apps</button>
+        <button type="button" data-view="settings">Einstellungen</button>
+        <div class="nav-sep" aria-hidden="true"></div>
+        <button type="button" data-view="home">Home</button>
+        <button type="button" data-view="activity">Aktivität</button>
+        <button type="button" data-view="projects">Projekte</button>
+        <button type="button" data-view="music">Musik</button>
+        <button type="button" data-view="videos">Videos</button>
+        <button type="button" data-view="galerie">Galerie</button>
+        <button type="button" onclick="window.open('/studio','_blank')">Studio</button>
+        <button type="button" data-view="maps">Maps</button>
+        <button type="button" data-view="streams">Streams</button>
+        <button type="button" data-view="downloads">Downloads</button>
+      </nav>
+    </details>
+    <details class="side-status" id="sideStatus">
+      <summary>Systemstatus</summary>
+      <div id="nx-master-tiles">
+        <button type="button" id="btnNexusShell">NEXUS SHELL ▾</button>
+        <div id="nx-shell-panel" class="hide">
+          <div id="nx-shell-head">NEXUS OS …</div>
+          <div id="nx-shell-rows"></div>
+          <div id="nx-shell-foot">—</div>
+        </div>
+        <a href="/approvals" target="_blank" rel="noopener">Approvals ↗</a>
+      </div>
+    </details>
+    <div class="side-foot">
+      <button type="button" class="icon-btn" id="btnRename" title="Umbenennen" aria-label="Umbenennen">✎</button>
+      <button type="button" class="icon-btn danger-icon" id="btnDelete" title="Löschen" aria-label="Löschen">🗑</button>
+    </div>
+  </aside>
+
+  <section id="nxChat">
+    <header id="nxTop">
+      <button type="button" id="btnToggleSide" class="icon-btn" title="Menü" aria-label="Menü">☰</button>
+      <div class="top-title">
+        <span id="chatTitle">NEXUS</span>
+        <span class="top-sub" id="chipModel">Modell —</span>
+      </div>
+      <div class="chips" id="statusChips">
+        <span class="chip" id="chipRoom">NEXUS ROOM · EDDY · NEXUS · CHATGPT</span>
+        <span class="chip" id="chipRoomRound">Round 0/4</span>
+        <span class="chip" id="chipNexusOs">NEXUS OS …</span>
+        <span class="chip" id="chipHealth">Health —</span>
+        <span class="chip" id="chipOllama">Ollama —</span>
+        <span class="chip" id="chipVoice">Voice Aus</span>
+        <span class="chip hide" id="chipCrew" title="Aktiver Crew-Agent">Crew —</span>
+        <span class="chip ok" id="chipActivity" title="Was Nexus macht">Bereit</span>
+      </div>
+      <button type="button" id="btnLiveHub" aria-expanded="false" aria-controls="nxLiveHub" title="Live-Hub NEXUS / HERMES / NEXUS GPT hier anzeigen">LIVE-HUB &#9656;</button><button type="button" id="btnTerminal" aria-expanded="false" aria-controls="nxTerminal" title="NEXUS-Terminal live (NEXUS / Hermes / NEXUS GPT / Autobuild)">TERMINAL &#9656;</button><button type="button" id="btnZocker" title="Zocker-Modus: NEXUS komplett abschalten" style="background:#c00000;color:#fff;border:2px solid silver;font-weight:bold" onclick="fetch('/api/terminal/zocker',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})">&#128163; ZOCKER</button>
+      <button type="button" id="btnMasterOrders">Aufträge</button>
+      <button type="button" class="icon-btn" id="btnDesktopBg" title="Desktop-Hintergrund an/aus" aria-label="Desktop-Hintergrund" aria-pressed="true">🖥</button>
+      <button type="button" class="icon-btn" id="btnToggleRight" title="Kontext" aria-label="Kontext">ℹ</button>
+    </header>
+
+    <div id="nxLiveHub" class="hide" role="region" aria-label="Live-Hub NEXUS HERMES NEXUS GPT"><div class="nx-livehub-bar"><strong class="nx-livehub-title">LIVE-HUB</strong><span class="nx-livehub-tabs" role="tablist"><button type="button" role="tab" data-ag="all" class="on">Alle</button><button type="button" role="tab" data-ag="NEXUS">NEXUS</button><button type="button" role="tab" data-ag="Hermes,Hermes-PS">HERMES</button><button type="button" role="tab" data-ag="NEXUS-GPT">NEXUS GPT</button></span><button type="button" id="btnLiveHubClose" aria-label="Live-Hub einklappen" title="Einklappen">&#8211;</button></div><iframe id="nxLiveHubFrame" title="Live-Monitor" loading="lazy"></iframe></div>
+    <div id="nxThread">
+      <section class="nx-ai-room" id="nxAiRoom" aria-label="Zentraler KI-Chatraum">
+        <div class="nx-ai-room-head"><strong>ZENTRALE KI · MASTER HOME</strong><span class="nx-ai-room-state" id="nxRoomState">NEXUS aktiv</span></div>
+        <div class="nx-partners" role="group" aria-label="Gesprächspartner wählen">
+          <button type="button" class="nx-partner" data-partner="hermes"><span><span class="nx-partner-name">HERMES</span><span class="nx-partner-role">Planung · Ausführung · Werkzeuge</span><span class="nx-partner-status" id="nxPartnerStatus-hermes">prüfe…</span></span></button>
+          <button type="button" class="nx-partner active" data-partner="nexus"><span><span class="nx-partner-name">NEXUS</span><span class="nx-partner-role">Zentrale · KI-Hub · Steuerung</span><span class="nx-partner-status" id="nxPartnerStatus-nexus">prüfe…</span></span></button>
+          <button type="button" class="nx-partner" data-partner="gpt"><span><span class="nx-partner-name">NEXUS GPT</span><span class="nx-partner-role">Chat · Analyse · Wissen · Beratung</span><span class="nx-partner-status" id="nxPartnerStatus-gpt">Verfügbarkeit unbekannt</span></span></button>
+        </div>
+        <div class="nx-agent-tools">
+          <label for="nxChatMode">Gespräch</label>
+          <select id="nxChatMode"><option value="single">Einzelgespräch</option><option value="group">Gemeinsam · HERMES, NEXUS & GPT</option></select>
+          <button type="button" id="nxAuxAgent" class="nx-partner nx-aux-partner" data-partner="aether" aria-label="AETHER separat auswählen"><span><span class="nx-partner-name">AETHER · separat</span><span class="nx-partner-status" id="nxPartnerStatus-aether">prüfe…</span></span></button>
+        </div>
+      </section>
+      <div id="welcome">
+        <div class="welcome-mark">N</div>
+        <h1>NEXUS AI Master Home</h1>
+        <p>Lokales AI-Zuhause · SPACE · EARTH · <button type="button" class="linkish" id="btnWelcomeHome">Home-Hub</button></p>
+        <div class="suggestions" id="suggestions">
+          <button type="button" data-q="Was kannst du?">Was kannst du?</button>
+          <button type="button" data-q="Gemeinsam: Prüfe NEXUS-Verbindung">NEXUS + Hermes gemeinsam</button>
+          <button type="button" data-q="@Ops wie hoch ist meine cpu">@Ops CPU</button>
+          <button type="button" data-q="@Rap schreib einen hook über nachtschicht">@Rap Hook</button>
+          <button type="button" data-q="merk dir: NEXUS läuft auf Port 8299">Memory-Test</button>
+        </div>
+      </div>
+      <div id="messages"></div>
+      <div id="chatScrollBtns" aria-label="Chat scrollen">
+        <button type="button" id="btnScrollUp" title="Nach oben (Bild)">▲</button>
+        <button type="button" id="btnScrollDown" title="Nach unten (Bild)">▼</button>
+      </div>
+    </div>
+
+    <div id="screenPreviewWrap" class="screen-pip hide" aria-hidden="true">
+      <video id="screenPreview" autoplay muted playsinline></video>
+      <div class="pip-actions">
+        <button type="button" id="btnScreenAnalyze" title="Analysieren">Analysieren</button>
+        <button type="button" id="btnScreenStop" title="Stop">✕</button>
+      </div>
+    </div>
+
+    <div id="nxTerminal" class="nx-term collapsed" role="region" aria-label="NEXUS Terminal live">
+      <div class="nx-term-bar">
+        <button type="button" id="nxTermToggle" class="nx-term-title" aria-expanded="false" aria-controls="nxTermBody" title="Terminal ein-/ausklappen">&#9638; TERMINAL <span id="nxTermDot" class="nx-term-dot" title="Live-Verbindung"></span><span id="nxTermLast" class="nx-term-last"></span></button>
+        <span class="nx-term-tabs" role="tablist">
+          <button type="button" role="tab" data-ag="all" class="on" aria-selected="true">Alle</button>
+          <button type="button" role="tab" data-ag="NEXUS">NEXUS</button>
+          <button type="button" role="tab" data-ag="Hermes">Hermes</button>
+          <button type="button" role="tab" data-ag="NEXUS-GPT">NEXUS GPT</button>
+          <button type="button" role="tab" data-ag="Autobuild">Autobuild</button>
+          <button type="button" role="tab" data-ag="Eddie">Eddie</button>
+        </span>
+        <label class="nx-term-chk"><input type="checkbox" id="nxTermAuto" checked/> Auto-Scroll</label>
+        <button type="button" id="nxTermPause" class="nx-term-btn" aria-pressed="false">Pause</button>
+        <button type="button" id="nxTermClear" class="nx-term-btn" title="Anzeige leeren (Verlauf bleibt)">Leeren</button>
+      </div>
+      <div id="nxTermBody" class="nx-term-body">
+        <pre id="nxTermOut" class="nx-term-out" aria-live="polite"></pre>
+        <form id="nxTermForm" class="nx-term-form" autocomplete="off">
+          <span class="nx-term-ps">PS7 Eddie&gt;</span>
+          <input id="nxTermInput" type="text" spellcheck="false" placeholder="Befehl (pwsh 7, eigene Sitzung) – C: und destruktive Befehle gesperrt"/>
+          <button type="submit" class="nx-term-btn">Ausführen</button>
+        </form>
+      </div>
+    </div>
+    <div id="nxComposer">
+      <div class="composer-shell">
+        <div id="speakPulse" class="speak-pulse" aria-hidden="true" title="Spricht">
+          <span class="speak-wave"></span><span class="speak-wave"></span><span class="speak-wave"></span>
+        </div>
+        <div class="composer-box">
+          <button type="button" class="icon-btn composer-icon" id="btnAttach" title="Anhang" aria-label="Anhang">📎</button>
+          <textarea id="nxInput" rows="1" placeholder="Nachricht an NEXUS…" autocomplete="off"></textarea>
+          <button type="button" class="icon-btn composer-icon" id="btnMic" title="Mikrofon (PTT)" aria-label="Mikrofon">🎤</button>
+          <button type="button" class="icon-btn composer-icon" id="btnAutoSpeak" title="Vorlesen an/aus" aria-label="Vorlesen">🔊</button>
+          <button type="button" class="icon-btn composer-icon" id="btnLive" title="Live-Gespräch" aria-label="Live">🎙</button>
+          <button type="button" class="btn-send" id="btnSend" title="Senden" aria-label="Senden">↑</button>
+        </div>
+        <div class="composer-meta">
+          <button type="button" class="extras-toggle" id="btnExtras" aria-expanded="false" aria-controls="composerExtras">Extras</button>
+          <span class="hint">Enter senden · Aufträge: Fortschritt und Ergebnisse · „nur schreiben“ = ohne Vorlesen</span>
+        </div>
+        <div class="composer-tools" id="composerExtras" hidden>
+          <button type="button" class="toggle" data-toggle="voice" id="togVoice">Voice</button>
+          <button type="button" class="toggle" data-toggle="screen" id="togScreen">Screen</button>
+          <button type="button" class="toggle" data-toggle="mic" id="togMic">Mic</button>
+          <select id="modelSelect" title="Modell"><option value="">auto</option></select>
+          <div class="media-btns">
+            <button type="button" data-media="prev" title="Prev">⏮</button>
+            <button type="button" data-media="pause" title="Pause">⏸</button>
+            <button type="button" data-media="play" title="Play">▶</button>
+            <button type="button" data-media="next" title="Next">⏭</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel float-panel workspace-panel" id="musicPanel">
+        <div class="panel-head">
+          <h3>Musik-Player</h3>
+          <button type="button" class="icon-btn" id="btnCloseMusic" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <div class="nxm" id="nxmRoot">
+            <div class="nxm-stage">
+              <canvas id="nxmCanvas" class="nxm-canvas" aria-label="Audio-Visualizer"></canvas>
+              <div class="nxm-core" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="nxm-np">
+                <div class="nxm-np-title" id="nxmTitle">Lokaler Player bereit</div>
+                <div class="nxm-np-meta" id="nxmMeta">MP3 · WAV · OGG · bleibt lokal im Browser</div>
+              </div>
+            </div>
+            <div class="nxm-progress">
+              <span id="nxmCur">0:00</span>
+              <input type="range" id="nxmSeek" min="0" max="1000" step="1" value="0" aria-label="Fortschritt"/>
+              <span id="nxmDur">0:00</span>
+            </div>
+            <div class="nxm-controls">
+              <button type="button" class="nxm-btn" data-nxm="prev" title="Vorheriger Titel">⏮</button>
+              <button type="button" class="nxm-btn nxm-play" data-nxm="toggle" id="nxmToggle" title="Play/Pause (Leertaste)">▶</button>
+              <button type="button" class="nxm-btn" data-nxm="next" title="Nächster Titel">⏭</button>
+              <button type="button" class="nxm-btn" data-nxm="stop" title="Stop">⏹</button>
+              <button type="button" class="nxm-btn" data-nxm="shuffle" title="Zufall">⇄</button>
+              <button type="button" class="nxm-btn" data-nxm="repeat" title="Wiederholen: aus">↻</button>
+              <div class="nxm-vol">
+                <button type="button" class="nxm-btn" data-nxm="mute" id="nxmMute" title="Stumm">🔊</button>
+                <input type="range" id="nxmVol" min="0" max="1" step="0.01" value="1" aria-label="Lautstärke"/>
+              </div>
+            </div>
+            <div class="nxm-track-actions">
+              <button type="button" class="primary" id="nxmPick">🎵 Lokale Dateien wählen</button>
+              <button type="button" id="nxmClear">Liste leeren</button>
+              <span class="nxm-count" id="nxmCount">0 Tracks</span>
+              <input type="file" id="nxmFiles" accept=".mp3,.wav,.ogg,.oga,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg" multiple hidden/>
+            </div>
+            <div id="nxmPlaylist" class="nxm-playlist">
+              <div class="streams-note">Noch keine lokalen Tracks. „Lokale Dateien wählen“ – alles bleibt im Browser, kein Upload.</div>
+            </div>
+          </div>
+          <audio id="nxmAudio" preload="metadata"></audio>
+
+          <details class="nxm-lib">
+            <summary>NEXUS-Bibliothek · workspace/media</summary>
+            <p class="streams-note">NEXUS eigener Player — lokale Tracks aus <code>workspace/media</code>. Optional MP3-URL laden.</p>
+            <div class="now-playing" id="musicNow">
+              <div class="np-title" id="musicNowTitle">Kein Track</div>
+              <div class="np-meta" id="musicNowMeta">Bibliothek laden…</div>
+              <audio id="nexusAudioPlayer" controls preload="metadata" style="width:100%;margin-top:8px"></audio>
+            </div>
+            <div class="streams-actions" style="margin-top:10px">
+              <button type="button" data-mctrl="prev">⏮</button>
+              <button type="button" class="primary" data-mctrl="play">▶ Play</button>
+              <button type="button" data-mctrl="pause">⏸</button>
+              <button type="button" data-mctrl="next">⏭</button>
+              <button type="button" data-mctrl="stop">⏹</button>
+              <button type="button" id="btnMusicRefresh">Bibliothek</button>
+            </div>
+            <div id="musicList" class="media-tiles"></div>
+            <div class="streams-actions" style="margin-top:12px">
+              <input id="musicUrl" placeholder="https://… mp3/wav (legal)" style="flex:1;min-width:160px"/>
+              <button type="button" id="btnMusicPlayUrl">URL abspielen</button>
+              <button type="button" class="primary" id="btnMusicDl">Download</button>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="videosPanel">
+        <div class="panel-head">
+          <h3>Video-Player</h3>
+          <button type="button" class="icon-btn" id="btnCloseVideos" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">NEXUS eigener Video-Player — lokale Dateien oder offizieller YouTube-Embed. Kachel antippen = abspielen.</p>
+          <div class="streams-actions">
+            <input id="videoUrl" placeholder="https://… YouTube oder mp4/webm"/>
+            <button type="button" class="primary" id="btnVideoPlayUrl">In NEXUS abspielen</button>
+            <button type="button" id="btnVideoRefresh">Bibliothek aktualisieren</button>
+          </div>
+          <video id="nexusVideo" controls playsinline style="width:100%;max-height:360px;background:#000;border-radius:12px;margin-top:10px"></video>
+          <iframe id="nexusVideoEmbed" class="hide" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" style="width:100%;min-height:320px;border:none;border-radius:12px;margin-top:10px"></iframe>
+          <div id="videoList" class="media-tiles video-list"></div>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="galleryPanel">
+        <div class="panel-head">
+          <h3>Galerie</h3>
+          <button type="button" class="icon-btn" id="btnCloseGallery" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Bilder aus <code>workspace/media</code>, screens, downloads (+ Static-Refs).</p>
+          <div class="streams-actions">
+            <button type="button" class="primary" id="btnGalleryRefresh">Aktualisieren</button>
+          </div>
+          <div id="galleryGrid" class="media-tiles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:12px"></div>
+        </div>
+      </div>
+      <div class="panel float-panel workspace-panel" id="mapsPanel">
+        <div class="panel-head">
+          <h3>Maps</h3>
+          <button type="button" class="icon-btn" id="btnCloseMaps" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">OpenStreetMap Embed — Suche per Nominatim (Internet nötig).</p>
+          <div class="streams-actions">
+            <input id="mapsQuery" placeholder="Ort suchen (z.B. Berlin)…" style="flex:1;min-width:160px"/>
+            <button type="button" class="primary" id="btnMapsGo">Suchen</button>
+            <a id="mapsExtLink" href="https://www.openstreetmap.org" target="_blank" rel="noopener">OSM öffnen</a>
+          </div>
+          <iframe id="mapsFrame" title="OpenStreetMap"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=11.4,48.05,11.7,48.25&amp;layer=mapnik"
+            style="width:100%;min-height:420px;border:none;border-radius:12px;margin-top:10px;background:#0a0d14"></iframe>
+        </div>
+      </div>
+      <div class="panel float-panel workspace-panel" id="appsPanel">
+        <div class="panel-head">
+          <h3>Apps</h3>
+          <button type="button" class="icon-btn" id="btnCloseApps" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Dienste, mit denen NEXUS sich verbinden kann. Embed öffnet in NEXUS; andere im Browser (Login dort).</p>
+          <div id="appsGrid" class="apps-grid"></div>
+          <div id="appFrameWrap" class="app-frame-wrap hide">
+            <div class="panel-head">
+              <strong id="appFrameTitle">App</strong>
+              <button type="button" class="icon-btn" id="btnCloseAppFrame">✕</button>
+            </div>
+            <iframe id="appFrame" title="App" style="width:100%;min-height:420px;border:none;border-radius:12px;background:#111"></iframe>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="panel float-panel workspace-panel" id="crewPanel">
+        <div class="panel-head">
+          <h3>Crew · Agenten</h3>
+          <button type="button" class="icon-btn" id="btnCloseCrew" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Spezialisten im Chat: <code>@Coder</code> <code>@Scout</code> <code>@Fixer</code> <code>@Media</code> <code>@Ops</code> <code>@Lens</code> <code>@Rap</code> — Karte tippen = aktiv + Tag. Enter/Los oder Doppelklick sendet.</p>
+          <div id="crewGrid" class="crew-grid"></div>
+          <div class="crew-foot">
+            <p class="streams-note" id="crewActiveHint">Kein Agent aktiv.</p>
+            <button type="button" class="icon-btn" id="btnCrewClear" title="Aktiven Agent deaktivieren" hidden>Deaktivieren</button>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="panel float-panel workspace-panel" id="activityPanel">
+        <div class="panel-head">
+          <h3>Aktivität · live</h3>
+          <button type="button" class="icon-btn" id="btnCloseActivity" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <div class="activity-current" id="activityCurrent">Bereit</div>
+          <ul class="activity-log" id="activityLog"></ul>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="homePanel">
+        <div class="panel-head">
+          <h3>Home · Hub</h3>
+          <button type="button" class="icon-btn" id="btnCloseHome" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Master Home · Anrufen (/m), Self-Improve, Health, Crew, Panels</p>
+          <div class="home-hub-grid" id="homeHubGrid"></div>
+        </div>
+      </div>
+
+            <div class="panel float-panel workspace-panel" id="perfPanel">
+        <div class="panel-head">
+          <h3>System</h3>
+          <button type="button" class="icon-btn" id="btnClosePerf" title="Schließen">✕</button>
+        </div>
+        <div class="body perf-body">
+          <p class="streams-note" id="perfStamp">Live-Monitor · echte Werte · UNKNOWN wenn fehlt</p>
+          <div class="perf-gauges">
+            <div class="perf-gauge" data-metric="cpu">
+              <svg class="perf-ring" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="perf-ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="perf-ring-fg" id="perfCpuRing" cx="60" cy="60" r="52"/>
+              </svg>
+              <div class="perf-ring-center">
+                <div class="perf-pct" id="perfCpuPct">—</div>
+                <div class="perf-label">CPU</div>
+              </div>
+              <div class="perf-value" id="perfCpuVal">—</div>
+            </div>
+            <div class="perf-gauge" data-metric="ram">
+              <svg class="perf-ring" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="perf-ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="perf-ring-fg" id="perfRamRing" cx="60" cy="60" r="52"/>
+              </svg>
+              <div class="perf-ring-center">
+                <div class="perf-pct" id="perfRamPct">—</div>
+                <div class="perf-label">RAM</div>
+              </div>
+              <div class="perf-value" id="perfRamVal">—</div>
+            </div>
+            <div class="perf-gauge" data-metric="disk">
+              <svg class="perf-ring" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="perf-ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="perf-ring-fg" id="perfDiskRing" cx="60" cy="60" r="52"/>
+              </svg>
+              <div class="perf-ring-center">
+                <div class="perf-pct" id="perfDiskPct">—</div>
+                <div class="perf-label">Festplatte</div>
+              </div>
+              <div class="perf-value" id="perfDiskVal">—</div>
+            </div>
+            <div class="perf-gauge" data-metric="gpu">
+              <svg class="perf-ring" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="perf-ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="perf-ring-fg" id="perfGpuRing" cx="60" cy="60" r="52"/>
+              </svg>
+              <div class="perf-ring-center">
+                <div class="perf-pct" id="perfGpuPct">n/a</div>
+                <div class="perf-label">GPU</div>
+              </div>
+              <div class="perf-value" id="perfGpuVal">nicht verfügbar</div>
+            </div>
+          </div>
+          <div class="perf-meta" id="perfMeta"></div>
+
+          <div class="perf-section">
+            <h4 class="perf-sec-title">Festplatten</h4>
+            <div id="perfDisks" class="perf-disk-list"><span class="muted">—</span></div>
+          </div>
+
+          <div class="perf-section">
+            <h4 class="perf-sec-title">Netzwerk</h4>
+            <div id="perfNet" class="perf-net">—</div>
+          </div>
+
+          <div class="perf-section">
+            <h4 class="perf-sec-title">Top-Prozesse</h4>
+            <div class="perf-proc-wrap">
+              <table class="perf-table" id="perfProcTable">
+                <thead><tr><th>Name</th><th>PID</th><th>CPU</th><th>RAM</th></tr></thead>
+                <tbody id="perfProcBody"><tr><td colspan="4">—</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="perf-section perf-row2">
+            <div>
+              <h4 class="perf-sec-title">Ollama</h4>
+              <div id="perfOllama" class="perf-ollama">—</div>
+            </div>
+            <div>
+              <h4 class="perf-sec-title">NEXUS</h4>
+              <div id="perfNexus" class="perf-nexus">—</div>
+            </div>
+          </div>
+
+          <div class="perf-section">
+                      <div class="perf-section perf-row2">
+            <div>
+              <h4 class="perf-sec-title">LLM</h4>
+              <div id="perfLlm" class="perf-ollama">—</div>
+            </div>
+            <div>
+              <h4 class="perf-sec-title">Bridge</h4>
+              <div id="perfBridge" class="perf-nexus">—</div>
+            </div>
+          </div>
+          <div class="perf-section">
+            <h4 class="perf-sec-title">Akku / Battery</h4>
+            <div id="perfBattery" class="perf-nexus">UNKNOWN</div>
+          </div>
+<h4 class="perf-sec-title">Alerts</h4>
+            <ul id="perfAlerts" class="perf-alerts"><li class="ok">Keine Alerts</li></ul>
+          </div>
+
+          <div class="perf-section">
+            <h4 class="perf-sec-title">Verlauf (CPU)</h4>
+            <canvas id="perfSpark" class="perf-spark" width="320" height="48" aria-label="CPU-Verlauf"></canvas>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="panel float-panel workspace-panel" id="filesPanel">
+        <div class="panel-head">
+          <h3>Dateien</h3>
+          <button type="button" class="icon-btn" id="btnCloseFiles" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Workspace-Dateien. Öffnen liest hier; „Im Explorer“ startet den Ordner/Datei auf dem PC.</p>
+          <div class="streams-actions">
+            <input id="filesPath" placeholder="Pfad (leer = Workspace-Root)" style="flex:1;min-width:180px"/>
+            <button type="button" id="btnFilesRefresh">Aktualisieren</button>
+            <button type="button" id="btnFilesUp">Hoch</button>
+            <button type="button" class="primary" id="btnFilesExplorer">Im Explorer</button>
+          </div>
+          <div id="filesList" class="files-list"></div>
+          <pre id="filesPreview" class="files-preview hide"></pre>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="projectsPanel">
+        <div class="panel-head">
+          <h3>Projekte</h3>
+          <button type="button" class="icon-btn" id="btnCloseProjects" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Projekte unter workspace/projects. Aktiv setzen, öffnen oder neu anlegen.</p>
+          <div class="streams-actions">
+            <input id="projectName" placeholder="Neues Projekt (Name)" style="flex:1;min-width:160px"/>
+            <button type="button" class="primary" id="btnProjectCreate">Anlegen</button>
+            <button type="button" id="btnProjectsRefresh">Aktualisieren</button>
+          </div>
+          <div id="projectsList" class="files-list"></div>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="downloadsPanel">
+        <div class="panel-head">
+          <h3>Downloads</h3>
+          <button type="button" class="icon-btn" id="btnCloseDownloads" title="Schließen">✕</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">URL herunterladen (http/https). Danach erscheint die Datei in Dateien/Medien.</p>
+          <div class="streams-actions">
+            <input id="downloadUrl" placeholder="https://…" style="flex:1;min-width:200px"/>
+            <button type="button" class="primary" id="btnDownloadGo">Download</button>
+            <button type="button" id="btnDownloadsRefresh">Liste</button>
+          </div>
+          <div id="downloadsList" class="files-list"></div>
+          <div id="downloadsStatus" class="streams-note"></div>
+        </div>
+      </div>
+
+            <div class="panel float-panel workspace-panel" id="memoryPanel">
+        <div class="panel-head">
+          <h3>Memory</h3>
+          <button type="button" class="icon-btn" id="btnCloseMemory" title="Schließen">×</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Erinnerungen mit Herkunft und früheren Fassungen. Im Chat: „merk dir: …“. Benutzerangaben sind keine unabhängig geprüften Fakten.</p>
+          <div class="streams-actions">
+            <button type="button" class="primary" id="btnMemoryRefresh">Aktualisieren</button>
+          </div>
+          <form id="memorySearch" class="streams-actions"><input id="memoryQuery" type="search" placeholder="Erinnerungen und frühere Aufträge suchen" aria-label="Gedächtnis durchsuchen"/><button type="submit">Suchen</button></form>
+          <div id="memoryList" class="files-list"><span class="muted">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="skillsPanel">
+        <div class="panel-head">
+          <h3>Skills</h3>
+          <button type="button" class="icon-btn" id="btnCloseSkills" title="Schließen">×</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Vorhandene Fähigkeiten, freigegebener Umfang und echte Nachweise. Neue Skills und produktive Selbständerungen sind nicht automatisch freigegeben.</p>
+          <div class="streams-actions">
+            <button type="button" class="primary" id="btnSkillsRefresh">Aktualisieren</button>
+          </div>
+          <div id="skillsStatus" class="streams-note">—</div>
+          <div id="skillsList" class="files-list"><span class="muted">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="voicePanel">
+        <div class="panel-head">
+          <h3>Voice</h3>
+          <button type="button" class="icon-btn" id="btnCloseVoice" title="Schließen">×</button>
+        </div>
+        <div class="body">
+          <p class="streams-note">Status via <code>GET /api/voice/status</code>. Steuerung weiterhin über Composer (Mic / Live / Vorlesen).</p>
+          <div class="streams-actions">
+            <button type="button" class="primary" id="btnVoiceRefresh">Aktualisieren</button>
+          </div>
+          <pre id="voiceStatusBox" class="files-preview">—</pre>
+        </div>
+      </div>
+<div class="panel float-panel workspace-panel" id="settingsPanel">
+        <div class="panel-head">
+          <h3>Einstellungen</h3>
+          <button type="button" class="icon-btn" id="btnCloseSettings" title="Schließen">✕</button>
+        </div>
+        <div class="body settings-body">
+          <label class="set-row"><span>Chat-Modell</span><select id="settingsModel"></select></label>
+          <label class="set-row"><span>Antworten vorlesen</span><input type="checkbox" id="settingsAutoSpeak"/></label>
+          <label class="set-row"><span>Weckwort „Hey Nexus“ (PC-Mikro)</span><input type="checkbox" id="settingsWakeword"/></label>
+          <p class="streams-note" id="settingsWakewordHint"><!-- heynexus-20261006 --></p>
+          <!-- 20261102 4D: settingsDesktopBg entfernt (ohne Wirkung) -->
+          <label class="set-row"><span>Rechte Kontextleiste</span><input type="checkbox" id="settingsRightPanel"/></label>
+          <p class="streams-note" id="settingsHint">Chat-Modell serverseitig in ai_models.json (keep_alive=0, kein Auto-Pull). UI + Env NEXUS_MODEL.</p>
+          <div class="streams-actions">
+            <button type="button" class="primary" id="btnSettingsSave">Übernehmen</button>
+            <button type="button" id="btnSettingsHealth">Health prüfen</button>
+          </div>
+          <pre id="settingsHealth" class="files-preview"></pre>
+        </div>
+      </div>
+
+      <div class="panel float-panel workspace-panel" id="streamsPanel">
+        <div class="panel-head">
+          <h3>Live-Streams</h3>
+          <button type="button" class="icon-btn" id="btnCloseStreams" title="Schließen">✕</button>
+        </div>
+        <div class="body streams-body">
+          <p class="streams-note">Nur autorisierte http/https-URLs. Kein DRM-Bypass. Direkte Media-URLs (mp4/webm/m3u8) funktionieren am besten.</p>
+          <input id="streamUrl" placeholder="https://… Media-URL oder YT/Twitch"/>
+          <input id="streamTitle" placeholder="Titel (optional)"/>
+          <div class="streams-actions">
+            <button type="button" class="primary" id="btnStreamAdd">Hinzufügen</button>
+            <button type="button" id="btnStreamPlay">Play</button>
+            <button type="button" id="btnStreamFollow">KI mitverfolgen</button>
+            <button type="button" id="btnStreamStopFollow">Stop KI</button>
+          </div>
+          <video id="liveVideo" controls playsinline></video>
+          <iframe id="liveEmbed" class="hide" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+          <div id="streamList"></div>
+          <div id="streamComment" class="stream-comment"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside id="nxRight">
+    <div class="panel"><h3>Projekt</h3><div class="body" id="ctxProject">Kein aktives Projekt</div></div>
+    <div class="panel"><h3>Dateien</h3><div class="body" id="ctxFiles">—</div></div>
+    <div class="panel"><h3>Tools</h3><div class="body" id="ctxTools">Chat · Voice · Screen · Streams · Memory</div></div>
+    <div class="panel"><h3>Status</h3><div class="body" id="ctxStatus">Lade…</div></div>
+    <div class="panel float-panel show" id="agentPanel" style="position:static;display:block">
+      <h3>Agenten</h3>
+      <div class="agent-pills">
+        <span>WEB</span><span>CODE</span><span>TERMINAL</span><span>MATRIX_UI</span>
+      </div>
+    </div>
+  </aside>
+</div>
+<audio id="nxAudio" preload="none"></audio>
+<audio id="nxTts" preload="none"></audio>
+<script id="nxStableJs">/* Pruef-Hilfe: misst erst, wenn das Layout 4x250 ms unveraendert ist (max 9 s) */
+window.__nxStableLoad=function(fn0){var fn=function(){try{fn0()}finally{setTimeout(function(){window.__nxRelease&&window.__nxRelease()},50)}};function sig(){var a=[document.body?document.body.scrollHeight:0,innerWidth,innerHeight,document.getElementsByTagName("*").length,document.documentElement.clientWidth,document.documentElement.scrollHeight];["nxComposer","nxLiveHub","nxTerminal","nxReferenceStage","nxThread","nxInput","nxReferenceCard-whatsapp","nxReferenceCard-files"].forEach(function(i){var e=document.getElementById(i);if(e){var r=e.getBoundingClientRect();a.push(Math.round(r.top),Math.round(r.bottom),Math.round(r.left),Math.round(r.right))}});return a.join(",")}
+function subsDone(){/* alle Skripte, Styles und iframes (ausser dem Halte-Frame) sind fertig geladen */var n=document.querySelectorAll("script[src],link[rel=stylesheet][href],iframe[src]:not(#nxHold)");for(var k=0;k<n.length;k++){var u=n[k].src||n[k].href;if(u&&/^https?:/.test(u)&&!performance.getEntriesByName(u).length)return false}return true}function noAnim(){/* keine endliche CSS-Animation/Transition laeuft mehr (Endlos-Effekte zaehlen nicht) */if(!document.getAnimations)return true;var l=document.getAnimations();for(var k=0;k<l.length;k++){var an=l[k],e=an.effect,ti=e&&e.getComputedTiming?e.getComputedTiming():null;if(an.playState==="running"&&ti&&isFinite(ti.endTime))return false}return true}function go(){var last=null,same=0,t0=Date.now();(function tick(){var s=sig();same=(s===last&&(!document.fonts||document.fonts.status==="loaded")&&subsDone()&&noAnim())?same+1:0;last=s;if(same>=6||Date.now()-t0>12000){fn()}else setTimeout(tick,250)})()}
+function start(){go()}if(document.readyState==="complete")setTimeout(start,0);else if(document.readyState==="interactive")setTimeout(start,0);else document.addEventListener("DOMContentLoaded",start)};/* Nur im Pruefmodus: ein haengender Bild-Request haelt das load-Event (und damit --dump-dom) auf, bis gemessen wurde */if(/[?&](domcheck|gridcheck|termcheck|n4check|n4r13|n4send|n4light|n4contrast|n4pseudo|n4apps|n4layout)=1/.test(location.search)){document.addEventListener("DOMContentLoaded",function(){var h=document.createElement("iframe");h.id="nxHold";h.setAttribute("aria-hidden","true");h.tabIndex=-1;h.style.cssText="position:absolute;width:0;height:0;border:0;visibility:hidden";h.src="/api/terminal/stream?hold="+Date.now();window.__nxHold=h;document.body.appendChild(h)})}window.__nxRelease=function(){var h=window.__nxHold;if(h){window.__nxHold=null;if(h.parentNode)h.parentNode.removeChild(h)}};</script>
+<script src="/static/js/space_fx.js?v=dedupe20261102"></script>
+<script src="/static/js/desktop_bg.js?v=dedupe20261102"></script>
+<dialog id="masterOrders" aria-labelledby="masterHeading">
+  <div class="master-head"><h2 id="masterHeading">NEXUS · Aufträge</h2><button id="masterClose" type="button" aria-label="Aufträge schließen">Schließen</button></div>
+  <p id="masterWorkState" role="status" aria-live="polite">Bereit</p>
+  <div class="master-actions">
+    <button type="button" id="masterRefresh">Status aktualisieren</button>
+    <button type="button" id="masterResume" disabled>Gespeicherten Auftrag fortsetzen</button>
+    <button type="button" id="masterReload">Sitzung neu laden</button>
+  </div>
+  <small id="masterUpdated" role="status">Status wird geladen …</small>
+  <h3>Direkt im Chat</h3>
+  <div class="master-actions">
+    <button type="button" data-master-send="Liste Hermes-Dateien">Meine Hermes-Dateien</button>
+    <button type="button" data-master-send="Prüfe NEXUS-Verbindung">Bridge-Verbindung</button>
+    <button type="button" data-master-send="Was kannst du?">Fähigkeiten</button>
+    <button type="button" data-master-draft='Erstelle notiz.txt mit Inhalt: "Meine Notiz"'>Textdatei anlegen …</button>
+    <button type="button" data-master-draft="Erstelle einen sachlichen Entwicklungsbericht als nexus_status.md">Statusbericht …</button>
+  </div>
+  <h3>Ergebnis dieser Sitzung</h3><div id="masterResult"></div>
+  <h3>Lokale Freigaben</h3><p id="masterApprovalCount">Status unbekannt</p><div id="masterApprovals"></div>
+  <a id="masterApprovalLink" href="/approvals" target="_blank" rel="noopener">Freigaben lokal prüfen</a>
+  <p>Freigaben erfolgen am NEXUS-PC. Codeausführung bleibt gesperrt.</p>
+  <h3>Gespeicherte Aufträge</h3><div id="masterOrderList"></div>
+  <details><summary>Letzte Werkzeugbelege</summary><div id="masterReceipts"></div></details>
+</dialog>
+<script src="/static/js/master_home.js?v=dedupe20261102"></script>
+<script src="/static/js/phase2_room.js?v=uiwork60"></script>
+<script src="/static/js/chat_pipeline.js?v=uiwork60"></script>
+<script src="/static/js/nx_md.js?v=dedupe20261102"></script>
+<script src="/static/js/app.js?v=uiwork60"></script>
+<script src="/static/js/nexus_music.js?v=dedupe20261102"></script>
+<script src="/static/js/bridge_status_tiles.js?v=dedupe20261102"></script>
+<script src="/static/js/hermes_status_step5.js?v=dedupe20261102"></script>
+<script src="/static/js/hermes_allmode.js?v=dedupe20261102"></script>
+<script src="/static/js/hermes_tasks_step6.js?v=dedupe20261102"></script>
+<script src="/static/js/master_glass.js?v=uiwork60"></script>
+<script src="/static/js/nexus4d.js?v=uiwork60"></script>
+<script id="nxGlassRetry">/* 20261102 Nexus-UI: falls master_glass.js nicht geladen hat (Netzwackler), einmal nachladen */(function(){function chk(){if(window.__nxGlassRetried||document.getElementById("nxReferenceScene")||window.NEXUS_GLASS)return;window.__nxGlassRetried=1;var s=document.createElement("script");s.src="/static/js/master_glass.js?v=uiwork60&retry="+Date.now();document.body.appendChild(s);if(document.body)document.body.dataset.glassRetry="1"}setTimeout(chk,2500);window.addEventListener("load",function(){setTimeout(chk,300)})})();</script>
+<style id="nxLiveHubCss">
+#btnLiveHub{margin-right:10px;padding:4px 12px;border-radius:999px;border:1px solid rgba(137,207,240,.7);background:rgba(255,255,255,.85);color:#0b3d5c;font-weight:700;cursor:pointer}
+#btnLiveHub[aria-expanded="true"]{background:#89cff0;color:#04263a}
+#nxLiveHub{flex:0 0 auto;position:relative;z-index:2;margin:6px 12px;border:1px solid rgba(137,207,240,.6);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.9);box-shadow:0 6px 24px rgba(0,40,80,.18)}
+#nxLiveHub.hide{display:none}
+.nx-livehub-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:linear-gradient(90deg,#e8f6fd,#f4f6f8);color:#0b3d5c;font-weight:700;font-size:13px}
+.nx-livehub-bar button{border:1px solid #9fb3c2;background:#fff;border-radius:8px;padding:3px 10px;cursor:pointer;color:#0b3d5c}
+#nxLiveHubFrame{display:block;width:100%;height:min(26vh,240px);border:0;background:#0d1117}
+</style>
+<style id="nxLayout5">
+@media (min-width:1660px) and (min-height:560px){
+body.nx-app.nx-reference{background:radial-gradient(1200px 700px at 15% 0%,#ffffff 0%,rgba(255,255,255,0) 60%),linear-gradient(160deg,#eaf3fa 0%,#d6e6f3 50%,#eef2f6 100%)!important}
+body.nx-app.nx-reference #nxReferenceStage{left:19.14vw!important;top:2vh!important;width:61.72vw!important;height:86.4vh!important}
+body.nx-app.nx-reference #nxApp{height:138.24vh!important;box-shadow:0 0 0 1px #c9d6e2,0 10px 30px rgba(30,70,110,.18)!important;border-color:#f4f9fd!important}
+body.nx-app.nx-reference #nxReferenceScene{display:grid!important;position:fixed!important;inset:0!important;grid-template-columns:1.2vw 7.97vw .8vw 7.97vw 1.2vw 61.72vw 1.2vw 7.97vw .8vw 7.97vw 1.2vw;grid-template-rows:2vh 12vh 1.4vh 12vh 1.4vh minmax(0,1fr) 1.6vh 8vh 2vh}
+body.nx-app.nx-reference #nxReferenceOuterCards{display:contents!important}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-art-link,body.nx-app.nx-reference #nxReferenceScene .nx-reference-art-link,body.nx-app.nx-reference #nxLiveHub{background:linear-gradient(160deg,rgba(255,255,255,.88),rgba(233,245,253,.74))!important;border:1px solid #c9d6e2!important;border-radius:16px!important;box-shadow:inset 0 1px 0 #fff,0 6px 18px rgba(30,70,110,.13)!important;backdrop-filter:blur(12px);color:#0b3d5c!important;overflow:hidden}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-art-link:hover{border-color:#89cff0!important;box-shadow:0 0 0 2px rgba(137,207,240,.55),0 8px 22px rgba(30,70,110,.18)!important}
+body.nx-app.nx-reference .nx-reference-app-tile{gap:.9vh!important;padding:1vh .6vw!important}
+body.nx-app.nx-reference .nx-reference-app-logo{width:4.6vh!important;height:4.6vh!important;min-width:0!important;min-height:0!important;border-radius:12px!important;box-shadow:0 3px 8px rgba(0,0,0,.15)!important}
+body.nx-app.nx-reference .nx-reference-app-name{color:#0b3d5c!important;text-shadow:none!important;font:600 clamp(12px,.82vw,16px)/1.2 "Segoe UI",system-ui,sans-serif!important}
+body.nx-app.nx-reference .nx-reference-app-state{color:#5a7590!important;text-shadow:none!important;font-size:clamp(10px,.65vw,12px)!important}
+#nxReferenceCard-whatsapp{grid-area:2/2/3/3}#nxReferenceCard-facebook{grid-area:2/4/3/5}
+#nxReferenceCard-youtube{grid-area:4/2/5/3}#nxReferenceCard-studio{grid-area:4/4/5/5}
+#nxReferenceCard-files{grid-area:2/8/3/9}#nxReferenceCard-mail{grid-area:2/10/3/11}
+#nxReferenceCard-nexusall{grid-area:8/2/9/11}
+body.nx-app.nx-reference #nxReferenceScene > #nxLiveHub{grid-area:6/2/7/5;position:relative;margin:0;display:flex;flex-direction:column;pointer-events:auto;z-index:2}
+body.nx-app.nx-reference #nxReferenceScene > #nxLiveHub.hide{display:none}
+body.nx-app.nx-reference #nxLiveHub .nx-livehub-bar{display:flex;align-items:center;gap:.5vw;padding:.8vh .7vw;background:linear-gradient(90deg,#f4fafe,#e6f3fb);border-bottom:1px solid #d5e2ec}
+body.nx-app.nx-reference #nxLiveHubFrame{flex:1 1 auto;height:auto;min-height:0;background:#fbfdff}
+}
+.nx-livehub-title{letter-spacing:.08em;font-size:12px;color:#0b3d5c}
+.nx-livehub-tabs{display:flex;gap:4px;flex:1 1 auto;flex-wrap:wrap}
+.nx-livehub-tabs button{border:1px solid #c9d6e2;background:#fff;color:#0b3d5c;border-radius:999px;padding:2px 9px;font:600 11px "Segoe UI",system-ui,sans-serif;cursor:pointer}
+.nx-livehub-tabs button.on{background:#89cff0;border-color:#6dbbe0;color:#04263a}
+#btnLiveHubClose{flex:none}
+
+</style>
+<script id="nxLiveHubJs">
+(function(){var b=document.getElementById("btnLiveHub"),p=document.getElementById("nxLiveHub"),f=document.getElementById("nxLiveHubFrame"),c=document.getElementById("btnLiveHubClose");if(!b||!p||!f)return;
+function set(o,u){if(u){try{localStorage.setItem("nxLiveHub",o?"1":"0")}catch(e){}}p.classList.toggle("hide",!o);b.setAttribute("aria-expanded",o?"true":"false");if(o){if(!f.getAttribute("src"))f.setAttribute("src","/live_monitor.html");}else{f.removeAttribute("src");}}
+var mq=window.matchMedia("(min-width:1660px) and (min-height:560px)"),home=p.parentNode,anchor=document.getElementById("nxThread");function place(){var sc=document.getElementById("nxReferenceScene");if(sc){var t=sc;if(p.parentNode!==t)t.appendChild(p);}else if(p.parentNode!==home){home.insertBefore(p,anchor);}}place();document.addEventListener("DOMContentLoaded",function(){setTimeout(place,0);});window.addEventListener("load",place);var curAg="all";function theme(){try{var d=f.contentDocument;if(!d||!d.head||d.getElementById("nxHubTheme"))return;var s=d.createElement("style");s.id="nxHubTheme";s.textContent="body{background:#fbfdff!important;color:#1d3446!important;font:12.5px/1.45 Segoe UI,system-ui,sans-serif!important}header{display:none!important}#log{padding:6px 10px!important}.e{border-bottom:1px solid #e3edf5!important;padding:3px 0!important}.t,.d{color:#7a8ea0!important}.d{margin-left:0!important}.k{color:#5a7590!important}.a{color:#fff!important}";d.head.appendChild(s);}catch(e){}}function filt(){try{var d=f.contentDocument;if(!d)return;var want=curAg==="all"?null:curAg.split(",");d.querySelectorAll("#flt label").forEach(function(l){var a=l.querySelector(".a"),i=l.querySelector("input");if(!a||!i)return;var on=!want||want.indexOf(a.textContent.trim())>=0;if(i.checked!==on){i.checked=on;i.dispatchEvent(new Event("change"));}});}catch(e){}}f.addEventListener("load",function(){theme();setTimeout(filt,300);});p.querySelectorAll(".nx-livehub-tabs button").forEach(function(t){t.addEventListener("click",function(){curAg=t.dataset.ag;p.querySelectorAll(".nx-livehub-tabs button").forEach(function(x){x.classList.toggle("on",x===t);x.setAttribute("aria-selected",x===t?"true":"false");});filt();});});if(mq.addEventListener)mq.addEventListener("change",place);window.nxLiveHub=set;b.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();set(p.classList.contains("hide"),1);});
+if(c)c.addEventListener("click",function(){set(false,1);});
+var _ls=null;try{_ls=localStorage.getItem("nxLiveHub")}catch(e){}if(/[?&]livehub=1/.test(location.search)||_ls!=="0")set(true);
+if(/[?&]domcheck=1/.test(location.search))__nxStableLoad(function(){function r(e){if(!e)return null;var x=e.getBoundingClientRect();return{t:x.top,b:x.bottom,l:x.left,r:x.right,h:x.height}}var hub=r(p),cp=r(document.getElementById("nxComposer")),inp=document.getElementById("nxInput"),ov=false;if(inp){var q=inp.getBoundingClientRect(),hit=document.elementFromPoint(q.left+q.width/2,q.top+q.height/2);ov=!(hit&&hit.closest&&hit.closest("#nxComposer"));}var th=document.getElementById("nxThread"),inThread=!!(th&&th.contains(p)),t0=hub?hub.t:null;if(th){th.scrollTop=th.scrollHeight;}var t1=r(p);var R={};["nxApp","nxChat","nxSide","nxTop","nxThread","nxReferenceScene","nxReferenceStage","nxReferenceCard-youtube","nxReferenceCard-mail","nxReferenceCard-facebook","nxReferenceCard-studio","nxReferenceCard-health","nxReferenceOuterCards","nxReferenceEcosystem","nxReferenceTab-pc","nxReferenceTab-security","nxReferenceCard-whatsapp","nxReferenceCard-files","nxReferenceCard-nexusall","nxReferenceLiveHealth"].forEach(function(i){R[i]=r(document.getElementById(i))});var o={parent:p.parentNode&&(p.parentNode.id||p.parentNode.tagName),reference:document.body.classList.contains("nx-reference")&&mq.matches,rects:R,vw:innerWidth,vh:innerHeight,in_thread:inThread,top_before:t0,top_after:t1?t1.t:null,thread_scrollable:th?th.scrollHeight>th.clientHeight:null,open:!p.classList.contains("hide"),src:f.getAttribute("src")||"",expanded:b.getAttribute("aria-expanded"),hub:hub,composer:cp,overlap_composer:ov,input_visible:!!(inp&&inp.offsetParent),same_page:location.pathname};var pre=document.createElement("pre");pre.id="domcheck";pre.style.display="none";pre.textContent=JSON.stringify(o);document.body.appendChild(pre);});})();
+</script>
+<style id="nxTermCss">
+#nxTerminal.nx-term{margin:6px 12px 4px;border-radius:14px;background:rgba(255,255,255,.72);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(192,204,216,.9);box-shadow:0 4px 18px rgba(120,170,210,.18),inset 0 1px 0 rgba(255,255,255,.9);color:#1d3446;font:12px/1.4 "Segoe UI",system-ui,sans-serif;flex:0 0 auto;position:relative;z-index:3}
+.nx-term-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 10px}
+.nx-term-title{background:none;border:0;font-weight:700;letter-spacing:.06em;color:#2f6f9f;cursor:pointer;padding:2px 4px;display:flex;align-items:center;gap:6px}
+.nx-term-dot{width:8px;height:8px;border-radius:50%;background:#b8c4ce;display:inline-block}
+.nx-term-dot.on{background:#7cc4f2;box-shadow:0 0 6px #8fd0f7}
+.nx-term-last{font-weight:400;color:#7a8ea0;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Consolas,"Cascadia Mono",monospace;letter-spacing:0}
+.nx-term-tabs{display:flex;gap:3px;margin-left:auto}
+.nx-term-tabs button,.nx-term-btn{border:1px solid #c9d6e1;background:linear-gradient(#fff,#eef3f7);color:#3d5a70;border-radius:9px;padding:2px 8px;font-size:11.5px;cursor:pointer}
+.nx-term-tabs button.on,.nx-term-btn[aria-pressed=true]{background:linear-gradient(#dff1fd,#bfe3fa);border-color:#9fd0f0;color:#174e75}
+.nx-term-chk{font-size:11.5px;color:#56708a;display:flex;align-items:center;gap:3px}
+.nx-term-body{border-top:1px solid #dfe8ef;padding:4px 8px 6px}
+#nxTerminal.collapsed{display:none!important}
+#nxTerminal.collapsed .nx-term-body{display:none}
+#nxTerminal.float{position:fixed;right:14px;width:min(720px,58vw);margin:0;z-index:40;box-shadow:0 10px 34px rgba(90,140,190,.28),inset 0 1px 0 #fff}#nxTerminal.float .nx-term-out{height:min(220px,26vh)}
+#nxTerminal.collapsed .nx-term-tabs,#nxTerminal.collapsed .nx-term-chk,#nxTerminal.collapsed .nx-term-btn{display:none}
+.nx-term-out{margin:0;height:min(200px,16vh);min-height:70px;overflow:auto;white-space:pre-wrap;word-break:break-word;font:12px/1.42 Consolas,"Cascadia Mono","Courier New",monospace;background:rgba(248,251,254,.85);border:1px solid #e1e9f0;border-radius:9px;padding:6px 8px;color:#1f3547}
+.nx-term-out .l{display:block}.nx-term-out .hide{display:none}
+.nx-term-out .ag{display:inline-block;min-width:74px;font-weight:700;color:#3a87c0}
+.nx-term-out .ag-Hermes{color:#7a69c8}.nx-term-out .ag-Autobuild{color:#8a97a3}.nx-term-out .ag-NEXUS-GPT{color:#2aa5a0}.nx-term-out .ag-Eddie{color:#c07a2a}
+.nx-term-out .ts{color:#9aabba}.nx-term-out .cmd{color:#174e75;font-weight:600}.nx-term-out .err{color:#c0392b}.nx-term-out .okk{color:#2e8b57}.nx-term-out .bad{color:#c0392b;font-weight:600}.nx-term-out .blk{color:#b9770e;font-weight:600}.nx-term-out .meta{color:#8a9bab}
+@media (max-height:820px){#nxTerminal.nx-term{margin:3px 12px 2px}.nx-term-bar{padding:2px 8px}.nx-term-form{margin-top:3px!important}}
+.nx-term-form{display:flex;gap:6px;align-items:center;margin-top:5px}
+.nx-term-ps{font:12px Consolas,monospace;color:#2f6f9f;font-weight:700}
+#nxTermInput{flex:1;min-width:0;border:1px solid #c9d6e1;border-radius:9px;padding:4px 8px;font:12px Consolas,"Cascadia Mono",monospace;background:#fff;color:#1d3446}
+</style>
+<script id="nxTermJs">
+(function(){var P=document.getElementById("nxTerminal");if(!P)return;var out=document.getElementById("nxTermOut"),tg=document.getElementById("nxTermToggle"),dot=document.getElementById("nxTermDot"),last=document.getElementById("nxTermLast"),auto=document.getElementById("nxTermAuto"),pb=document.getElementById("nxTermPause"),cl=document.getElementById("nxTermClear"),fm=document.getElementById("nxTermForm"),inp=document.getElementById("nxTermInput");
+var ag="all",paused=false,queue=[],seen={},es=null,MAX=1500;
+function esc(s){return String(s==null?"":s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function vis(a){return ag==="all"||a===ag}
+function line(e){var a=e.agent||"?",t=(e.ts||"").slice(11,19),h="";if(e.type==="start")h='<span class="cmd">&gt; '+esc(e.cmd)+'</span> <span class="meta">['+esc(e.shell||e.kind||"")+(e.cwd?" @ "+esc(e.cwd):"")+']</span>';else if(e.type==="out")h=esc(e.text);else if(e.type==="err")h='<span class="err">'+esc(e.text)+'</span>';else if(e.type==="end")h='<span class="'+(e.ok?"okk":"bad")+'">'+(e.ok?"✔":"✖")+' exit '+esc(e.rc)+' · '+esc(e.sec)+' s</span>'+(e.text?' <span class="meta">'+esc(e.text)+'</span>':"");else if(e.type==="verdict")h='<span class="'+(e.ok?"okk":"bad")+'">'+(e.ok?"&#10004; ":"&#10008; ")+esc(e.text)+'</span>';else if(e.type==="blocked")h='<span class="blk">⛔ GESPERRT: '+esc(e.reason)+'</span> <span class="meta">'+esc(e.cmd)+'</span>';else h='<span class="meta">'+esc(e.text)+'</span>';
+var d=document.createElement("span");d.className="l"+(vis(a)?"":" hide");d.dataset.ag=a;d.dataset.run=e.run||"";d.innerHTML='<span class="ts">'+t+'</span> <span class="ag ag-'+esc(a)+'">'+esc(a==="NEXUS-GPT"?"NEXUS GPT":a)+'</span> '+h;return d}
+function add(e){if(!e||(e.id&&seen[e.id]))return;if(e.id)seen[e.id]=1;if(paused){queue.push(e);return}out.appendChild(line(e));while(out.childNodes.length>MAX)out.removeChild(out.firstChild);if(e.type==="start")last.textContent=(e.agent||"")+": "+(e.cmd||"").slice(0,80);if(auto.checked)out.scrollTop=out.scrollHeight}
+function filt(){out.querySelectorAll(".l").forEach(function(l){l.classList.toggle("hide",!vis(l.dataset.ag))});if(auto.checked)out.scrollTop=out.scrollHeight}
+function connect(){try{if(es)es.close();es=new EventSource("/api/terminal/stream?backlog=200");es.onopen=function(){dot.classList.add("on")};es.onerror=function(){dot.classList.remove("on")};es.onmessage=function(m){try{add(JSON.parse(m.data))}catch(x){}}}catch(x){}}
+var TB=document.getElementById("btnTerminal");if(TB)TB.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();setOpen(P.classList.contains("collapsed"),1)});function setOpen(o,u){P.classList.toggle("collapsed",!o);tg.setAttribute("aria-expanded",o?"true":"false");if(TB)TB.setAttribute("aria-expanded",o?"true":"false");if(u){try{localStorage.setItem("nxTerm",o?"1":"0")}catch(x){}}if(o&&auto.checked)out.scrollTop=out.scrollHeight}
+tg.addEventListener("click",function(){setOpen(P.classList.contains("collapsed"),1)});
+P.querySelectorAll(".nx-term-tabs button").forEach(function(b){b.addEventListener("click",function(){ag=b.dataset.ag;P.querySelectorAll(".nx-term-tabs button").forEach(function(x){x.classList.toggle("on",x===b);x.setAttribute("aria-selected",x===b?"true":"false")});filt()})});
+pb.addEventListener("click",function(){paused=!paused;pb.setAttribute("aria-pressed",paused?"true":"false");pb.textContent=paused?"Weiter ("+queue.length+")":"Pause";if(!paused){var q=queue;queue=[];q.forEach(add)}});
+setInterval(function(){if(paused)pb.textContent="Weiter ("+queue.length+")"},1000);
+cl.addEventListener("click",function(){out.innerHTML=""});
+fm.addEventListener("submit",function(ev){ev.preventDefault();var c=inp.value.trim();if(!c)return;inp.value="";fetch("/api/terminal/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({agent:"Eddie",command:c,shell:"session",wait:false})}).then(function(r){return r.json()}).then(function(j){if(j&&j.status==="BLOCKED"){}else if(j&&j.success===false)add({type:"info",agent:"Eddie",text:"Fehler: "+(j.error||"?"),ts:new Date().toISOString()})}).catch(function(e){add({type:"info",agent:"Eddie",text:"Netzwerkfehler: "+e,ts:""})})});
+function fit(){P.classList.remove("float");P.style.bottom="";out.style.height="";if(P.classList.contains("collapsed"))return;var cp=document.getElementById("nxComposer"),inp=document.getElementById("nxInput");if(!cp||!inp)return;function hidden(){var q=inp.getBoundingClientRect();if(q.bottom>innerHeight)return true;var e=document.elementFromPoint(q.left+q.width/2,q.top+q.height/2);return !(e&&e.closest&&e.closest("#nxComposer"))}var was=P.classList.contains("collapsed");P.classList.add("collapsed");var base=hidden();P.classList.remove("collapsed");if(base||!hidden())return;var ov=cp.getBoundingClientRect().bottom-innerHeight,h=out.getBoundingClientRect().height;if(ov>0&&h-ov>=90){out.style.height=(h-ov-4)+"px";if(!hidden())return;out.style.height=""}P.classList.add("float");var ct=cp.getBoundingClientRect().top;P.style.bottom=Math.max(8,innerHeight-Math.min(ct,innerHeight-60)+8)+"px"}var _so=setOpen;setOpen=function(o,u){_so(o,u);requestAnimationFrame(fit)};window.addEventListener("resize",fit);window.addEventListener("load",fit);var o=null;try{o=localStorage.getItem("nxTerm")}catch(x){}setOpen(/[?&]term=1/.test(location.search)||o==="1");connect();window.nxTerminal={open:setOpen,add:add};
+if(/[?&]termcheck=1/.test(location.search))__nxStableLoad(function(){setTimeout(function(){fit();function r(e){if(!e)return null;var x=e.getBoundingClientRect();return{t:x.top,b:x.bottom,l:x.left,r:x.right,h:x.height,w:x.width}}var hub=document.getElementById("nxLiveHub"),cp=document.getElementById("nxComposer"),i=document.getElementById("nxInput"),ov=false;if(i){var q=i.getBoundingClientRect(),hit=document.elementFromPoint(q.left+q.width/2,q.top+q.height/2);ov=!(hit&&hit.closest&&hit.closest("#nxComposer"))}var res={term:r(P),out:r(out),hub:r(hub),hub_parent:hub&&hub.parentNode&&(hub.parentNode.id||hub.parentNode.tagName),composer:r(cp),inp:r(i),send:r(document.getElementById("btnSend")),vh:innerHeight,target:r(document.getElementById("nxGlassTarget")),overlap_composer:ov,open:!P.classList.contains("collapsed"),parent:P.parentNode&&(P.parentNode.id||P.parentNode.tagName),lines:out.querySelectorAll(".l").length,text:out.textContent.slice(-1500),tabs:Array.prototype.map.call(P.querySelectorAll(".nx-term-tabs button"),function(b){return b.dataset.ag}),has_input:!!inp,has_pause:!!pb,live:dot.classList.contains("on"),font:getComputedStyle(out).fontFamily,vw:innerWidth,vh:innerHeight};var pre=document.createElement("pre");pre.id="termcheck";pre.style.display="none";pre.textContent=JSON.stringify(res);document.body.appendChild(pre)},0)});
+})();
+</script>
+<style id="nxTermCss2">
+#btnTerminal{margin-right:10px;padding:4px 12px;border-radius:999px;border:1px solid rgba(137,207,240,.7);background:rgba(255,255,255,.85);color:#0b3d5c;font-weight:700;cursor:pointer}
+#btnTerminal[aria-expanded="true"]{background:#89cff0;color:#04263a}
+.nx-term-ctl{display:flex;flex-wrap:wrap;gap:6px;padding:4px 8px;font:12px Consolas,monospace}
+.nx-term-ctl:empty{display:none}
+.nx-term-ctl .it{display:flex;align-items:center;gap:6px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.75);border:1px solid #c0c7cf}
+.nx-term-ctl .it.apr{border-color:#e8b04b;background:#fff8e6}
+.nx-term-ctl button{font:inherit;padding:1px 8px;border-radius:6px;border:1px solid #89cff0;background:#fff;cursor:pointer}
+.nx-term-ctl button.x{border-color:#e07070;color:#a01818}
+.nx-term-ctl button.ok{border-color:#4caf50;color:#1b5e20}
+</style>
+<script id="nxTermJs2">
+(function(){var P=document.getElementById("nxTerminal");if(!P)return;var c=document.createElement("div");c.id="nxTermCtl";c.className="nx-term-ctl";var b=document.getElementById("nxTermBody");if(b)P.insertBefore(c,b);else P.appendChild(c);
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(x){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[x]})}
+function post(u,d,h){return fetch(u,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},h||{}),body:JSON.stringify(d)}).then(function(r){return r.json()})}
+function draw(j){var h="";(j.running||[]).forEach(function(r){h+='<span class="it run"><b>'+esc(r.agent)+'</b> '+esc(String(r.cmd).slice(0,60))+' <button type="button" class="x" data-cancel="'+esc(r.run)+'" title="Befehl abbrechen">&#9632; Abbrechen</button></span>'});(j.approvals||[]).forEach(function(a){h+='<span class="it apr">&#9888; PRIVILEGED <b>'+esc(a.agent)+'</b> '+esc(String(a.cmd).slice(0,80))+' <button type="button" class="ok" data-apr="'+esc(a.approval_id)+'">Freigeben</button><button type="button" class="x" data-deny="'+esc(a.approval_id)+'">Ablehnen</button></span>'});if(c.innerHTML!==h)c.innerHTML=h}
+function poll(){if(P.classList.contains("collapsed"))return;fetch("/api/terminal/state").then(function(r){return r.json()}).then(draw).catch(function(){})}
+c.addEventListener("click",function(e){var t=e.target;if(t.dataset.cancel)post("/api/terminal/cancel",{run:t.dataset.cancel,by:"Eddie-UI"}).then(poll);else if(t.dataset.apr||t.dataset.deny)post("/api/terminal/approve",{approval_id:t.dataset.apr||t.dataset.deny,approve:!!t.dataset.apr},{"X-NEXUS-UI":"approve"}).then(poll)});
+setInterval(poll,1500);poll();window.nxTerminalCtl={poll:poll,draw:draw}})();
+</script>
+<style id="nxDedupeCss">
+/* DEDUPE 20261102: jede Info/Funktion genau einmal, eigenes Raster pro Bereich, keine Ueberlagerung */
+body.nx-app.nx-reference #nxThread{overflow-y:auto!important;overflow-x:hidden!important;min-height:0!important}
+body.nx-app.nx-reference #nxSide{display:flex!important;flex-direction:column!important;overflow-y:auto!important;overflow-x:hidden!important}
+body.nx-app.nx-reference #nxSide>*{flex:0 0 auto!important;position:relative!important}
+body.nx-app.nx-reference #nxGlassTelemetry{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:6px!important;width:auto!important;margin:0 12px 6px!important;padding:4px!important}
+body.nx-app.nx-reference #nxGlassTelemetry .nx-glass-metric{min-height:0!important;padding:6px 8px!important;gap:2px!important;overflow:hidden}
+body.nx-app.nx-reference #nxGlassTelemetry .nx-glass-metric-value,body.nx-app.nx-reference #nxGlassTelemetry .nx-glass-metric-detail{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.nx-app.nx-reference #nxGlassQuickActions{flex-wrap:wrap}
+#nxReferenceCard-zocker{display:none}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-art-link,body.nx-app.nx-reference #nxReferenceCard-zocker{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;margin:0!important;overflow:hidden}
+body.nx-app.nx-reference #nxReferenceCard-zocker{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;cursor:pointer;border-radius:16px;border:1px solid rgba(220,60,60,.55);background:linear-gradient(160deg,rgba(255,238,238,.94),rgba(255,198,198,.8));box-shadow:inset 0 1px 0 #fff,0 6px 18px rgba(200,40,40,.22);backdrop-filter:blur(12px);color:#9b1111;font:700 clamp(11px,.85vw,15px) "Segoe UI",system-ui,sans-serif;pointer-events:auto;padding:0}
+body.nx-app.nx-reference #nxReferenceCard-zocker:hover{box-shadow:0 0 0 2px rgba(230,70,70,.6),0 8px 22px rgba(200,40,40,.3)}
+#nxReferenceCard-zocker .nx-zk-icon{font-size:clamp(20px,3.6vh,40px);line-height:1}
+body.nx-dark.nx-app.nx-reference #nxReferenceCard-zocker{background:linear-gradient(160deg,rgba(70,14,18,.9),rgba(40,8,12,.85))!important;color:#ffb3b3!important;border-color:rgba(255,90,90,.6)!important}
+@media (min-width:1660px) and (min-height:560px){
+body.nx-app.nx-reference #nxReferenceScene{grid-template-rows:2vh minmax(0,1fr) 1.4vh minmax(0,1fr) 1.4vh minmax(0,1fr) 1.4vh minmax(0,1fr) 1.6vh 8vh 2vh!important}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-whatsapp{grid-area:2/2/3/3!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-facebook{grid-area:2/4/3/5!important}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-youtube{grid-area:4/2/5/3!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-studio{grid-area:4/4/5/5!important}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-files{grid-area:6/2/7/3!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-mail{grid-area:6/4/7/5!important}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-zocker{grid-area:8/2/9/5!important}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-nexusall{grid-area:10/2/11/11!important}
+body.nx-app.nx-reference #nxReferenceScene > #nxLiveHub{grid-area:2/8/9/11!important}
+body.nx-app.nx-reference #nxReferenceStage{top:2vh!important;height:86.4vh!important}
+}
+@media not all and (min-width:1660px) and (min-height:560px){
+body.nx-app.nx-reference #nxReferenceScene{display:grid!important;position:fixed!important;left:0;top:0;bottom:0;width:212px;padding:10px;box-sizing:border-box;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,minmax(48px,10vh)) minmax(0,1fr) 52px;gap:8px;z-index:30;pointer-events:auto;background:linear-gradient(170deg,rgba(240,247,253,.92),rgba(214,229,243,.9));border-right:1px solid #c9d6e2;backdrop-filter:blur(12px)}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-art-link{background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(233,245,253,.76))!important;border:1px solid #c9d6e2!important;border-radius:14px!important;box-shadow:inset 0 1px 0 #fff,0 4px 12px rgba(30,70,110,.12)!important;color:#0b3d5c!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:4px!important}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-app-logo{width:34px!important;height:34px!important;min-width:0!important;min-height:0!important;border-radius:10px!important}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-app-name{color:#0b3d5c!important;text-shadow:none!important;font:600 12px/1.15 "Segoe UI",system-ui,sans-serif!important}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-app-state{display:none}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-whatsapp{grid-area:1/1/2/2!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-facebook{grid-area:1/2/2/3!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-youtube{grid-area:2/1/3/2!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-studio{grid-area:2/2/3/3!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-files{grid-area:3/1/4/2!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-mail{grid-area:3/2/4/3!important}body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-zocker{grid-area:4/1/5/3!important}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-nexusall{grid-area:6/1/7/3!important;flex-direction:row!important;gap:8px}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-nexusall .nx-reference-app-name{font-size:11px!important}
+body.nx-app.nx-reference #nxApp{margin-left:212px!important;width:calc(100vw - 212px)!important;max-width:calc(100vw - 212px)!important}
+body.nx-app.nx-reference #nxReferenceOuterCards{display:contents!important}
+body.nx-app.nx-reference #nxReferenceScene > #nxLiveHub{grid-area:5/1/6/3!important;position:relative!important;margin:0!important;display:flex;flex-direction:column;min-height:0;overflow:hidden;border-radius:14px}
+body.nx-app.nx-reference #nxReferenceScene > #nxLiveHub.hide{display:none!important}
+body.nx-app.nx-reference #nxReferenceScene > #nxLiveHub #nxLiveHubFrame{flex:1 1 auto;min-height:0;height:auto}
+body.nx-app.nx-reference #nxReferenceScene .nx-reference-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+}
+/* 20261102 Nexus-UI: Hub auch unter 1660px rechts (wie bei 1920), Kacheln links */
+@media not all and (min-width:1660px) and (min-height:560px){
+body.nx-app.nx-reference #nxReferenceScene{right:0!important;width:auto!important;grid-template-columns:92px 92px minmax(0,1fr) clamp(240px,20vw,320px)!important;grid-template-rows:repeat(3,minmax(48px,10vh)) minmax(0,1fr) 52px!important;pointer-events:none!important;border-right:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:linear-gradient(90deg,rgba(240,247,253,.94) 0,rgba(214,229,243,.92) 211px,#c9d6e2 211px,#c9d6e2 212px,transparent 212px)!important}
+body.nx-app.nx-reference #nxReferenceScene>*{pointer-events:auto}
+body.nx-app.nx-reference #nxReferenceScene #nxReferenceCard-nexusall{grid-area:5/1/6/3!important}
+body.nx-app.nx-reference #nxReferenceScene > #nxLiveHub{grid-area:1/4/6/5!important}
+body.nx-app.nx-reference .nx-glass-metric-value,body.nx-app.nx-reference .nx-glass-metric-detail{white-space:normal!important;text-overflow:clip!important;overflow:hidden!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15!important;word-break:break-word}
+body.nx-app.nx-reference .nx-glass-metric{min-width:0!important}
+body.nx-app.nx-reference #nxComposer .composer-box{flex-wrap:wrap!important;row-gap:4px!important}
+body.nx-app.nx-reference #nxComposer #nxInput{order:-1!important;flex:1 1 100%!important;min-width:0!important;width:100%!important}
+body.nx-app.nx-reference #nxComposer .composer-meta .hint{display:none!important}
+body.nx-app.nx-reference #nxComposer #nxInput{min-height:34px!important;max-height:72px!important}
+body.nx-app.nx-reference #nxGlassTarget{order:20!important;flex:0 0 auto!important;width:auto!important;max-width:none!important;margin-left:auto!important}
+body.nx-app.nx-reference #nxApp{width:calc(100vw - 230px - clamp(240px,20vw,320px))!important;max-width:calc(100vw - 230px - clamp(240px,20vw,320px))!important}
+}
+</style>
+<script id="nxGridJs">
+(function(){
+function zock(){if(!confirm("\uD83D\uDCA3 ZOCKER-Modus: NEXUS-Dienste wirklich abschalten?"))return;fetch("/api/terminal/zocker",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}).then(function(r){return r.json()}).then(function(j){if(!j||!j.success)alert("Zocker fehlgeschlagen")}).catch(function(){alert("Zocker: keine Antwort")});}
+function add(){var sc=document.getElementById("nxReferenceScene");if(!sc||document.getElementById("nxReferenceCard-zocker"))return!!sc;
+var b=document.createElement("button");b.type="button";b.id="nxReferenceCard-zocker";b.title="ZOCKER: NEXUS abschalten (mit Rueckfrage)";b.innerHTML='<span class="nx-zk-icon">💣</span><span>ZOCKER</span>';b.addEventListener("click",zock);sc.appendChild(b);return true;}
+/* 20261102 Nexus-UI: ZOCKER-Kachel entfernt, ZOCKER nur noch als #btnZocker in der Kopfzeile */
+if(/[?&]gridcheck=1/.test(location.search))setTimeout(function(){function vis(e){if(!e)return false;var r=e.getBoundingClientRect();if(r.width<4||r.height<4||r.bottom<=0||r.right<=0||r.top>=innerHeight||r.left>=innerWidth)return false;for(var x=e;x&&x.nodeType==1;x=x.parentElement){var c=getComputedStyle(x);if(c.display=="none"||c.visibility=="hidden"||+c.opacity<.05)return false;if(x.tagName=="DETAILS"&&!x.open&&x!==e&&!(e.tagName=="SUMMARY"&&e.parentElement===x))return false}return true}
+var P=[].slice.call(document.querySelectorAll("#nxSide,#nxTop,#nxThread,#nxGlassTelemetry,#nxComposer,#nxLiveHub,[id^=nxReferenceCard-],#nxTop button,#nxTop details,#nxGlassQuickActions button,.composer-box,#nxGlassTelemetry .nx-glass-metric")).filter(vis);var ov=[];function nm(e){return e.id||(e.className+"").split(" ")[0]+":"+(e.innerText||"").trim().slice(0,14)}
+for(var a=0;a<P.length;a++)for(var b=a+1;b<P.length;b++){var A=P[a],B=P[b];if(A.contains(B)||B.contains(A))continue;var r=A.getBoundingClientRect(),s=B.getBoundingClientRect();if(r.left<s.right-1&&s.left<r.right-1&&r.top<s.bottom-1&&s.top<r.bottom-1)ov.push(nm(A)+"/"+nm(B))}
+var L={},d=[];[].slice.call(document.querySelectorAll("button,a,[role=button],summary")).filter(vis).forEach(function(e){var t=((e.innerText||"")+" "+(e.title||e.getAttribute("aria-label")||"")).toLowerCase().replace(/[^a-z\u00e4\u00f6\u00fc\u00df0-9 ]/g," ").replace(/\s+/g," ").trim();var k=(e.innerText||"").toLowerCase().replace(/[^a-z\u00e4\u00f6\u00fc\u00df0-9]/g,"");if(!k||k.length<3)return;(L[k]=L[k]||[]).push(nm(e))});for(var k in L)if(L[k].length>1)d.push(k+"="+L[k].join(","));
+var tiles=["whatsapp","facebook","youtube","files","mail","studio","nexusall"].filter(function(i){var e=document.getElementById("nxReferenceCard-"+i);return vis(e)||!!(e&&e.closest("#n4Apps,#n4AppStore"))}).length;
+var pre=document.createElement("pre");pre.id="nxGridResult";pre.textContent="GRIDCHECK "+JSON.stringify({R:["nxReferenceScene","nxReferenceCard-whatsapp","nxReferenceCard-studio","nxReferenceCard-files","nxLiveHub","nxReferenceCard-nexusall"].map(function(i){var e=document.getElementById(i);if(!e)return i+":-";var r=e.getBoundingClientRect();return i+":"+[r.left,r.top,r.width,r.height].map(Math.round).join(",")+":"+getComputedStyle(e).zoom}),w:innerWidth,h:innerHeight,tiles:tiles,checked:P.length,overlap:ov,dupLabels:d,livehubInScene:!!(document.getElementById("nxReferenceScene")||{contains:function(){return false}}).contains(document.getElementById("nxLiveHub"))});document.body.appendChild(pre);window.__nxRelease&&window.__nxRelease()},1200);
+})();
+</script>
+</body>
+</html>

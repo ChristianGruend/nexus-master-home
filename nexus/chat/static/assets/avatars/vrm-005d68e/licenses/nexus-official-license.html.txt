@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <!-- v28068 -->
+
+
+  <title>Do VRoid Studio&#39;s sample models come with conditions of use? &ndash; VRoid FAQ</title>
+
+  <meta name="csrf-param" content="authenticity_token">
+<meta name="csrf-token" content="hc:meta:server:0nu3oh357p2mP5aFk5usoylehkDI5DnesFwWO65WB7kahPLwC07vqfVAL_tsQOgKuchDr2pFWfBP5WI8zraRjQ">
+
+  <meta name="description" content="Both base models and sample models come with their own conditions of use, but their conditions might differ depending on the model...." /><meta property="og:image" content="https://vroid.pixiv.help/hc/theming_assets/01HZKMY505C37XZ5FDADPP2XN6" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="VRoid FAQ" />
+<meta property="og:title" content="Do VRoid Studio's sample models come with conditions of use?" />
+<meta property="og:description" content="Both base models and sample models come with their own conditions of use, but their conditions might differ depending on the model.
+Before you start editing or using a model, please make sure to ta..." />
+<meta property="og:url" content="https://vroid.pixiv.help/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use" />
+<link rel="canonical" href="https://vroid.pixiv.help/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use">
+<link rel="alternate" hreflang="en-us" href="https://vroid.pixiv.help/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use">
+<link rel="alternate" hreflang="ja" href="https://vroid.pixiv.help/hc/ja/articles/4402614652569-VRoid-Studio-%E6%97%A7%E3%83%99%E3%83%BC%E3%82%BF%E7%89%88%E3%81%AE%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%83%A2%E3%83%87%E3%83%AB%E3%81%AB%E5%88%A9%E7%94%A8%E6%9D%A1%E4%BB%B6%E3%81%AF%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99%E3%81%8B">
+<link rel="alternate" hreflang="x-default" href="https://vroid.pixiv.help/hc/ja/articles/4402614652569-VRoid-Studio-%E6%97%A7%E3%83%99%E3%83%BC%E3%82%BF%E7%89%88%E3%81%AE%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%83%A2%E3%83%87%E3%83%AB%E3%81%AB%E5%88%A9%E7%94%A8%E6%9D%A1%E4%BB%B6%E3%81%AF%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99%E3%81%8B">
+
+  <link rel="stylesheet" href="//static.zdassets.com/hc/assets/application-b925b7498ff4356827db8a6064e91e2b.css" media="all" id="stylesheet" />
+    <!-- Entypo pictograms by Daniel Bruce — www.entypo.com -->
+    <link rel="stylesheet" href="//static.zdassets.com/hc/assets/theming_v1_support-e05586b61178dcde2a13a3d323525a18.css" media="all" />
+  <link rel="stylesheet" type="text/css" href="/hc/theming_assets/1128206/360000928133/style.css?digest=56481947389465">
+
+  <link rel="icon" type="image/x-icon" href="/hc/theming_assets/01HZKMY54KTCDDJM98P6N521JR">
+
+    <script src="//static.zdassets.com/hc/assets/jquery-ed472032c65bb4295993684c673d706a.js"></script>
+    
+
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <script type="text/javascript" src="/hc/theming_assets/1128206/360000928133/script.js?digest=56481947389465"></script>
+</head>
+<body class="">
+  
+  
+  
+
+  <header class="header">
+  <div class="logo">
+    <a title="Home" href="/hc/en-us">
+    <img src="/hc/theming_assets/01HZKMY505C37XZ5FDADPP2XN6" alt="Logo">
+    </a>
+  </div>
+  <div class="nav-wrapper">
+    <div class="footer-language-selector">
+      
+        <div class="dropdown language-selector" aria-haspopup="true">
+          <a class="dropdown-toggle">English (United States)</a>
+          <span class="dropdown-menu dropdown-menu-end" role="menu">
+            
+              <a href="/hc/change_language/ja?return_to=%2Fhc%2Fja%2Farticles%2F4402614652569-VRoid-Studio-%25E6%2597%25A7%25E3%2583%2599%25E3%2583%25BC%25E3%2582%25BF%25E7%2589%2588%25E3%2581%25AE%25E3%2582%25B5%25E3%2583%25B3%25E3%2583%2597%25E3%2583%25AB%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2581%25AB%25E5%2588%25A9%25E7%2594%25A8%25E6%259D%25A1%25E4%25BB%25B6%25E3%2581%25AF%25E3%2581%2582%25E3%2582%258A%25E3%2581%25BE%25E3%2581%2599%25E3%2581%258B" dir="ltr" rel="nofollow" role="menuitem">日本語</a>
+            
+          </span>
+        </div>
+      
+    </div>
+    <a href="https://vroid.com/" target=blank>VRoid</a>
+  </div>
+</header>
+
+
+  <main role="main">
+    <div class="container-divider"></div>
+<div class="container">
+  <nav class="sub-nav">
+    <ol class="breadcrumbs">
+  
+    <li title="VRoid FAQ">
+      
+        <a href="/hc/en-us">VRoid FAQ</a>
+      
+    </li>
+  
+    <li title="VRoid Studio old beta">
+      
+        <a href="/hc/en-us/categories/360000053442-VRoid-Studio-old-beta">VRoid Studio old beta</a>
+      
+    </li>
+  
+    <li title="▼Sample Models for old beta">
+      
+        <a href="/hc/en-us/sections/360002889853--Sample-Models-for-old-beta">▼Sample Models for old beta</a>
+      
+    </li>
+  
+</ol>
+
+    <form role="search" class="search" data-search="" action="/hc/en-us/search" accept-charset="UTF-8" method="get"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" /><input type="hidden" name="category" id="category" value="360000053442" autocomplete="off" />
+<input type="search" name="query" id="query" placeholder="Search" aria-label="Search" /></form>
+  </nav>
+
+  <div class="article-container" id="article-container">
+    
+      <section class="article-sidebar">
+        <section class="section-articles collapsible-sidebar">
+          <h3 class="collapsible-sidebar-title sidenav-title">Articles in this section</h3>
+          <ul>
+            
+              <li>
+                <a href="/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use" class="sidenav-item current-article">Do VRoid Studio&#39;s sample models come with conditions of use?</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/900000088126-New-model" class="sidenav-item ">New model</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/360000232302-School-uniform-texture-available-for-free" class="sidenav-item ">School uniform texture available for free</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/360012381793-%CE%B2-Ver-AvatarSample-1" class="sidenav-item ">β Ver AvatarSample_1</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/360014900273-%CE%B2-Ver-AvatarSample-2" class="sidenav-item ">β Ver AvatarSample_2</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/360014900113-%CE%B2-Ver-AvatarSample-3" class="sidenav-item ">β Ver AvatarSample_3</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/360014900233-%CE%B2-Ver-AvatarSample-4" class="sidenav-item ">β Ver AvatarSample_4</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/360014788554-Sakurada-Fumiriya" class="sidenav-item ">Sakurada Fumiriya</a>
+              </li>
+            
+              <li>
+                <a href="/hc/en-us/articles/360013482714-Sendagaya-Shino" class="sidenav-item ">Sendagaya Shino</a>
+              </li>
+            
+          </ul>
+          
+        </section>
+      </section>
+    
+
+    <article class="article">
+      <header class="article-header">
+        <h1 title="Do VRoid Studio&#39;s sample models come with conditions of use?" class="article-title no-author">
+          Do VRoid Studio&#39;s sample models come with conditions of use?
+          
+        </h1>
+
+        <div class="article-author">
+          
+          <div class="article-meta">
+            
+
+
+          </div>
+        </div>
+
+        
+      </header>
+
+      <section class="article-info">
+        <div class="article-content">
+          <div class="article-body"><p>Both base models and sample models come with their own conditions of use, but their conditions might differ depending on the model.</p>
+<p><span style="font-weight: 400;">Before you start editing or using a model, please make sure to take a look at their conditions of use. While some models have CC0 licenses, some others have their own particular set of conditions.</span></p>
+<p><span style="font-weight: 400;">If this is your first attempt at creating 3D characters, it might be easier to pick a sample model and try editing it first. You can try changing some random parameters, textures, and colors to see how they reflect in real time. Once you get the grasp of how things work, step up your game and try designing a new hairstyle by yourself. All the textures in the .vroid files for our sample models are completely customizable. There is literally no limit to what you can do.</span></p>
+<p><span style="font-weight: 400;">Sample models are available on VRoid Hub too.</span><span style="font-weight: 400;"><br></span><span style="font-weight: 400;">You can ❤ models on VRoid Hub to call them up on integrated apps, download their VRM files, and use them on any AR/VR platform, or even use them to create brand-new 3D content.</span></p>
+<p><span style="font-weight: 400;">Sample models are meant primarily for beginners and people new to the 3D creative scene. In order to leave more freedom to each user, we’re deliberately making them customizable.<br>Please refrain from doing anything that might harm or disturb other people.</span></p>
+<p>&nbsp;</p>
+<h2 id="h_01JFJ11EVGK2G1DTDJYZZ4RMYA">▼Models with particular conditions of use</h2>
+<p>The VRoid Studio models listed below can be used freely, as long as you comply with their conditions of use. While copyright is not waived, you can alter, distribute, and do many more things with them.</p>
+<p>Please carefully read the conditions of use listed in the article below.</p>
+<p><img src="/hc/article_attachments/4402914145305" alt="__________2021-06-28_15.48.58.png" width="463" height="166"></p>
+<p>・AvatarSample_A<br>・AvatarSample_B<br>・AvatarSample_C<br><br></p>
+<h4 id="h_01JFJ11EVGWWFMXGPP1NPQXKBH"><strong>Check the article below to see the full conditions of use for each model</strong></h4>
+<p><span class="notion-enable-hover" style="color: rgba(55, 53, 47, 1);" data-token-index="0">VRoidPreset_A - Z</span> ： <a href="https://vroid.pixiv.help/hc/en-us/articles/4402394424089" target="_blank" rel="noopener noreferrer">https://vroid.pixiv.help/hc/en-us/articles/4402394424089</a></p>
+<p>&nbsp;</p>
+<h2 id="h_01JFJ11EVGG8JETXDEDPKFQA5M">▼CC0 license models</h2>
+<p>The VRoid Studio models listed below are CC0 licensed*.<br>Copyright is waived, and there is no particular limit when using them.<br>(However, please refrain from doing anything that might harm or disturb other people.)</p>
+<p><span class="wysiwyg-font-size-medium">※&nbsp;CC0 license: Creative Commons License. To read more about CC0, check the link below (external links).<br></span><span class="wysiwyg-font-size-medium">About CC0　<a href="http://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer">http://creativecommons.org/publicdomain/zero/1.0/</a><br></span><span class="wysiwyg-font-size-medium">CC0 FAQ　<a href="https://creativecommons.jp/sciencecommons/cc0-faq/" target="_blank" rel="noopener noreferrer">https://creativecommons.jp/sciencecommons/cc0-faq/</a></span></p>
+<p><span class="wysiwyg-color-black">Base models</span></p>
+<p><span class="wysiwyg-color-black"><img src="/hc/article_attachments/4402738322329" alt="__________2021-06-24_14.27.04.png" width="318" height="211"></span></p>
+<p>Sample models</p>
+<p><img src="/hc/article_attachments/42654801508505" alt="1.png" width="550" height="165"><br><img src="/hc/article_attachments/42654801515545" alt="2.png" width="550" height="169"></p>
+<p><span class="wysiwyg-font-size-medium">・HairSample_Male<br>・HairSample_Female<br>・β Ver AvatarSample_1<br>・β Ver AvatarSample_2<br>・β Ver AvatarSample_3<br>・β Ver AvatarSample_4<br><br></span></p>
+<h4 id="h_01JFJ11EVGXRZ01P01HVSSHEPF"><strong>Check the article below to see the full conditions of use for CC0 licensed models</strong></h4>
+<p>β Ver AvatarSample_1 ： <a href="https://vroid.pixiv.help/hc/en-us/articles/360012381793" target="_blank" rel="noopener noreferrer">https://vroid.pixiv.help/hc/en-us/articles/360012381793</a><br>β Ver AvatarSample_2 ： <a href="https://vroid.pixiv.help/hc/en-us/articles/360014900273" target="_blank" rel="noopener noreferrer">https://vroid.pixiv.help/hc/en-us/articles/360014900273</a><br><span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;">β Ver AvatarSample_3 ： <a href="https://vroid.pixiv.help/hc/en-us/articles/360014900113" target="_blank" rel="noopener noreferrer">https://vroid.pixiv.help/hc/en-us/articles/360014900113</a></span><br>β Ver AvatarSample_4 ： <a href="https://vroid.pixiv.help/hc/en-us/articles/360014900233" target="_blank" rel="noopener noreferrer">https://vroid.pixiv.help/hc/en-us/articles/360014900233</a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p></div>
+
+          <div class="article-attachments">
+            <ul class="attachments">
+              
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div class="article-footer">
+          
+            <div class="article-share">
+  <ul class="share">
+    <li><a href="https://www.facebook.com/share.php?title=Do+VRoid+Studio%27s+sample+models+come+with+conditions+of+use%3F&u=https%3A%2F%2Fvroid.pixiv.help%2Fhc%2Fen-us%2Farticles%2F4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use" class="share-facebook">Facebook</a></li>
+    <li><a href="https://twitter.com/share?lang=en&text=Do+VRoid+Studio%26%2339%3Bs+sample+models+come+with+conditions+of+use%3F&url=https%3A%2F%2Fvroid.pixiv.help%2Fhc%2Fen-us%2Farticles%2F4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use" class="share-twitter">Twitter</a></li>
+    <li><a href="https://www.linkedin.com/shareArticle?mini=true&source=VRoid&title=Do+VRoid+Studio%27s+sample+models+come+with+conditions+of+use%3F&url=https%3A%2F%2Fvroid.pixiv.help%2Fhc%2Fen-us%2Farticles%2F4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use" class="share-linkedin">LinkedIn</a></li>
+  </ul>
+
+</div>
+          
+          
+        </div>
+        
+          <div class="article-votes">
+            <span class="article-votes-question">Was this article helpful?</span>
+            <div class="article-votes-controls" role='radiogroup'>
+              <a class="button article-vote article-vote-up" data-helper="vote" data-item="article" data-type="up" data-id="4402614652569" data-upvote-count="317" data-vote-count="357" data-vote-sum="277" data-vote-url="/hc/en-us/articles/4402614652569/vote" data-value="null" data-label="317 out of 357 found this helpful" data-selected-class="null" data-as="link" aria-selected="false" role="radio" rel="nofollow" title="Yes" href="#"></a>
+              <a class="button article-vote article-vote-down" data-helper="vote" data-item="article" data-type="down" data-id="4402614652569" data-upvote-count="317" data-vote-count="357" data-vote-sum="277" data-vote-url="/hc/en-us/articles/4402614652569/vote" data-value="null" data-label="317 out of 357 found this helpful" data-selected-class="null" data-as="link" aria-selected="false" role="radio" rel="nofollow" title="No" href="#"></a>
+            </div>
+            <small class="article-votes-count">
+              <span class="article-vote-label" data-helper="vote" data-item="article" data-type="label" data-id="4402614652569" data-upvote-count="317" data-vote-count="357" data-vote-sum="277" data-vote-url="/hc/en-us/articles/4402614652569/vote" data-value="null" data-label="317 out of 357 found this helpful">317 out of 357 found this helpful</span>
+            </small>
+          </div>
+        
+
+        <div class="article-more-questions">
+          お気づきの点がございましたら、<a href=https://www.pixiv.net/support?mode=select_vroid target=blank>各種お問い合わせフォーム</a>よりご連絡ください
+        </div>
+
+      </footer>
+
+      <section class="article-relatives">
+        
+          <div data-recent-articles></div>
+        
+        
+          
+  <section class="related-articles">
+    
+      <h3 class="related-articles-title">Related articles</h3>
+    
+    <ul>
+      
+        <li>
+          <a href="/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCBnjJwMBBDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJlOSBABBDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI1L2hjL2VuLXVzL2FydGljbGVzLzQ0MDIzOTQ0MjQwODktVlJvaWRQcmVzZXQtQS1aBjsIVDoJcmFua2kG--88c38840da1ab9e78be0ed6749661f06fece5493" rel="nofollow">VRoidPreset_A - Z</a>
+        </li>
+      
+        <li>
+          <a href="/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCGH%2BaNJTADoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJlOSBABBDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI%2BL2hjL2VuLXVzL2FydGljbGVzLzM2MDAxMjM4MTc5My0lQ0UlQjItVmVyLUF2YXRhclNhbXBsZS0xBjsIVDoJcmFua2kH--3c56b9acb32c0f75a9a578c9e4dfe5afc56d0439" rel="nofollow">β Ver AvatarSample_1</a>
+        </li>
+      
+        <li>
+          <a href="/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCJlO8M4BBDoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJlOSBABBDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSJ3L2hjL2VuLXVzL2FydGljbGVzLzQ0MDU4MTMzMzM2NTctQ2FuLUktdXNlLXRoZS1tb2RlbHMtY3JlYXRlZC13aXRoLVZSb2lkLVN0dWRpby1TdGFibGUtVmVyLWZvci1jb21tZXJjaWFsLXB1cnBvc2VzBjsIVDoJcmFua2kI--0211be419a7f84c8bf3f6845f92ed113b4378c11" rel="nofollow">Can I use the models created with VRoid Studio Stable Ver. for commercial purposes?</a>
+        </li>
+      
+        <li>
+          <a href="/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCD6AL4zRADoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJlOSBABBDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSIuL2hjL2VuLXVzL2FydGljbGVzLzkwMDAwMDA4ODEyNi1OZXctbW9kZWwGOwhUOglyYW5raQk%3D--39d4ea652854fb9662d0c6efcb26006f5b70ebe0" rel="nofollow">New model</a>
+        </li>
+      
+        <li>
+          <a href="/hc/en-us/related/click?data=BAh7CjobZGVzdGluYXRpb25fYXJ0aWNsZV9pZGwrCAlsj9JTADoYcmVmZXJyZXJfYXJ0aWNsZV9pZGwrCJlOSBABBDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoIdXJsSSI%2BL2hjL2VuLXVzL2FydGljbGVzLzM2MDAxNDkwMDIzMy0lQ0UlQjItVmVyLUF2YXRhclNhbXBsZS00BjsIVDoJcmFua2kK--76628cbcde7ede2133620c80885887f33e5526dd" rel="nofollow">β Ver AvatarSample_4</a>
+        </li>
+      
+    </ul>
+  </section>
+
+
+        
+      </section>
+      
+    </article>
+  </div>
+</div>
+
+  </main>
+
+  
+
+
+  <!-- / -->
+
+  
+  <script src="//static.zdassets.com/hc/assets/en-us.a4373f65dddee53ac592.js"></script>
+  
+
+  <script type="text/javascript">
+  /*
+
+    Greetings sourcecode lurker!
+
+    This is for internal Zendesk and legacy usage,
+    we don't support or guarantee any of these values
+    so please don't build stuff on top of them.
+
+  */
+
+  HelpCenter = {};
+  HelpCenter.account = {"subdomain":"pixiv","environment":"production","name":"pixiv"};
+  HelpCenter.user = {"identifier":"da39a3ee5e6b4b0d3255bfef95601890afd80709","email":null,"name":"","role":"anonymous","avatar_url":"https://assets.zendesk.com/hc/assets/default_avatar.png","is_admin":false,"external_id":null,"organizations":[],"groups":[]};
+  HelpCenter.internal = {"asset_url":"//static.zdassets.com/hc/assets/","web_widget_asset_composer_url":"https://static.zdassets.com/ekr/snippet.js","current_session":{"locale":"en-us","csrf_token":"hc:hcobject:server:Zl0T_dyQjkX2kImArPz0H8-539I7Bt4wWLTTVtEPm7OuolavyiePcaXvMP5TJ7C2Xy8aPZmnvh6nDadRse8Nhw","shared_csrf_token":null},"usage_tracking":{"event":"article_viewed","data":"BAh7CDoLbG9jYWxlSSIKZW4tdXMGOgZFVDoPYXJ0aWNsZV9pZGwrCJlOSBABBDoKX21ldGF7DDoPYWNjb3VudF9pZGkDDjcROhNoZWxwX2NlbnRlcl9pZGwrCHoyr9FTADoNYnJhbmRfaWRsKwiFObrRUwA6DHVzZXJfaWQwOhN1c2VyX3JvbGVfbmFtZUkiDkFOT05ZTU9VUwY7BlQ7AEkiCmVuLXVzBjsGVDoaYW5vbnltb3VzX3RyYWNraW5nX2lkMA==--0bcde3f066c0c97acd6f5f9ca8fa3de08561aefe","url":"https://vroid.pixiv.help/hc/activity"},"current_record_id":"4402614652569","current_record_url":"/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use","current_record_title":"Do VRoid Studio's sample models come with conditions of use?","current_text_direction":"ltr","current_brand_id":360000928133,"current_brand_name":"VRoid","current_brand_url":"https://vroid.zendesk.com","current_brand_active":true,"current_path":"/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use","show_autocomplete_breadcrumbs":true,"user_info_changing_enabled":false,"has_user_profiles_enabled":false,"has_end_user_attachments":true,"user_aliases_enabled":false,"has_anonymous_kb_voting":true,"has_multi_language_help_center":true,"show_at_mentions":false,"embeddables_config":{"embeddables_web_widget":false,"embeddables_help_center_auth_enabled":false,"embeddables_connect_ipms":false},"answer_bot_subdomain":"static","gather_plan_state":"subscribed","has_article_verification":true,"has_gather":true,"has_ckeditor":false,"has_community_enabled":false,"has_community_badges":true,"has_community_post_content_tagging":false,"has_gather_content_tags":true,"has_guide_content_tags":true,"has_user_segments":true,"has_answer_bot_web_form_enabled":false,"has_garden_modals":false,"has_auth_email_less_sso":false,"theming_cookie_key":"hc-da39a3ee5e6b4b0d3255bfef95601890afd80709-2-preview","is_preview":false,"has_search_settings_in_plan":true,"theming_api_version":1,"theming_settings":{"brand_color":"rgba(29, 161, 242, 1)","brand_text_color":"rgba(245, 245, 245, 1)","text_color":"#333333","link_color":"rgba(29, 161, 242, 1)","background_color":"rgba(255, 255, 255, 1)","heading_font":"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif","text_font":"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif","logo":"/hc/theming_assets/01HZKMY505C37XZ5FDADPP2XN6","favicon":"/hc/theming_assets/01HZKMY54KTCDDJM98P6N521JR","homepage_background_image":"/hc/theming_assets/01HZKMY5BGR91NC2EM2G1XTDVT","community_background_image":"/hc/theming_assets/01HZKMY5H55GYY6QGVE2SM20K1","community_image":"/hc/theming_assets/01HZKMY5NW9FXSFM6RS0H673NQ","instant_search":true,"scoped_kb_search":true,"scoped_community_search":true,"show_recent_activity":true,"show_articles_in_section":true,"show_article_author":false,"show_article_comments":false,"show_follow_article":false,"show_recently_viewed_articles":true,"show_related_articles":true,"show_article_sharing":true,"show_follow_section":false,"show_follow_post":false,"show_post_sharing":false,"show_follow_topic":false},"has_pci_credit_card_custom_field":true,"help_center_restricted":false,"is_assuming_someone_else":false,"flash_messages":[],"user_photo_editing_enabled":true,"user_preferred_locale":"ja","base_locale":"en-us","login_url":"https://pixiv.zendesk.com/access?locale=en-us\u0026brand_id=360000928133\u0026return_to=https%3A%2F%2Fvroid.pixiv.help%2Fhc%2Fen-us%2Farticles%2F4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use","has_alternate_templates":true,"has_custom_statuses_enabled":false,"has_hc_generative_answers_setting_enabled":false,"has_suggested_initial_questions_enabled":false,"has_contentful_eap":false,"has_contentful_eap_eligible":false,"has_pdf_ingestion_eap":true,"has_pdf_ingestion_eap_eligible":true,"has_guide_saas_management":false,"has_knowledge_category_translation_modal":false,"has_guide_service_catalog":true,"has_csat_reverse_2_scale_in_mobile":false,"has_unified_navigation":true,"has_unified_navigation_eap_access":true,"has_knowledge_locale_display_names":true,"has_csat_bet365_branding":false,"has_csat_flora":false,"has_csat_theming_integration_phase_1":false,"has_help_center_gen_search_follow_up_conversation":true,"chat_page_renderable":false,"version":"v28068","dev_mode":false};
+</script>
+
+  
+  <script src="//static.zdassets.com/hc/assets/moment-3b62525bdab669b7b17d1a9d8b5d46b4.js"></script>
+  <script src="//static.zdassets.com/hc/assets/hc_enduser-43bd7d52b00e5335ac966bab857ea142.js"></script>
+  
+  
+</body>
+</html>

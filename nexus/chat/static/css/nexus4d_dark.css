@@ -1,0 +1,276 @@
+/* 20261102 NEXUS 4D Runde 2: erzwingt dunkles Glas ueber alte White-Glass-Styles (master_glass, nx-reference). Nur body.nx-4d. */
+html:has(body.nx-4d),html body#nxBody.nx-4d{background:#05060a radial-gradient(1200px 700px at 15% -10%,rgba(138,92,255,.22),transparent 60%),radial-gradient(900px 600px at 100% 110%,rgba(0,229,255,.16),transparent 60%) fixed!important;color:#e6ecff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg{position:fixed!important;inset:0!important;z-index:0!important;pointer-events:none!important;display:block!important;opacity:1!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-grid{opacity:.9!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-blob{opacity:.42!important}
+/* Container transparent, damit Raster/Blobs durchscheinen */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxApp#nxApp,html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceScene#nxReferenceScene{background:transparent!important;background-image:none!important;position:relative;z-index:1}
+/* Dunkles Glas fuer alle Hauptflaechen */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is(#nxSide,#nxChat,#nxTop,#nxRight,#nxLiveHub,#nxGlassTelemetry,#nxTerminal,.panel,.modal,.dialog,dialog,[role=dialog],.nx-panel,.settings,#nxSettings,.nx-zocker-window,.nx-zocker-frame,details>div,.dropdown-menu,.menu){background:linear-gradient(160deg,rgba(20,26,45,.85),rgba(10,13,22,.9))!important;border-color:rgba(120,150,255,.18)!important;color:#e6ecff!important;-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%)}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat#nxChat{background:linear-gradient(165deg,rgba(14,18,32,.78),rgba(8,10,18,.82))!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxTop#nxTop{background:linear-gradient(100deg,rgba(20,26,45,.8),rgba(12,16,28,.82))!important;border-bottom:1px solid rgba(120,150,255,.14)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .nx-livehub-bar{background:linear-gradient(90deg,rgba(20,26,45,.95),rgba(14,18,32,.95))!important;color:#e6ecff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .top-title,html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassClock,html body#nxBody.nx-4d.nx-4d.nx-4d summary{background:rgba(20,26,45,.7)!important;color:#e6ecff!important;border:1px solid rgba(120,150,255,.18)!important}
+/* Chips/Statuskacheln */
+html body#nxBody.nx-4d.nx-4d.nx-4d .chip,html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry *{color:#e6ecff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .chip{background:rgba(20,26,45,.85)!important;border:1px solid rgba(120,150,255,.22)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > *{background:rgba(255,255,255,.04)!important;border-color:rgba(120,150,255,.18)!important}
+/* Logo */
+html body#nxBody.nx-4d.nx-4d.nx-4d .logo-mark{background:conic-gradient(from 210deg,#00e5ff,#8a5cff,#ff3ea5,#00e5ff)!important;box-shadow:0 0 24px rgba(0,229,255,.35)!important;color:#05060a!important}
+/* Chatblasen: Assistent dunkles Glas, User cyan/violett getoent, beide heller Text */
+html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row,html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row.assistant{background:transparent!important;background-image:none!important;box-shadow:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row .content,html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row.assistant .content{background:linear-gradient(160deg,rgba(24,30,52,.92),rgba(14,18,32,.94))!important;color:#e6ecff!important;border:1px solid rgba(120,150,255,.2)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row.user .content{background:linear-gradient(135deg,rgba(0,120,160,.55),rgba(90,60,190,.55))!important;border-color:rgba(0,229,255,.35)!important;color:#f2f6ff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row .content *{color:inherit!important;background-color:transparent}
+html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row .content :is(pre,code){background:rgba(0,0,0,.45)!important;color:#d8e2ff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .msg-row .content a{color:#5ff0ff!important}
+/* Meta-/Nebenzeilen: dim aber >=4.5:1 */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is(.meta,.msg-meta,.time,.ts,.sub,.hint,.muted,.dim,small,.nx-meta,[class*=meta],[class*=hint],[class*=unverified]){color:#a3aed6!important;opacity:1!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d ::placeholder{color:#8f9bc6!important;opacity:1!important}
+/* Allgemeiner Text in dunklen Flaechen */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is(#nxSide,#nxTop,#nxChat,#nxRight,#nxLiveHub,.panel,.modal,dialog,[role=dialog],#nxReferenceScene) :is(h1,h2,h3,h4,p,li,label,span,strong,b,td,th,dt,dd,div,a,summary):not(#chatTitle):not(.content *){color:#e6ecff}
+/* Buttons/Inputs */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is(button,.btn,select,input,textarea):not(#btnSend):not([id^=nxReferenceCard-]):not(.chip){background:rgba(20,26,45,.85)!important;color:#e6ecff!important;border-color:rgba(120,150,255,.24)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #btnSend.btn-send{background:linear-gradient(135deg,#00b8d4,#7a4dff)!important;color:#fff!important}
+/* App-Kacheln: dunkles Glas, Glow, HUD-Ecken */
+html body#nxBody.nx-4d.nx-4d.nx-4d [id^=nxReferenceCard-].nx-reference-app-tile{background:linear-gradient(160deg,rgba(20,26,45,.88),rgba(10,13,22,.92))!important;border:1px solid rgba(120,150,255,.22)!important;color:#e6ecff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 8px 28px rgba(0,0,0,.45)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d [id^=nxReferenceCard-] *{color:#e6ecff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d [id^=nxReferenceCard-]:hover{border-color:rgba(0,229,255,.55)!important;box-shadow:0 0 22px rgba(0,229,255,.25)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d [id^=nxReferenceCard-]{--n4-hud:rgba(0,229,255,.8);background-repeat:no-repeat}
+html body#nxBody.nx-4d.nx-4d.nx-4d [id^=nxReferenceCard-].nx-reference-app-tile{background-image:linear-gradient(var(--n4-hud),var(--n4-hud)),linear-gradient(var(--n4-hud),var(--n4-hud)),linear-gradient(var(--n4-hud),var(--n4-hud)),linear-gradient(var(--n4-hud),var(--n4-hud)),linear-gradient(160deg,rgba(20,26,45,.88),rgba(10,13,22,.92))!important;background-size:12px 2px,2px 12px,12px 2px,2px 12px,100% 100%!important;background-position:left 6px top 6px,left 6px top 6px,right 6px bottom 6px,right 6px bottom 6px,0 0!important;background-repeat:no-repeat!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceCard-whatsapp{--n4-hud:#25d366}html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceCard-facebook{--n4-hud:#4d8bff}html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceCard-youtube{--n4-hud:#ff4d5e}html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceCard-studio{--n4-hud:#8a5cff}html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceCard-files{--n4-hud:#ffc14d}html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceCard-mail{--n4-hud:#00e5ff}html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceCard-nexusall{--n4-hud:#ff3ea5}
+/* ZOCKER rot */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is([id*=ocker],[class*=ocker],[id*=Zocker]):is(button,a){background:linear-gradient(135deg,rgba(150,10,30,.9),rgba(90,0,20,.92))!important;color:#fff!important;border-color:rgba(255,70,90,.7)!important}
+/* Sidebar aktiv */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide :is(.active,[aria-current],[aria-selected=true]){box-shadow:inset 3px 0 0 #00e5ff,0 0 18px rgba(0,229,255,.18)!important}
+/* Runde 2b: alte Body-Overlays (master_reference body::before/::after) und rechter Rand */
+html body#nxBody.nx-4d.nx-4d.nx-4d::before,html body#nxBody.nx-4d.nx-4d.nx-4d::after{display:none!important;content:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide#nxSide{background:linear-gradient(180deg,rgba(20,26,45,.88),rgba(10,13,22,.92))!important;border:0!important;border-right:1px solid rgba(120,150,255,.18)!important;box-shadow:8px 0 30px rgba(0,0,0,.45)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxRight#nxRight{background:linear-gradient(180deg,rgba(20,26,45,.88),rgba(10,13,22,.92))!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .side-brand *,html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassSideBrand *{color:#e6ecff!important}
+/* ehemalige Avatar-Kacheln: Partner-Leiste wird per JS aus dem Layout genommen */
+#n4PartnerStore{display:none!important}/* Runde 3 (Eddie 17:59): EINE Flaeche statt vieler Karten, App-Kacheln -> Apps-Launcher */
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg::after{content:"";position:fixed;inset:10px;border-radius:20px;border:1px solid rgba(139,92,255,.22);background:linear-gradient(160deg,rgba(20,26,45,.85),rgba(10,13,22,.9));box-shadow:0 30px 90px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);
+ background-image:linear-gradient(#00e5ff,#00e5ff),linear-gradient(#00e5ff,#00e5ff),linear-gradient(#8a5cff,#8a5cff),linear-gradient(#8a5cff,#8a5cff),linear-gradient(#ff3ea5,#ff3ea5),linear-gradient(#ff3ea5,#ff3ea5),linear-gradient(#00e5ff,#00e5ff),linear-gradient(#00e5ff,#00e5ff),linear-gradient(160deg,rgba(20,26,45,.82),rgba(10,13,22,.88));
+ background-size:22px 2px,2px 22px,22px 2px,2px 22px,22px 2px,2px 22px,22px 2px,2px 22px,100% 100%;background-position:left 14px top 0,left 0 top 14px,right 14px top 0,right 0 top 14px,left 14px bottom 0,left 0 bottom 14px,right 14px bottom 0,right 0 bottom 14px,0 0;background-repeat:no-repeat}
+/* Szene: keine Kachelspalte mehr, nur Live-Hub rechts im Rahmen */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceScene#nxReferenceScene{inset:10px!important;left:10px!important;top:10px!important;bottom:10px!important;right:10px!important;padding:0!important;gap:0!important;grid-template-columns:0 0 minmax(0,1fr) clamp(240px,20vw,320px)!important;background:transparent!important;border:0!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxApp#nxApp{margin:10px 0 10px 10px!important;height:calc(100vh - 20px)!important;max-height:calc(100vh - 20px)!important;width:calc(100vw - 20px - clamp(240px,20vw,320px))!important;max-width:calc(100vw - 20px - clamp(240px,20vw,320px))!important;border-radius:20px 0 0 20px!important;overflow:hidden!important;gap:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxApp.right-collapsed{width:calc(100vw - 20px - clamp(240px,20vw,320px))!important}
+/* Innenbereiche ohne eigene Kartenraender, nur 1px-Trennlinien */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is(#nxSide#nxSide,#nxChat#nxChat,#nxTop#nxTop,#nxRight#nxRight,#nxLiveHub#nxLiveHub,#nxGlassTelemetry#nxGlassTelemetry,#nxAiRoom#nxAiRoom){background:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;margin:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide#nxSide{border-right:1px solid rgba(139,92,255,.12)!important;background:rgba(255,255,255,.012)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxTop#nxTop{border-bottom:1px solid rgba(139,92,255,.12)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxLiveHub#nxLiveHub{border-left:1px solid rgba(139,92,255,.12)!important;border-radius:0 20px 20px 0!important;overflow:hidden!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxLiveHubFrame{background:#0a0d16!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .nx-livehub-bar{background:transparent!important;border-bottom:1px solid rgba(139,92,255,.12)!important}
+/* Sidebar-Punkte flach statt Einzelkarten */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide :is(.nx-glass-nav-button,#btnNewChat,details){background:transparent!important;border:0!important;box-shadow:none!important;border-radius:10px!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .nx-glass-nav-button:hover{background:rgba(139,92,255,.12)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide #btnNewChat{background:linear-gradient(135deg,rgba(0,229,255,.16),rgba(138,92,255,.2))!important;border:1px solid rgba(0,229,255,.3)!important}
+/* Statuskacheln -> schlanke integrierte Leiste */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry#nxGlassTelemetry{display:flex!important;gap:0!important;padding:0!important;min-height:0!important;height:auto!important;border-top:1px solid rgba(139,92,255,.12)!important;border-bottom:1px solid rgba(139,92,255,.12)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > *{flex:1 1 0!important;min-width:0!important;background:transparent!important;border:0!important;border-right:1px solid rgba(139,92,255,.12)!important;border-radius:0!important;box-shadow:none!important;padding:5px 10px!important;min-height:0!important;height:auto!important;font-size:11px!important;line-height:1.3!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > *:last-child{border-right:0!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry svg{width:14px!important;height:14px!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry :is(progress,[class*=bar],[class*=meter]){height:2px!important}
+/* Apps-Launcher (ersetzt die App-Kacheln) */
+#n4Apps{position:fixed;z-index:10060;left:calc(10px + var(--n4-side,260px));bottom:70px;width:min(420px,calc(100vw - 40px));padding:14px;border-radius:18px;background:linear-gradient(160deg,rgba(20,26,45,.97),rgba(10,13,22,.98));border:1px solid rgba(139,92,255,.3);box-shadow:0 24px 70px rgba(0,0,0,.65),0 0 0 1px rgba(0,229,255,.08);color:#e6ecff}
+#n4Apps[hidden]{display:none!important}
+#n4Apps h2{margin:0 0 10px;font:700 12px/1 Inter,"Segoe UI",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#a3aed6}
+#n4AppsGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+html body#nxBody.nx-4d #n4AppsGrid .nx-reference-art-link{all:unset;box-sizing:border-box;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:82px;padding:8px!important;border-radius:14px!important;cursor:pointer;background:rgba(255,255,255,.035)!important;border:1px solid rgba(139,92,255,.16)!important;color:#e6ecff!important;text-align:center;font:600 12px/1.2 Inter,"Segoe UI",sans-serif!important;position:relative!important;width:auto!important;height:auto!important;grid-area:auto!important;box-shadow:none!important;background-image:none!important}
+html body#nxBody.nx-4d #n4AppsGrid .nx-reference-art-link:hover,html body#nxBody.nx-4d #n4AppsGrid .nx-reference-art-link:focus-visible{background:rgba(0,229,255,.1)!important;border-color:rgba(0,229,255,.5)!important;outline:none}
+html body#nxBody.nx-4d #n4AppsGrid .nx-reference-art-link::before,html body#nxBody.nx-4d #n4AppsGrid .nx-reference-art-link::after{display:none!important}
+html body#nxBody.nx-4d #n4AppsGrid .nx-reference-app-logo{width:30px!important;height:30px!important}
+html body#nxBody.nx-4d #n4AppsGrid .nx-reference-app-state{display:none!important}
+#n4AppsMore{margin-top:10px;width:100%;padding:8px;border-radius:10px;background:transparent!important;border:1px solid rgba(139,92,255,.24)!important;color:#a3aed6!important;cursor:pointer;font:600 12px Inter,"Segoe UI",sans-serif}
+#n4AppStore{display:none!important}
+/* Runde 4 (Eddie 18:01): 4D-Tiefe + Animation, nur transform/opacity, prefers-reduced-motion schaltet ab */
+html body#nxBody.nx-4d .n4-bg{perspective:900px;overflow:hidden}
+html body#nxBody.nx-4d .n4-grid{position:absolute!important;left:-50%!important;right:-50%!important;top:35%!important;height:130%!important;background-image:linear-gradient(rgba(0,229,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(138,92,255,.16) 1px,transparent 1px)!important;background-size:56px 56px!important;transform:rotateX(55deg);transform-origin:50% 0;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);animation:n4GridScroll 9s linear infinite;will-change:transform}
+@keyframes n4GridScroll{from{transform:rotateX(55deg) translateY(0)}to{transform:rotateX(55deg) translateY(56px)}}
+html body#nxBody.nx-4d .n4-blob{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform;animation:n4Drift 26s ease-in-out infinite alternate}
+html body#nxBody.nx-4d .n4-blob.b2{animation-duration:32s;animation-delay:-8s}
+html body#nxBody.nx-4d .n4-blob.b3{animation-duration:38s;animation-delay:-15s}
+@keyframes n4Drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(8vw,-6vh,0) scale(1.12)}100%{transform:translate3d(-6vw,5vh,0) scale(.94)}}
+/* Rahmen: Parallax-Tilt (max 3 Grad, per JS --n4rx/--n4ry) nur auf der Rahmen-Ebene, Inhalt bleibt plan und scharf */
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg::after{transform:perspective(1400px) rotateX(var(--n4rx,0deg)) rotateY(var(--n4ry,0deg));transition:transform .25s ease-out;will-change:transform}
+html body#nxBody.nx-4d .n4-bg::before{content:"";position:fixed;inset:10px;border-radius:20px;pointer-events:none;z-index:1;box-shadow:0 0 0 1px rgba(0,229,255,.35),0 0 26px rgba(0,229,255,.25);opacity:.25;animation:n4Pulse 3.2s ease-in-out infinite}
+@keyframes n4Pulse{0%,100%{opacity:.18}50%{opacity:.55}}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide :is(.active,[aria-current],[aria-expanded=true]){animation:n4Pulse2 2.8s ease-in-out infinite}
+@keyframes n4Pulse2{0%,100%{box-shadow:inset 3px 0 0 #00e5ff,0 0 8px rgba(0,229,255,.12)}50%{box-shadow:inset 3px 0 0 #00e5ff,0 0 20px rgba(0,229,255,.32)}}
+/* neue Chatnachrichten */
+html body#nxBody.nx-4d #messages > *{animation:n4In .2s ease-out both}
+@keyframes n4In{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* Hover-Lift + Lichtkante */
+html body#nxBody.nx-4d :is(button,.btn,summary){transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease}
+html body#nxBody.nx-4d :is(button,.btn,summary):not(:disabled):hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 6px 18px rgba(0,229,255,.14)!important}
+html body#nxBody.nx-4d #n4AppsGrid .nx-reference-art-link{transition:transform .16s ease,border-color .16s ease!important}
+html body#nxBody.nx-4d #n4AppsGrid .nx-reference-art-link:hover{transform:translateY(-2px)!important}
+#n4Apps:not([hidden]){animation:n4Pop .18s ease-out both}
+@keyframes n4Pop{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+/* Statusbalken fuellen animiert (scaleX) */
+html body#nxBody.nx-4d #nxGlassTelemetry :is(progress,[class*=bar] > *,[class*=fill]){transform-origin:left;animation:n4Fill .9s cubic-bezier(.2,.7,.2,1) both}
+@keyframes n4Fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){html body#nxBody.nx-4d *,html body#nxBody.nx-4d *::before,html body#nxBody.nx-4d *::after,html body#nxBody.nx-4d .n4-bg::after{animation:none!important;transition:none!important}html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg::after{transform:none!important}}
+/* Runde 4b: Kontrast-Fixes aus n4contrast + ZOCKER rot */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxTop #btnZocker#btnZocker,html body#nxBody.nx-4d.nx-4d.nx-4d #btnZocker#btnZocker{background:linear-gradient(135deg,#d0102a,#8a0018)!important;color:#fff!important;border:1px solid rgba(255,110,120,.85)!important;box-shadow:0 0 16px rgba(255,40,60,.35)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #btnZocker#btnZocker *{color:#fff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .side-brand .logo-mark.logo-mark,html body#nxBody.nx-4d.nx-4d.nx-4d .logo-mark.logo-mark{color:#05060a!important;text-shadow:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .agent-pills span{background:rgba(139,92,255,.18)!important;color:#e6ecff!important;border:1px solid rgba(139,92,255,.35)!important}/* Runde 4c: Breitbild >=1660px (Stage+zoom aus master_reference neutralisieren) */
+@media (min-width:1660px) and (min-height:560px){
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceStage#nxReferenceStage{position:fixed!important;left:10px!important;top:10px!important;width:calc(100vw - 20px - clamp(240px,20vw,320px))!important;height:calc(100vh - 20px)!important;z-index:2!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxApp#nxApp{zoom:1!important;margin:0!important;width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;border:0!important;box-shadow:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceScene#nxReferenceScene > #nxLiveHub#nxLiveHub{position:fixed!important;top:10px!important;right:10px!important;bottom:10px!important;left:auto!important;width:clamp(240px,20vw,320px)!important;height:auto!important;margin:0!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxLiveHubFrame{background:#0d1117!important}
+}/* ===== Runde 5: Zielbild preview_master_home.html ===== */
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg::after{inset:22px!important;border-radius:20px!important;background:rgba(10,12,22,.70)!important;border:1px solid rgba(139,92,255,.28)!important;box-shadow:0 0 60px rgba(139,92,255,.18),inset 0 0 0 1px rgba(255,255,255,.02)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceScene#nxReferenceScene{inset:22px!important;left:22px!important;top:22px!important;right:22px!important;bottom:22px!important;grid-template-columns:0 0 minmax(0,1fr) clamp(250px,19vw,380px)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxApp#nxApp{margin:22px 0 22px 22px!important;height:calc(100vh - 44px)!important;max-height:calc(100vh - 44px)!important;width:calc(100vw - 44px - clamp(250px,19vw,380px))!important;max-width:calc(100vw - 44px - clamp(250px,19vw,380px))!important;--sidebar-w:clamp(200px,13vw,260px)!important}
+@media (min-width:1660px) and (min-height:560px){
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceStage#nxReferenceStage{left:22px!important;top:22px!important;width:calc(100vw - 44px - clamp(250px,19vw,380px))!important;height:calc(100vh - 44px)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxApp#nxApp{margin:0!important;width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxReferenceScene#nxReferenceScene > #nxLiveHub#nxLiveHub{top:22px!important;right:22px!important;bottom:22px!important;width:clamp(250px,19vw,380px)!important}}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide#nxSide{width:clamp(200px,13vw,260px)!important;min-width:0!important;padding:16px 12px!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .nav-item,html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide [id^=nxGlassNav-]{color:#9aa6cf!important;border-radius:8px!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide :is(.active,.on,[aria-current=page])[id^=nxGlassNav-]{color:#e6ecff!important;background:rgba(0,229,255,.08)!important;box-shadow:inset 2px 0 0 #00e5ff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages#messages{max-width:980px!important;margin-inline:auto!important;width:100%!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages .msg.user .bubble,html body#nxBody.nx-4d.nx-4d.nx-4d #messages .user :is(.bubble,.content){background:linear-gradient(135deg,#5a32c8,#086f8a)!important;color:#f3f6ff!important;border:0!important;border-radius:14px 14px 4px 14px!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages :is(.assistant,.bot,.ai) :is(.bubble):not(.user *){background:#121626!important;color:#e6ecff!important;border:0!important;border-left:3px solid #00e5ff!important;border-radius:14px 14px 14px 4px!important}
+/* Statusleiste: kein Kasten, nur Trennlinien */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry#nxGlassTelemetry,html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry *{background-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry#nxGlassTelemetry{border:0!important;border-bottom:1px solid rgba(139,92,255,.12)!important;max-width:980px!important;margin-inline:auto!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > *{border:0!important;border-right:1px solid rgba(139,92,255,.12)!important;border-radius:0!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > *:last-child{border-right:0!important}
+/* Composer: einziges gerahmtes Element */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat :is(.composer,#composer,.input-row,.nx-composer){background:rgba(18,22,38,.55)!important;border:1px solid rgba(0,229,255,.25)!important;border-radius:14px!important;box-shadow:0 0 24px rgba(0,229,255,.08)!important;max-width:980px!important;margin-inline:auto!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat :is(.composer,#composer,.nx-composer) :is(.composer,.input-row,textarea,#input){border:0!important;box-shadow:none!important;background:transparent!important}
+/* Dock: Icons frei schwebend, kein Hintergrundkasten */
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock{display:flex;justify-content:center;gap:18px;padding:10px 0 14px;background:none!important;border:0!important;box-shadow:none!important;flex:none}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *{position:static!important;grid-area:auto!important;inset:auto!important;width:84px!important;height:auto!important;min-height:0!important;padding:0!important;margin:0!important;background:none!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important;transition:transform .2s}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *::before,html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *::after{display:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-logo{width:46px!important;height:46px!important;border-radius:13px!important;box-shadow:0 6px 18px rgba(0,0,0,.5)!important;animation:n4Glow 4s ease-in-out infinite}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-name{color:#e6ecff!important;font:500 11px/1.2 Inter,"Segoe UI",sans-serif!important;text-align:center}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-state{display:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *:hover{transform:translateY(-3px)}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *:hover .nx-reference-app-logo{box-shadow:0 0 22px #00e5ff!important}
+@keyframes n4Glow{50%{opacity:.88}}
+@media (min-width:1700px){html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-logo{width:54px!important;height:54px!important}html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-name{font-size:12.5px!important}}
+@media (max-width:1400px){html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock{gap:8px}html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *{width:64px!important}}
+@media (prefers-reduced-motion:reduce){html body#nxBody.nx-4d #n4Dock *{animation:none!important;transition:none!important}}/* ===== Runde 6: Neon sichtbar + animiert ===== */
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-blob{opacity:.30!important}
+#n4Edge{position:fixed;inset:22px;border-radius:20px;pointer-events:none;z-index:3}
+#n4Edge i{position:absolute;inset:0;border-radius:20px;padding:1.5px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;will-change:opacity}
+#n4Edge i:first-child{background:linear-gradient(120deg,#00e5ff,#8b5cff 40%,#ff3df2 70%,#00e5ff);animation:n4EdgeA 8s ease-in-out infinite}
+#n4Edge i:last-child{background:linear-gradient(300deg,#ff3df2,#00e5ff 40%,#8b5cff 70%,#ff3df2);animation:n4EdgeB 8s ease-in-out infinite;box-shadow:0 0 40px rgba(139,92,255,.25)}
+@keyframes n4EdgeA{0%,100%{opacity:.95}50%{opacity:.15}}@keyframes n4EdgeB{0%,100%{opacity:.15}50%{opacity:.95}}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide#nxSide{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:thin}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide :is(.active,.on,[aria-current=page])[id^=nxGlassNav-]{background:linear-gradient(90deg,rgba(0,229,255,.16),rgba(139,92,255,.06))!important;box-shadow:inset 3px 0 0 #00e5ff,0 0 18px rgba(0,229,255,.15)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry :is(.bar,[class*=bar],progress)>*{background:linear-gradient(90deg,#00e5ff,#8b5cff,#ff3df2)!important;box-shadow:0 0 8px rgba(0,229,255,.45)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-logo{box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 16px rgba(0,229,255,.28)!important}
+@keyframes n4Glow{50%{opacity:.8}}
+html body#nxBody.nx-4d.nx-4d.nx-4d .logo-mark.logo-mark{box-shadow:0 0 22px rgba(139,92,255,.6),0 0 40px rgba(0,229,255,.25)!important;animation:n4Pulse2 4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){#n4Edge i{animation:none!important}#n4Edge i:last-child{opacity:0}html body#nxBody.nx-4d .logo-mark{animation:none!important}}html body#nxBody.nx-4d.nx-4d.nx-4d #nxApp > :is(#nxSide,#nxChat){height:100%!important;max-height:100%!important;align-self:stretch!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d,html.nx-4d-root{background:#05060a!important}
+html:has(body#nxBody.nx-4d){background:#05060a!important}/* ===== Runde 7: 4D-Raum ===== */
+html body#nxBody.nx-4d .n4-blob{translate:calc(var(--mx,0)*-60px) calc(var(--my,0)*-40px)}
+html body#nxBody.nx-4d .n4-bg > :not(.n4-blob):not(#n4Edge){translate:calc(var(--mx,0)*-24px) calc(var(--my,0)*-16px)}
+html body#nxBody.nx-4d #n4Edge{translate:calc(var(--mx,0)*6px) calc(var(--my,0)*4px)}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide [id^=nxGlassNav-]:hover{background-image:radial-gradient(140px circle at var(--lx,50%) var(--ly,50%),rgba(0,229,255,.18),transparent 65%)!important;transform:translateX(2px) scale(1.02)}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat button:hover{background-image:radial-gradient(90px circle at var(--lx,50%) var(--ly,50%),rgba(139,92,255,.28),transparent 70%)!important}
+html body#nxBody.nx-4d #n4Dock{perspective:600px}
+html body#nxBody.nx-4d #n4Dock .nx-reference-app-logo{transition:transform .12s ease-out;transform-origin:50% 100%}
+.n4-ripple{position:fixed;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;z-index:99999;background:radial-gradient(circle,rgba(0,229,255,.55),rgba(139,92,255,.25) 50%,transparent 70%);animation:n4Rip .6s ease-out forwards}
+@keyframes n4Rip{from{transform:scale(1);opacity:1}to{transform:scale(9);opacity:0}}
+@keyframes n4In{from{opacity:0;transform:perspective(900px) translate3d(0,8px,-80px)}to{opacity:1;transform:none}}
+html body#nxBody.nx-4d #messages > *{animation-duration:.35s}
+html body#nxBody.nx-4d.n4-busy .n4-blob{opacity:.42!important;transition:opacity 1s}
+html body#nxBody.nx-4d.n4-busy #n4Edge i{animation-duration:2.5s!important}
+html body#nxBody.nx-4d.n4-busy .n4-bg > :not(.n4-blob):not(#n4Edge){animation-duration:6s!important}
+html body#nxBody.nx-4d.n4-hubpulse #nxLiveHub#nxLiveHub{box-shadow:inset 3px 0 0 #00e5ff,inset 0 0 40px rgba(0,229,255,.18)!important;transition:box-shadow .2s}
+html body#nxBody.nx-4d :is(dialog[open],.modal.show,.modal.open,[role=dialog]:not([hidden])){animation:n4Z .35s cubic-bezier(.2,.8,.2,1) both}
+@keyframes n4Z{from{opacity:0;transform:perspective(1200px) translate3d(0,0,-200px) scale(.96)}to{opacity:1;transform:none}}
+html body#nxBody.nx-4d.n4-focus #nxApp,html body#nxBody.nx-4d.n4-focus #nxLiveHub{filter:blur(3px) brightness(.7);transition:filter .3s}
+@media (prefers-reduced-motion:reduce){html body#nxBody.nx-4d *{translate:none!important}.n4-ripple{display:none}html body#nxBody.nx-4d.n4-focus #nxApp{filter:none}}html body#nxBody.nx-4d.nx-4d.nx-4d #nxRoomState#nxRoomState{background:rgba(0,229,255,.12)!important;color:#7ff3ff!important;border:1px solid rgba(0,229,255,.35)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxAiRoom h1{background:none!important;-webkit-text-fill-color:#7ff3ff!important;color:#7ff3ff!important}/* Runde 8: Dock-Labels sauber (keine Zusatztexte, kein Umbruch) */
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > * > :not(.nx-reference-app-logo):not(.nx-reference-app-name){display:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *{width:auto!important;min-width:64px!important;max-width:104px!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-name{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:104px!important;display:block!important}html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *{max-width:none!important;align-items:center!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-name{width:max-content!important;max-width:112px!important;text-align:center!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages h1,html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat h1{background:none!important;-webkit-text-fill-color:#e6ecff!important;color:#e6ecff!important;text-shadow:0 0 18px rgba(0,229,255,.35)!important}/* ===== Runde 9: hellere Basis + Farbakzente ueber Tokens ===== */
+html body#nxBody.nx-4d{--n4-bg:#0b0e1a;--n4-panel:rgba(22,27,46,.78);--n4-bubble:#171c30;--n4-c:#00e5ff;--n4-v:#8b5cff;--n4-m:#ff3df2;--n4-g:#3dff9a;--n4-line:rgba(139,92,255,.16);--n4-grad:linear-gradient(90deg,var(--n4-c),var(--n4-v),var(--n4-m),var(--n4-c))}
+html:has(body#nxBody.nx-4d),html body#nxBody.nx-4d.nx-4d.nx-4d{background:var(--n4-bg)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg::after{background:var(--n4-panel)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-blob{opacity:.40!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages :is(.assistant,.bot,.ai) .bubble:not(.user *){background:var(--n4-bubble)!important}
+/* Header-Linie mit laufendem Verlauf (nur transform animiert) */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxTop{position:relative;overflow:hidden}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxTop::after{content:"";position:absolute;left:-100%;right:auto;bottom:0;width:200%;height:2px;background:var(--n4-grad);background-size:50% 100%;animation:n4Run 6s linear infinite;pointer-events:none;opacity:.85}
+@keyframes n4Run{to{transform:translateX(50%)}}
+/* Sidebar-Bereiche mit eigener Akzentfarbe */
+html body#nxBody.nx-4d #nxGlassNav-chats,html body#nxBody.nx-4d #nxGlassNav-tasks,html body#nxBody.nx-4d #nxGlassNav-agents{--acc:var(--n4-c)}
+html body#nxBody.nx-4d #nxGlassNav-files,html body#nxBody.nx-4d #nxGlassNav-notes,html body#nxBody.nx-4d #nxGlassNav-calendar{--acc:var(--n4-v)}
+html body#nxBody.nx-4d #nxGlassNav-timer,html body#nxBody.nx-4d #nxGlassNav-contacts,html body#nxBody.nx-4d #nxGlassNav-apps{--acc:var(--n4-m)}
+html body#nxBody.nx-4d #nxGlassNav-system,html body#nxBody.nx-4d #nxGlassNav-devices,html body#nxBody.nx-4d #nxGlassNav-network,html body#nxBody.nx-4d #nxGlassNav-settings{--acc:var(--n4-g)}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide [id^=nxGlassNav-] svg{color:var(--acc,var(--n4-c))!important;stroke:currentColor}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide :is(.active,.on,[aria-current=page])[id^=nxGlassNav-]{background:linear-gradient(90deg,color-mix(in srgb,var(--acc,var(--n4-c)) 20%,transparent),transparent)!important;box-shadow:inset 3px 0 0 var(--acc,var(--n4-c)),0 0 20px color-mix(in srgb,var(--acc,var(--n4-c)) 25%,transparent)!important}
+/* Statusbalken farbig je Metrik */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > *{box-shadow:inset 0 -2px 0 var(--acc,var(--n4-c))!important}
+html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+1){--acc:var(--n4-c)}html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+2){--acc:var(--n4-v)}html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+3){--acc:var(--n4-m)}html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+4){--acc:var(--n4-g)}html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+5){--acc:#ffc46b}html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n){--acc:var(--n4-c)}
+/* Dock-Icons mit eigenem Farbglow */
+html body#nxBody.nx-4d #nxReferenceCard-whatsapp{--glow:#25d366}html body#nxBody.nx-4d #nxReferenceCard-facebook{--glow:#1b74e4}html body#nxBody.nx-4d #nxReferenceCard-youtube{--glow:#ff2a2a}html body#nxBody.nx-4d #nxReferenceCard-studio{--glow:var(--n4-m)}html body#nxBody.nx-4d #nxReferenceCard-mail{--glow:#2f9bff}html body#nxBody.nx-4d #nxReferenceCard-nexusall{--glow:var(--n4-c)}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-logo{box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 18px color-mix(in srgb,var(--glow,var(--n4-c)) 55%,transparent)!important}
+/* Composer leuchtet beim Fokus im Verlauf */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat :is(.composer,#composer,.nx-composer):focus-within{border-color:transparent!important;background:linear-gradient(rgba(18,22,38,.92),rgba(18,22,38,.92)) padding-box,var(--n4-grad) border-box!important;box-shadow:0 0 28px rgba(139,92,255,.35),0 0 12px rgba(0,229,255,.25)!important}
+@media (prefers-reduced-motion:reduce){html body#nxBody.nx-4d #nxTop::after{animation:none!important;transform:none}}/* ===== Runde 10: Daemmerung / Sommer-Herbstabend ===== */
+html body#nxBody.nx-4d{--n4-bg:#2a2140;--n4-panel:rgba(30,24,44,.62);--n4-bubble:rgba(30,24,44,.82);--n4-txt:#f3eefc;--n4-dim:#c9bfdc;--n4-amber:#ffb347;--n4-coral:#ff6b6b;--n4-pink:#ff5fa2;--n4-line:rgba(255,179,71,.16);--n4-grad:linear-gradient(90deg,var(--n4-c),var(--n4-v),var(--n4-pink),var(--n4-amber),var(--n4-c))}
+html:has(body#nxBody.nx-4d),html body#nxBody.nx-4d.nx-4d.nx-4d{background:linear-gradient(180deg,#2a2140 0%,#3a2a4a 35%,#4a2f45 60%,#5a3a3a 82%,#6b4433 100%) fixed!important;color:var(--n4-txt)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg{background:transparent!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg::after{background:var(--n4-panel)!important;backdrop-filter:blur(18px)!important;border-color:rgba(255,179,71,.28)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-blob.b1{background:#ff8a3d!important}html body#nxBody.nx-4d.nx-4d.nx-4d .n4-blob.b2{background:#ff5fa2!important}html body#nxBody.nx-4d.nx-4d.nx-4d .n4-blob.b3{background:#8b5cff!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-blob{opacity:.45!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-grid{background-image:linear-gradient(rgba(255,179,71,.22) 1px,transparent 1px),linear-gradient(90deg,rgba(255,95,162,.22) 1px,transparent 1px)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages :is(.assistant,.bot,.ai) .bubble:not(.user *){background:var(--n4-bubble)!important;color:var(--n4-txt)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide [id^=nxGlassNav-]{color:var(--n4-dim)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide :is(.active,.on,[aria-current=page])[id^=nxGlassNav-]{color:var(--n4-txt)!important}
+html body#nxBody.nx-4d #nxGlassNav-timer,html body#nxBody.nx-4d #nxGlassNav-contacts,html body#nxBody.nx-4d #nxGlassNav-apps{--acc:var(--n4-pink)}
+html body#nxBody.nx-4d #nxGlassNav-system,html body#nxBody.nx-4d #nxGlassNav-devices,html body#nxBody.nx-4d #nxGlassNav-network,html body#nxBody.nx-4d #nxGlassNav-settings{--acc:var(--n4-amber)}
+html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+3){--acc:var(--n4-pink)}html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+4){--acc:var(--n4-amber)}html body#nxBody.nx-4d #nxGlassTelemetry > :nth-child(6n+5){--acc:var(--n4-coral)}
+html body#nxBody.nx-4d #n4Edge i:first-child{background:linear-gradient(120deg,#00e5ff,#8b5cff 30%,#ff5fa2 60%,#ffb347 85%,#00e5ff)!important}
+html body#nxBody.nx-4d #n4Edge i:last-child{background:linear-gradient(300deg,#ffb347,#ff6b6b 30%,#ff5fa2 55%,#8b5cff 80%,#ffb347)!important}/* Runde 10b: Innenflaechen durchscheinend (Daemmerung sichtbar), Dock-Labels nicht abschneiden */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is(#nxSide#nxSide,#nxChat,#nxTop,#nxThread,#nxAiRoom,#nxGlassTelemetry){background:transparent!important;background-image:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxLiveHub#nxLiveHub{background:rgba(30,24,44,.55)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock > *{overflow:visible!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #n4Dock .nx-reference-app-name{overflow:hidden!important;max-width:120px!important;padding:0 2px!important}/* Runde 10c */
+html body#nxBody.nx-4d.nx-4d.nx-4d :is(#nxReferenceScene#nxReferenceScene,#nxReferenceStage#nxReferenceStage,#nxApp#nxApp,#nxDesktopBgWrap,#nxDesktopDim,main,#nxMain){background:transparent!important;background-image:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-bg::after{background:rgba(30,24,44,.50)!important;background-image:none!important}/* Runde 11: Live-Hub, Statusleiste, Logo, Reste */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxLiveHubFrame{background:transparent!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxLiveHub#nxLiveHub{background:rgba(30,24,44,.62)!important;backdrop-filter:blur(18px)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry#nxGlassTelemetry{position:relative!important;z-index:3!important;display:flex!important;flex-wrap:nowrap!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > *{flex:1 1 0!important;min-width:0!important;overflow:hidden!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry > * *{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .side-brand{overflow:visible!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .side-brand > :not(.logo-mark),html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .side-brand > :not(.logo-mark) *{letter-spacing:.06em!important;white-space:nowrap!important;min-width:0!important;overflow:visible!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .side-brand > :not(.logo-mark) :first-child{font-size:clamp(16px,1.05vw,20px)!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassQuickActions > :not(:last-child){display:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #sideStatus,html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassSideBrand{display:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxSide .side-brand{cursor:pointer}/* Runde 12: Statusleiste entfernt, Terminal-Panel ueber Composer, Blase einfach, Hinweis lesbar */
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxGlassTelemetry{display:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages .msg-row.assistant .msg-body{background:#171c30!important;border:0!important;border-left:3px solid #00e5ff!important;border-radius:14px 14px 14px 4px!important;box-shadow:none!important;padding:12px 16px!important;color:#f3eefc!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages .msg-row.assistant .msg-body > *,html body#nxBody.nx-4d.nx-4d.nx-4d #messages .msg-row.assistant .bubble{background:transparent!important;border:0!important;box-shadow:none!important;padding-left:0!important;padding-right:0!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #messages .msg-row.assistant .who{color:#7ff3ff!important;font-size:12px!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d .n4-badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,179,71,.16);color:#ffd59a;border:1px solid rgba(255,179,71,.4)}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxComposer .hint,html body#nxBody.nx-4d.nx-4d.nx-4d .composer-meta .hint{font-size:12px!important;color:#c9bfdc!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat > #nxTerminal{position:relative!important;inset:auto!important;width:auto!important;max-width:980px!important;margin:0 auto 8px!important;align-self:stretch;flex:none!important;background:rgba(30,24,44,.62)!important;backdrop-filter:blur(14px);border:1px solid rgba(255,179,71,.2)!important;border-radius:12px!important;z-index:2!important;box-shadow:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat > #nxTerminal #nxTermBody{max-height:160px!important;height:160px;overflow:auto!important;font:12.5px/1.45 ui-monospace,Consolas,monospace!important;color:#f3eefc!important;background:transparent!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat > #nxTerminal.collapsed #nxTermBody{display:none!important}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat > #nxTerminal *{color:inherit}
+html body#nxBody.nx-4d.nx-4d.nx-4d #nxChat > #nxTerminal .nx-term-bar{background:transparent!important;border:0!important}/* Runde 13 */
+html body#nxBody #nxGlassTelemetry,html body#nxBody #nxGlassTelemetry *,html body#nxBody section:has(> .nx-glass-metric),html body#nxBody .nx-glass-metric,html body#nxBody .nx-glass-metric *{display:none!important;height:0!important;margin:0!important;padding:0!important;border:0!important}
+html body#nxBody.nx-4d #messages .msg-row.assistant{background:none!important;border:0!important;padding:0!important;box-shadow:none!important;outline:0!important}
+html body#nxBody.nx-4d #messages .msg-row.assistant .msg-body .content,html body#nxBody.nx-4d #messages .msg-row.assistant .msg-body .meta{background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+html body#nxBody.nx-4d #nxChat > #nxTerminal{display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;transform:none!important}
+html body#nxBody.nx-4d #nxChat > #nxTerminal .nx-term-bar{display:flex!important;min-height:30px;align-items:center;padding:4px 10px!important;color:#ffd59a!important;font:600 12.5px ui-monospace,Consolas,monospace!important;cursor:pointer}
+html body#nxBody.nx-4d #nxChat > #nxTerminal:not(.collapsed) #nxTermBody{display:block!important}
+html body#nxBody.nx-4d #nxChat > #nxTerminal #nxTermBody{height:120px!important;max-height:120px!important}

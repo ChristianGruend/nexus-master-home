@@ -1,0 +1,5 @@
+﻿/* 20261102 Nexus-UI: Avatare komplett entfernt (Eddie). Restlose Absicherung + Layout ohne Avatar-Spalte. */
+.avatar, .nx-holo-avatar, .nx-avatar-warning, #nxVrmFrame, #btnVrmView, #nxVrmViewStatus, .nx-vrm-proof-link { display: none !important; }
+.msg-row { grid-template-columns: 1fr !important; }
+.msg-row > .msg-body { grid-column: 1 / -1 !important; margin-left: 0 !important; max-width: 100% !important; }
+.nx-partners > .nx-partner, .nx-aux-partner { grid-template-columns: 1fr !important; padding-left: 14px !important; }

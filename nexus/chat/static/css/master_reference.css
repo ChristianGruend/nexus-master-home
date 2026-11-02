@@ -1,0 +1,987 @@
+/* Master Home reference surface. Existing portrait/face and 3D geometry retain
+   their square coordinate space; only their surrounding layout changes. */
+body.nx-app.nx-reference {
+  --sidebar-w: clamp(240px, 16vw, 520px);
+  --right-w: 290px;
+  --col: min(1440px, 92%);
+  --reference-edge: rgba(221, 246, 255, .94);
+  background: #b8cbdf !important;
+  color: #102840;
+}
+body.nx-app.nx-reference::before,
+body.nx-app.nx-reference::after,
+body.nx-app.nx-reference #nxStars { display: none !important; }
+body.nx-app.nx-reference #nxApp {
+  height: 100dvh;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) 0 !important;
+  background: #b8cbdf url("/static/assets/master-glass/laboratory.svg") center top / cover no-repeat !important;
+}
+body.nx-app.nx-reference #nxApp:not(.right-collapsed) {
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--right-w) !important;
+}
+body.nx-app.nx-reference #nxApp.side-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr) 0 !important;
+}
+body.nx-app.nx-reference #nxApp.side-collapsed:not(.right-collapsed) {
+  grid-template-columns: 0 minmax(0, 1fr) var(--right-w) !important;
+}
+body.nx-app.nx-reference #nxChat {
+  background: transparent !important;
+  isolation: isolate;
+}
+body.nx-app.nx-reference #nxSide {
+  position: relative;
+  z-index: 25;
+  padding: clamp(20px, 2vh, 44px) clamp(16px, 1.3vw, 34px) 18px;
+  gap: 15px;
+  background: linear-gradient(108deg, rgba(255,255,255,.92), rgba(209,227,246,.88) 48%, rgba(251,254,255,.88)) !important;
+  border: 1px solid rgba(255,255,255,.9);
+  border-right: 3px solid #d9f5ff !important;
+  border-radius: 0 0 38px 0;
+  box-shadow: inset -5px 0 7px #fff, 8px 0 22px #32577b55, 2px 0 4px #55c9ff;
+  backdrop-filter: blur(20px);
+  overflow-y: auto;
+}
+body.nx-app.nx-reference .side-brand {
+  align-items: center;
+  gap: 17px;
+  padding: 0 0 clamp(10px, 2vh, 32px);
+}
+body.nx-app.nx-reference .logo-mark,
+body.nx-app.nx-reference .nx-glass-mini-logo {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: clamp(52px, 4vw, 86px);
+  height: clamp(52px, 4vw, 86px);
+  border: 3px solid #f3fbff;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 35% 25%, #9fb6cc, #143758 42%, #041c35 64%, #3c9cd7 68%, #09213c 76%);
+  box-shadow: 0 0 0 2px #7a9fbd, 0 0 0 5px #eaf6ff, 0 0 17px #81d8ff, inset 0 1px 5px #fff;
+  font: 600 clamp(27px, 2.7vw, 50px)/1 Georgia, serif;
+}
+body.nx-app.nx-reference .logo-title {
+  color: #0a2139;
+  font-size: clamp(18px, 1.25vw, 28px);
+  letter-spacing: .2em;
+}
+body.nx-app.nx-reference .logo-sub { font-size: clamp(7px, .55vw, 11px); color: #3e5a74; letter-spacing: .18em; }
+body.nx-app.nx-reference #btnNewChat {
+  min-height: clamp(48px, 5.7vh, 75px);
+  color: white;
+  font-size: clamp(13px, .9vw, 20px);
+  font-weight: 600;
+  border: 1px solid #e0ffff;
+  border-radius: 12px;
+  background: linear-gradient(115deg, #25baff, #1268df 61%, #83dfff);
+  box-shadow: inset 2px 0 #d9ffff, inset 0 1px #ffffffb0, 0 0 13px #5bdfff, 0 7px 20px #3a75af3d;
+}
+body.nx-app.nx-reference .nx-glass-icon { display: inline-flex; width: 25px; height: 25px; flex: 0 0 25px; align-items: center; justify-content: center; }
+body.nx-app.nx-reference .nx-glass-icon svg { display: block; width: 100%; height: 100%; }
+body.nx-app.nx-reference #nxGlassNav { display: flex; flex-direction: column; gap: clamp(2px, .55vh, 10px); }
+body.nx-app.nx-reference .nx-glass-nav-button {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.5vw, 26px);
+  width: 100%;
+  min-height: clamp(39px, 4.4vh, 64px);
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #102840;
+  text-align: left;
+  font-size: clamp(12px, .85vw, 19px);
+}
+body.nx-app.nx-reference .nx-glass-nav-button:hover,
+body.nx-app.nx-reference .nx-glass-nav-button.active { border-color: #a0d4ff; background: #f1fbff88; box-shadow: inset 2px 0 #2fa8ff; }
+body.nx-app.nx-reference .nx-glass-nav-section { margin-top: clamp(12px, 2.5vh, 40px); border-top: 1px solid #94b6d5; border-radius: 0 0 9px 9px; padding-top: 18px; }
+body.nx-app.nx-reference #nxGlassHistory { display: none; min-height: 100px; max-height: 42vh; overflow: auto; }
+body.nx-app.nx-reference.nx-glass-history #nxGlassHistory { display: block; }
+body.nx-app.nx-reference .nx-glass-history-title { display: block; padding: 8px 3px 10px; }
+body.nx-app.nx-reference #nxGlassHistory #chatSearch { width: 100%; margin-bottom: 8px; }
+body.nx-app.nx-reference #sideMore { margin-top: 4px; flex: 0 0 auto; }
+body.nx-app.nx-reference #sideStatus { flex: 0 0 auto; }
+body.nx-app.nx-reference #nxGlassSideBrand { display: flex; align-items: center; gap: 13px; margin-top: auto; border-top: 1px solid #9cbcd5; padding-top: 20px; }
+body.nx-app.nx-reference .nx-glass-mini-logo { width: 38px; height: 38px; font-size: 22px; border-width: 1px; }
+body.nx-app.nx-reference .nx-glass-side-wordmark { display: grid; gap: 3px; font-size: 13px; }
+body.nx-app.nx-reference .nx-glass-side-wordmark small { font-size: 10px; }
+body.nx-app.nx-reference .nx-glass-home { margin-left: auto; width: 43px; height: 43px; border: 1px solid #a2cfff; border-radius: 12px; background: #edf8ff; box-shadow: 0 0 13px #60bfff70; }
+body.nx-app.nx-reference .nx-glass-home .nx-glass-button-label { display: none; }
+body.nx-app.nx-reference #nxTop {
+  min-height: clamp(78px, 8vh, 144px);
+  gap: clamp(8px, .85vw, 24px);
+  padding: 10px clamp(16px, 1.7vw, 48px);
+  flex-wrap: nowrap;
+  border-bottom: 2px solid #e5f7ff;
+  border-radius: 0 0 24px 24px;
+  background: linear-gradient(100deg, #d3e6faab, #f2f8ffb0 52%, #b3ccea99) !important;
+  box-shadow: inset 0 -1px #6d9cc4, 0 5px 22px #20496e36;
+  backdrop-filter: blur(18px);
+  z-index: 20;
+}
+body.nx-app.nx-reference #nxTop > .top-title { flex: 0 1 265px; min-width: 135px; max-width: 300px; color: #193650; padding: 10px 14px; border: 1px solid #dff4ff9e; border-radius: 15px; background: #e5f3ff52; }
+body.nx-app.nx-reference #nxTop .top-title #chatTitle { font-size: clamp(12px, .8vw, 20px); letter-spacing: .045em; }
+body.nx-app.nx-reference #nxTop .top-title #chatModel { font-size: 10px; }
+body.nx-app.nx-reference #nxGlassHeaderStatus { display: flex; flex: 1 1 auto; align-items: center; gap: clamp(5px, .65vw, 18px); min-width: 0; }
+body.nx-app.nx-reference .nx-glass-chip { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 39px; padding: 9px 13px; white-space: nowrap; border: 1px solid #dceffc9e; border-radius: 11px; background: linear-gradient(125deg, #f8fdffb8, #e3effbab); color: #18334a; font-size: clamp(10px, .63vw, 16px); box-shadow: inset 0 1px #ffffffa6, 0 2px 8px #416a901f; }
+body.nx-app.nx-reference .nx-glass-chip .nx-glass-icon { width: 18px; height: 18px; flex-basis: 18px; }
+body.nx-app.nx-reference [data-quality="ok"] { --quality: #147e6e; }
+body.nx-app.nx-reference [data-quality="warn"] { --quality: #9b5e1c; }
+body.nx-app.nx-reference [data-quality="unknown"] { --quality: #526e88; }
+body.nx-app.nx-reference .nx-glass-chip[data-quality="ok"] { background: linear-gradient(125deg, #effffff0, #c7ece8b8); }
+body.nx-app.nx-reference .nx-glass-chip[data-quality="warn"] { border-color: #ebc99d; }
+body.nx-app.nx-reference .nx-glass-chip[data-quality="unknown"] { color: #526e88; }
+body.nx-app.nx-reference #nxGlassHeaderTools { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+body.nx-app.nx-reference .nx-glass-tool { display: grid; place-items: center; width: 39px; height: 39px; border: 0; background: transparent; color: #0d2941; }
+body.nx-app.nx-reference .nx-glass-tool .nx-glass-button-label { display: none; }
+body.nx-app.nx-reference #nxGlassClock { display: grid; gap: 3px; min-width: 126px; padding: 9px 13px; border: 1px solid #e3f2ff9e; border-radius: 13px; background: #eff7ff7d; text-align: center; font-size: 11px; }
+body.nx-app.nx-reference #nxGlassTime { font-size: 20px; color: #0a2139; }
+body.nx-app.nx-reference #nxGlassSystemControls { position: relative; flex: 0 0 auto; font-size: 10px; }
+body.nx-app.nx-reference #nxGlassSystemControls > summary,
+body.nx-app.nx-reference #nxGlassRoomControls > summary { cursor: pointer; padding: 9px 11px; color: #1f4262; background: #e8f6ffd9; border: 1px solid #e4f7ff; border-radius: 9px; list-style-position: inside; }
+body.nx-app.nx-reference #nxGlassSystemControls[open] > .nx-glass-system-controls { position: absolute; right: 0; top: calc(100% + 8px); width: min(560px, 78vw); display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; border: 1px solid #a7cee9; border-radius: 13px; background: #f1f8fffa; box-shadow: 0 12px 30px #173d6866; z-index: 50; }
+body.nx-app.nx-reference #nxGlassSystemControls #statusChips { flex-wrap: wrap; }
+body.nx-app.nx-reference #nxThread { scroll-padding-top: 16px; background: transparent !important; padding-bottom: 12px !important; }
+body.nx-app.nx-reference #nxAiRoom {
+  position: relative;
+  top: auto;
+  width: min(96%, 3200px);
+  max-width: 3200px;
+  margin: clamp(18px, 2.5vh, 54px) auto 0;
+  padding: 0 clamp(12px, 1vw, 36px) 12px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+  backdrop-filter: none;
+  overflow: visible;
+}
+body.nx-app.nx-reference #nxAiRoom::before,
+body.nx-app.nx-reference #nxAiRoom::after { display: none; }
+body.nx-app.nx-reference .nx-ai-room-head { min-height: 24px; margin-bottom: 0; justify-content: space-between; }
+body.nx-app.nx-reference .nx-ai-room-head strong { color: #e8f7ff; text-shadow: 0 1px 5px #153b65; font-size: 10px; letter-spacing: .18em; }
+body.nx-app.nx-reference .nx-ai-room-state { color: #173e61; background: #effbffcc; border-color: #d7f2ff; }
+body.nx-app.nx-reference #nxAiRoom .nx-partners { grid-template-columns: 1fr 1.18fr 1fr; align-items: end; gap: clamp(16px, 3vw, 110px); padding: 0 0 12px; }
+body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+  padding: 0;
+  border: 1px solid #d8f4ffae;
+  border-radius: 22px 22px 30px 30px;
+  background: linear-gradient(135deg, #e8f5ff33, #7eafdb12 50%, #e3f7ff33);
+  box-shadow: inset 0 1px #fff9, 0 14px 22px #15375b42, 0 0 16px #5cc8ff44;
+  overflow: visible;
+  transform: none;
+  isolation: isolate;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partner::before { z-index: -1; left: -7%; right: -7%; top: auto; bottom: -25px; height: 52px; border: 2px solid #b9edff; border-radius: 50%; background: linear-gradient(#d9f2ff88, #6395c7aa, #e6f8ff); box-shadow: 0 0 17px #4ab8ff, inset 0 4px #fff, 0 8px 0 #b3cee7, 0 13px 0 #f5fcff; filter: none; }
+body.nx-app.nx-reference #nxAiRoom .nx-partner.active { border-color: #a4e9ff; box-shadow: inset 0 1px #fff, 0 0 25px #64c7ff66; background: linear-gradient(135deg, #e8f5ff22, #6ba5d51a 50%, #def5ff33); }
+body.nx-app.nx-reference #nxAiRoom .nx-partner.active::after { display: none; }
+body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner .nx-holo-avatar {
+  width: min(100%, 23vw, 36vh);
+  max-width: 100%;
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  margin: 0;
+  border: 1px solid #dcf5ff;
+  border-radius: 20px 20px 6px 6px;
+  background: transparent;
+  box-shadow: 0 0 16px #82cdff55, inset 0 0 14px #fff6;
+  overflow: hidden;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner[data-partner="nexus"] .nx-holo-avatar { width: min(100%, 28vw, 43vh); }
+body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner .nx-holo-avatar::before { opacity: .15; }
+body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner > span:last-child { position: relative; z-index: 6; width: 100%; min-height: 96px; padding: 14px 10px 15px; border-radius: 0 0 25px 25px; text-align: center; background: linear-gradient(#365e86c2, #346b9fdf); color: #f4fbff; text-shadow: 0 1px 6px #083763; }
+body.nx-app.nx-reference #nxAiRoom .nx-partner-name,
+body.nx-app.nx-reference #nxAiRoom .nx-partner[data-partner="nexus"] .nx-partner-name { font-size: clamp(17px, 1.5vw, 38px); color: #fff; letter-spacing: .15em; font-weight: 650; }
+body.nx-app.nx-reference #nxAiRoom .nx-partner-role { font-size: clamp(10px, .9vw, 22px); max-width: none; line-height: 1.4; margin-top: 5px; color: #f1f9ff; }
+body.nx-app.nx-reference #nxAiRoom .nx-partner-status { color: #f0f9ff; font-size: clamp(9px, .7vw, 17px); line-height: 1.4; max-width: 100%; white-space: normal; margin-top: 8px; }
+body.nx-app.nx-reference #nxAiRoom .nx-partner-status::before { box-shadow: 0 0 10px currentColor; }
+body.nx-app.nx-reference .nx-glass-wave { display: inline-flex; justify-content: center; align-items: center; gap: 3px; height: 23px; margin: 8px 0 0; opacity: .8; }
+body.nx-app.nx-reference .nx-glass-wave i { width: 3px; height: 8px; border-radius: 2px; background: #d9f7ff; box-shadow: 0 0 7px #50c6ff; }
+body.nx-app.nx-reference .nx-glass-wave i:nth-child(3n) { height: 17px; }
+body.nx-app.nx-reference .nx-glass-wave i:nth-child(4n) { height: 23px; }
+body.nx-app.nx-reference .nx-speaking .nx-glass-wave i { animation: nxReferenceWave .7s ease-in-out infinite alternate; }
+body.nx-app.nx-reference .nx-speaking .nx-glass-wave i:nth-child(2n) { animation-delay: -.35s; }
+@keyframes nxReferenceWave { to { transform: scaleY(.3); opacity: .5; } }
+body.nx-app.nx-reference #nxAiRoom #nxVrmFrame { border-radius: 22px; }
+body.nx-app.nx-reference #nxAiRoom .nx-partners.nx-vrm-active .nx-holo-avatar { background: transparent; }
+body.nx-app.nx-reference #nxGlassRoomControls { position: relative; display: block; margin: 35px 0 0; font-size: 10px; }
+body.nx-app.nx-reference #nxGlassRoomControls > summary { display: inline-block; background: #edf8ffe0; padding: 7px 10px; }
+body.nx-app.nx-reference #nxGlassRoomControls[open] { padding: 10px; border-radius: 12px; background: #eaf6fff2; box-shadow: 0 4px 15px #153b6555; }
+body.nx-app.nx-reference #nxGlassRoomControls .nx-agent-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 10px; }
+body.nx-app.nx-reference #nxGlassRoomControls .nx-avatar-warning { color: #385d7d; font-size: 10px; }
+body.nx-app.nx-reference #nxAiRoom #nxAuxAgent { flex-direction: row; padding: 6px; margin-left: auto; border: 1px solid #b0d2ec; border-radius: 8px; background: #fff; box-shadow: none; }
+body.nx-app.nx-reference #nxAiRoom #nxAuxAgent::before { display: none; }
+body.nx-app.nx-reference #nxAiRoom #nxAuxAgent > span:last-child { min-height: 0; width: auto; padding: 3px 8px; color: #163a57; background: transparent; text-shadow: none; }
+body.nx-app.nx-reference #nxAiRoom #nxAuxAgent .nx-partner-name { color: #153a59; font-size: 10px; letter-spacing: .02em; }
+body.nx-app.nx-reference #nxAiRoom #nxAuxAgent .nx-partner-status { color: #385d7d; font-size: 9px; margin-top: 2px; }
+body.nx-app.nx-reference #nxGlassLaunchDock { display: grid; grid-template-columns: repeat(3, 1fr) 1.35fr repeat(4, 1fr); gap: clamp(8px, .7vw, 22px); align-items: center; width: min(94%, 3130px); margin: 6px auto 24px; }
+body.nx-app.nx-reference .nx-glass-dock-button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; min-width: 0; min-height: clamp(82px, 9vh, 176px); padding: 12px 6px; color: #f6fcff; border: 1px solid #dceffc9e; border-radius: 16px; background: linear-gradient(125deg, #ecf8ff59, #5f89b381 65%, #effbff52); backdrop-filter: blur(7px); box-shadow: inset 0 1px #ffffffa6, 0 4px 12px #274d7540; font-size: clamp(10px, .9vw, 22px); text-shadow: 0 1px 6px #28547e; }
+body.nx-app.nx-reference .nx-glass-dock-button .nx-glass-icon { width: clamp(27px, 2vw, 48px); height: clamp(27px, 2vw, 48px); }
+body.nx-app.nx-reference #nxGlassCore { aspect-ratio: 1.3; min-height: 94px; border: 1px solid #9fd6f5a6; border-radius: 50%; background: radial-gradient(ellipse, #0c3357 18%, #13426c 46%, #1b5a86 70%, #2a7ab0 88%, #4f9bd0a6 100%); box-shadow: 0 0 16px #4cc9ff59, inset 0 2px #ffffff40; }
+body.nx-app.nx-reference .nx-glass-core-mark { color: #eaf7ff; font: 600 clamp(38px, 4vw, 110px)/1 Georgia, serif; text-shadow: 0 2px 8px #64bcff73; }
+body.nx-app.nx-reference #nxGlassTelemetry { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(9px, .8vw, 24px); width: min(93%, 3100px); margin: 0 auto 22px; }
+body.nx-app.nx-reference .nx-glass-metric { display: grid; grid-template-columns: 1fr; gap: 7px; align-content: start; min-width: 0; min-height: clamp(105px, 10vh, 205px); padding: clamp(12px, 1vw, 28px); border: 1px solid #eaf6ff9e; border-radius: 17px; background: linear-gradient(125deg, #cfe0f0, #b7cde1 49%, #a5bfd8); box-shadow: inset 0 1px #ffffffa6, 0 4px 14px #3156782e; backdrop-filter: blur(14px); color: #0d2944; text-align: left; }
+body.nx-app.nx-reference .nx-glass-metric-heading { display: flex; align-items: center; gap: 10px; font-size: clamp(10px, .8vw, 21px); }
+body.nx-app.nx-reference .nx-glass-metric-heading .nx-glass-icon { width: 22px; height: 22px; flex-basis: 22px; }
+body.nx-app.nx-reference .nx-glass-metric-value { overflow-wrap: anywhere; font-size: clamp(11px, .95vw, 26px); font-weight: 600; }
+body.nx-app.nx-reference .nx-glass-metric-detail { color: #345775; font-size: clamp(10px, .7vw, 18px); line-height: 1.3; overflow-wrap: anywhere; }
+body.nx-app.nx-reference .nx-glass-meter { display: none; height: 8px; width: 100%; border-radius: 6px; background: #93aec7aa; box-shadow: inset 0 1px 2px #284e722e; overflow: hidden; }
+body.nx-app.nx-reference .nx-glass-has-meter .nx-glass-meter { display: block; }
+body.nx-app.nx-reference .nx-glass-meter i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0872ff, #48d3ff); box-shadow: 0 0 8px #4bcfff; }
+body.nx-app.nx-reference #welcome { min-height: 120px; padding: 12px; }
+body.nx-app.nx-reference #welcome .welcome-mark { display: none; }
+body.nx-app.nx-reference .msg-row { backdrop-filter: blur(16px); }
+body.nx-app.nx-reference #nxComposer {
+  padding: 12px clamp(16px, 2.1vw, 60px) 19px;
+  border: 0;
+  background: linear-gradient(#b9d1e500, #c6dcec99 40%, #b4d0e4b0);
+  box-shadow: none;
+}
+body.nx-app.nx-reference #nxComposer .composer-shell { width: 100%; max-width: 3100px; background: none !important; }
+body.nx-app.nx-reference #nxComposer .composer-box {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  min-height: clamp(68px, 8vh, 142px);
+  padding: 12px 19px;
+  border: 2px solid #d8f7ff;
+  border-radius: 22px;
+  background: linear-gradient(110deg, #19344ff5, #24455fef 58%, #143048f5) !important;
+  box-shadow: 0 0 0 1px #739ebd, 0 0 18px #b4e9ff, inset 0 1px 9px #7ab7e22b;
+  color: #f5fbff;
+}
+body.nx-app.nx-reference #nxInput { flex: 1 1 auto; min-width: 70px; color: #eef8ff !important; background: transparent !important; font-size: clamp(14px, 1.05vw, 27px); padding: 10px 5px; }
+body.nx-app.nx-reference #nxInput::placeholder { color: #b3c9db; }
+body.nx-app.nx-reference #nxGlassTarget { display: flex; order: 2; align-items: center; gap: 6px; border: 1px solid #6d9ab9; border-radius: 11px; padding: 7px 11px; color: #fff; font-size: 12px; white-space: nowrap; }
+body.nx-app.nx-reference #nxGlassTargetSelect { max-width: 140px; color: #fff; background: #17364e; border: 0; font-size: inherit; padding: 3px; }
+body.nx-app.nx-reference #nxComposer .composer-icon { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 42px; color: #edf8ff; background: transparent; border-color: transparent; }
+body.nx-app.nx-reference #nxComposer .composer-icon .nx-glass-icon { width: 25px; height: 25px; }
+body.nx-app.nx-reference #btnMic { order: 3; }
+body.nx-app.nx-reference #btnAttach { order: 4; }
+body.nx-app.nx-reference #btnLive { order: 5; }
+body.nx-app.nx-reference #btnAutoSpeak { order: 6; }
+body.nx-app.nx-reference #btnSend { order: 7; display: grid; place-items: center; flex: 0 0 clamp(49px, 3.8vw, 92px); width: clamp(49px, 3.8vw, 92px); height: clamp(49px, 3.8vw, 92px); border: 2px solid #e1ffff; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #3bddff, #0474f8 57%, #004bbf); box-shadow: 0 0 13px #1aa5ff, inset 0 1px 5px #e2ffff; }
+body.nx-app.nx-reference #btnSend .nx-glass-icon { width: 29px; height: 29px; }
+body.nx-app.nx-reference #nxGlassQuickActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; width: 100%; margin: 13px auto 0; }
+body.nx-app.nx-reference .nx-glass-quick { min-height: 34px; padding: 7px 14px; border: 1px solid #f0fbff; border-radius: 10px; background: #d7e8f6b5; color: #234460; font-size: clamp(10px, .7vw, 17px); box-shadow: inset 0 1px #fff9; }
+body.nx-app.nx-reference .nx-glass-more { display: flex; align-items: center; gap: 5px; }
+body.nx-app.nx-reference .composer-meta { color: #2f5373; }
+body.nx-app.nx-reference .composer-meta .hint { font-size: 10px; }
+body.nx-app.nx-reference #nxRight { background: #edf6fff0 !important; backdrop-filter: blur(20px); }
+@media (min-width: 2200px) {
+  body.nx-app.nx-reference { --col: min(1800px, 86%); }
+  body.nx-app.nx-reference #nxTop > .top-title { flex-basis: 400px; max-width: 450px; }
+  body.nx-app.nx-reference #nxTop .top-title #chatTitle { font-size: 23px; }
+  body.nx-app.nx-reference .nx-glass-chip { min-height: 54px; padding: 12px 20px; font-size: 18px; }
+  body.nx-app.nx-reference .nx-glass-chip .nx-glass-icon { width: 23px; height: 23px; flex-basis: 23px; }
+  body.nx-app.nx-reference #nxGlassClock { min-width: 180px; font-size: 15px; }
+  body.nx-app.nx-reference #nxGlassTime { font-size: 30px; }
+  body.nx-app.nx-reference #nxGlassSystemControls { font-size: 13px; }
+  body.nx-app.nx-reference #nxGlassTarget { font-size: 19px; padding: 13px 16px; }
+  body.nx-app.nx-reference #nxGlassTargetSelect { max-width: 200px; }
+  body.nx-app.nx-reference #nxComposer .composer-icon { width: 54px; height: 54px; flex-basis: 54px; }
+  body.nx-app.nx-reference #nxComposer .composer-icon .nx-glass-icon { width: 36px; height: 36px; }
+  body.nx-app.nx-reference .nx-glass-icon { width: 29px; height: 29px; flex-basis: 29px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner > span:last-child { min-height: 160px; padding: 23px 15px; }
+  body.nx-app.nx-reference #nxGlassRoomControls { font-size: 13px; }
+  body.nx-app.nx-reference #nxGlassRoomControls > summary { padding: 10px 15px; }
+}
+@media (max-width: 1650px) {
+  body.nx-app.nx-reference #nxTop { flex-wrap: wrap; gap: 7px; min-height: 84px; padding: 9px 15px; }
+  body.nx-app.nx-reference #nxTop > .top-title { flex-basis: 215px; max-width: 245px; padding: 5px 9px; }
+  body.nx-app.nx-reference #nxGlassHeaderStatus { order: 4; flex: 1 0 100%; justify-content: center; flex-wrap: wrap; }
+  body.nx-app.nx-reference .nx-glass-chip { min-height: 31px; padding: 6px 8px; font-size: 10px; }
+  body.nx-app.nx-reference #nxGlassClock { min-width: 112px; padding: 5px 8px; font-size: 9px; }
+  body.nx-app.nx-reference #nxGlassTime { font-size: 16px; }
+  body.nx-app.nx-reference #nxGlassHeaderTools { gap: 6px; }
+  body.nx-app.nx-reference #nxGlassTelemetry { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  body.nx-app.nx-reference .nx-glass-metric { min-height: 94px; }
+}
+@media (max-width: 1100px) and (min-width: 801px) {
+  body.nx-app.nx-reference #nxApp,
+  body.nx-app.nx-reference #nxApp:not(.right-collapsed) { grid-template-columns: var(--sidebar-w) minmax(0, 1fr) !important; }
+  body.nx-app.nx-reference #nxApp.side-collapsed,
+  body.nx-app.nx-reference #nxApp.side-collapsed:not(.right-collapsed) { grid-template-columns: 0 minmax(0, 1fr) !important; }
+  body.nx-app.nx-reference #nxGlassHeaderTools .nx-glass-tool { display: none; }
+  body.nx-app.nx-reference #nxGlassLaunchDock { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  body.nx-app.nx-reference #nxGlassCore { aspect-ratio: auto; border-radius: 16px; min-height: 82px; }
+  body.nx-app.nx-reference #nxGlassTarget { max-width: 115px; font-size: 10px; padding: 5px; }
+  body.nx-app.nx-reference #nxGlassTargetSelect { max-width: 78px; }
+}
+@media (max-width: 800px) {
+  body.nx-app.nx-reference #nxApp,
+  body.nx-app.nx-reference #nxApp:not(.right-collapsed),
+  body.nx-app.nx-reference #nxApp.side-collapsed,
+  body.nx-app.nx-reference #nxApp.side-collapsed:not(.right-collapsed) { grid-template-columns: minmax(0, 1fr) !important; }
+  body.nx-app.nx-reference #nxApp { background-size: auto 100%; background-position: center top; }
+  body.nx-app.nx-reference #nxSide { position: fixed; inset: 0 auto 0 0; width: min(310px, 83vw); max-height: 100dvh; padding: 22px 17px !important; z-index: 35; }
+  body.nx-app.nx-reference #nxApp.side-open #btnToggleSide { z-index: 36; left: calc(min(310px, 83vw) + 4px); }
+  body.nx-app.nx-reference #nxTop { min-height: 100px; border-radius: 0 0 16px 16px; padding: 7px 9px; }
+  body.nx-app.nx-reference #nxTop > .top-title { flex: 1 1 120px; max-width: calc(100% - 180px); min-width: 0; padding: 4px 5px; border: 0; background: transparent; }
+  body.nx-app.nx-reference #nxTop .top-title #chatTitle { font-size: 11px; }
+  body.nx-app.nx-reference #nxTop .top-title #chatModel { font-size: 8px; }
+  body.nx-app.nx-reference #nxGlassHeaderTools { margin-left: 0; }
+  body.nx-app.nx-reference #nxGlassHeaderTools .nx-glass-tool { display: none; }
+  body.nx-app.nx-reference #nxGlassClock { display: none; }
+  body.nx-app.nx-reference #nxGlassSystemControls { font-size: 9px; }
+  body.nx-app.nx-reference #nxGlassSystemControls > summary { padding: 7px; }
+  body.nx-app.nx-reference #nxGlassHeaderStatus { gap: 4px; }
+  body.nx-app.nx-reference .nx-glass-chip { padding: 5px 6px; gap: 4px; font-size: 9px; min-height: 26px; }
+  body.nx-app.nx-reference .nx-glass-chip .nx-glass-icon { width: 13px; height: 13px; flex-basis: 13px; }
+  body.nx-app.nx-reference #nxAiRoom { width: calc(100% - 18px); margin: 17px auto 0; padding: 0 3px 5px; }
+  body.nx-app.nx-reference .nx-ai-room-head { margin-bottom: 8px; }
+  body.nx-app.nx-reference .nx-ai-room-head strong { font-size: 7px; letter-spacing: .05em; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners { gap: 5px; grid-template-columns: 1fr 1.1fr 1fr; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner { border-radius: 12px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner .nx-holo-avatar,
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner[data-partner="nexus"] .nx-holo-avatar { width: 100%; max-width: 100%; border-radius: 11px 11px 3px 3px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner > span:last-child { padding: 8px 3px 10px; min-height: 99px; border-radius: 0 0 11px 11px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partner-name,
+  body.nx-app.nx-reference #nxAiRoom .nx-partner[data-partner="nexus"] .nx-partner-name { font-size: 11px; letter-spacing: .04em; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partner-role { font-size: 8px; line-height: 1.35; margin-top: 5px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partner-status { font-size: 8px; gap: 3px; margin-top: 6px; }
+  body.nx-app.nx-reference .nx-glass-wave { gap: 2px; height: 16px; margin-top: 5px; }
+  body.nx-app.nx-reference .nx-glass-wave i { width: 2px; }
+  body.nx-app.nx-reference .nx-glass-wave i:nth-child(4n) { height: 16px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partner::before { bottom: -15px; height: 25px; }
+  body.nx-app.nx-reference #nxGlassRoomControls { margin-top: 23px; font-size: 9px; }
+  body.nx-app.nx-reference #nxGlassRoomControls .nx-agent-tools { gap: 6px; }
+  body.nx-app.nx-reference #nxGlassRoomControls select { max-width: 165px; }
+  body.nx-app.nx-reference #nxGlassLaunchDock { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; width: 94%; margin: 9px auto 14px; }
+  body.nx-app.nx-reference .nx-glass-dock-button { min-height: 60px; gap: 5px; padding: 8px 3px; border-radius: 10px; font-size: 9px; }
+  body.nx-app.nx-reference .nx-glass-dock-button .nx-glass-icon { width: 23px; height: 23px; }
+  body.nx-app.nx-reference #nxGlassCore { min-height: 60px; border-radius: 10px; aspect-ratio: auto; }
+  body.nx-app.nx-reference .nx-glass-core-mark { font-size: 37px; }
+  body.nx-app.nx-reference #nxGlassTelemetry { width: 94%; gap: 7px; margin-bottom: 13px; }
+  body.nx-app.nx-reference .nx-glass-metric { min-height: 100px; padding: 9px; gap: 5px; border-radius: 11px; }
+  body.nx-app.nx-reference .nx-glass-metric-heading { font-size: 9px; gap: 5px; }
+  body.nx-app.nx-reference .nx-glass-metric-heading .nx-glass-icon { width: 16px; height: 16px; flex-basis: 16px; }
+  body.nx-app.nx-reference .nx-glass-metric-value { font-size: 10px; }
+  body.nx-app.nx-reference .nx-glass-metric-detail { font-size: 8px; }
+  body.nx-app.nx-reference #nxComposer { padding: 8px 8px 10px; }
+  body.nx-app.nx-reference #nxComposer .composer-box { min-height: 58px; padding: 6px; gap: 3px; border-radius: 15px; flex-wrap: wrap; }
+  body.nx-app.nx-reference #nxInput { flex: 1 1 calc(100% - 60px); order: 0; font-size: 13px; padding: 8px 4px; }
+  body.nx-app.nx-reference #btnSend { order: 1; flex-basis: 40px; width: 40px; height: 40px; }
+  body.nx-app.nx-reference #btnSend .nx-glass-icon { width: 23px; height: 23px; }
+  body.nx-app.nx-reference #nxGlassTarget { flex: 1 1 120px; padding: 4px 6px; font-size: 10px; max-width: none; }
+  body.nx-app.nx-reference #nxGlassTargetSelect { max-width: 130px; }
+  body.nx-app.nx-reference #nxComposer .composer-icon { width: 29px; height: 29px; flex: 0 0 29px; }
+  body.nx-app.nx-reference #nxComposer .composer-icon .nx-glass-icon { width: 19px; height: 19px; }
+  body.nx-app.nx-reference #nxGlassQuickActions { margin-top: 7px; gap: 4px; }
+  body.nx-app.nx-reference .nx-glass-quick { min-height: 25px; padding: 4px 6px; font-size: 8px; border-radius: 7px; }
+  body.nx-app.nx-reference .composer-meta { margin-top: 5px; }
+  body.nx-app.nx-reference .composer-meta .hint { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.nx-app.nx-reference .nx-glass-wave i { animation: none !important; }
+}
+
+/* Keep the complete reference dashboard above the fixed composer on desktop.
+   The core badge has an explicit height so its grid column cannot inflate the dock. */
+@media (min-width: 801px) {
+  body.nx-app.nx-reference #nxAiRoom { margin-top: clamp(12px, 1.3vh, 28px); padding-bottom: 8px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner .nx-holo-avatar {
+    width: min(100%, 23vw, 26vh);
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner[data-partner="nexus"] .nx-holo-avatar { width: min(100%, 28vw, 31vh); }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner > span:last-child {
+    min-height: clamp(94px, 6.4vh, 140px);
+    padding: 8px 10px 10px;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partner-name,
+  body.nx-app.nx-reference #nxAiRoom .nx-partner[data-partner="nexus"] .nx-partner-name { font-size: clamp(17px, 1.25vw, 32px); }
+  body.nx-app.nx-reference #nxAiRoom .nx-partner-role { font-size: clamp(10px, .72vw, 19px); margin-top: 3px; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partner-status { font-size: clamp(9px, .6vw, 16px); margin-top: 5px; }
+  body.nx-app.nx-reference .nx-glass-wave { height: 17px; margin-top: 4px; }
+  body.nx-app.nx-reference .nx-glass-wave i:nth-child(4n) { height: 17px; }
+  body.nx-app.nx-reference #nxGlassRoomControls { margin-top: 16px; }
+  body.nx-app.nx-reference #nxGlassRoomControls > summary { padding: 6px 10px; }
+  body.nx-app.nx-reference #nxGlassLaunchDock { margin-top: 7px; margin-bottom: 14px; }
+  body.nx-app.nx-reference .nx-glass-dock-button { min-height: clamp(76px, 8.7vh, 188px); }
+  body.nx-app.nx-reference #nxGlassCore { aspect-ratio: auto; min-height: 0; height: clamp(94px, 10vh, 216px); }
+  body.nx-app.nx-reference #nxGlassTelemetry { margin-bottom: 16px; }
+  body.nx-app.nx-reference .nx-glass-metric { min-height: clamp(96px, 7vh, 160px); padding: clamp(10px, .65vw, 20px); gap: 5px; }
+  body.nx-app.nx-reference .nx-glass-metric-heading { font-size: clamp(10px, .68vw, 19px); gap: 8px; }
+  body.nx-app.nx-reference .nx-glass-metric-value { font-size: clamp(11px, .8vw, 23px); }
+  body.nx-app.nx-reference .nx-glass-metric-detail { font-size: clamp(10px, .6vw, 16px); }
+  body.nx-app.nx-reference .nx-glass-meter { height: 6px; }
+  body.nx-app.nx-reference #nxComposer { padding-top: 8px; padding-bottom: 12px; }
+  body.nx-app.nx-reference #nxComposer .composer-box { min-height: clamp(72px, 5.5vh, 120px); padding: 8px 14px; }
+  body.nx-app.nx-reference #btnSend { flex-basis: clamp(48px, 4.4vh, 95px); width: clamp(48px, 4.4vh, 95px); height: clamp(48px, 4.4vh, 95px); }
+  body.nx-app.nx-reference .composer-meta { margin-top: 5px; }
+  body.nx-app.nx-reference #nxGlassQuickActions { margin-top: 8px; gap: 7px; }
+  body.nx-app.nx-reference .nx-glass-quick { min-height: 28px; padding: 5px 11px; }
+}
+
+/* 20261021 visual reference geometry: keep the existing live dashboard and rigs.
+   Large desktops follow normalized reference rows; smaller layouts stay intact. */
+@media (min-width: 1660px) {
+  body.nx-app.nx-reference { --sidebar-w: 17vw; }
+  body.nx-app.nx-reference #nxTop { min-height: 7.56vh; }
+  body.nx-app.nx-reference #nxAiRoom {
+    width: 96%;
+    max-width: none;
+    height: 51.44vh;
+    margin-top: 0;
+    padding-bottom: 0;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners {
+    height: calc(100% - 24px - 2vh);
+    align-items: end;
+  }
+  body.nx-app.nx-reference #nxGlassRoomControls {
+    position: absolute;
+    right: 1vw;
+    bottom: 0;
+    z-index: 21;
+    max-width: 65%;
+    margin: 0;
+  }
+  body.nx-app.nx-reference #nxGlassRoomControls[open] {
+    max-width: min(1050px, 75%);
+  }
+  body.nx-app.nx-reference #nxGlassLaunchDock {
+    width: 94%;
+    height: 10vh;
+    margin: 1.8vh auto 2.2vh 2%;
+  }
+  body.nx-app.nx-reference #nxGlassCore {
+    justify-self: center;
+    width: 10vh;
+    height: 10vh;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+  body.nx-app.nx-reference #nxGlassTelemetry {
+    width: 92%;
+    margin: 0 auto 1.6vh 3.3%;
+  }
+  body.nx-app.nx-reference .nx-glass-metric { min-height: 9.2vh; }
+  body.nx-app.nx-reference #nxComposer {
+    min-height: 16.2vh;
+    padding: .8vh 2.8vw 1.4vh 1.8vw;
+  }
+  body.nx-app.nx-reference #nxComposer .composer-box { min-height: 8vh; }
+  body.nx-app.nx-reference #nxGlassQuickActions { margin-top: 8px; }
+  body.nx-app.nx-reference .nx-glass-quick {
+    min-height: 3.4vh;
+    font-size: clamp(12px, .78vw, 30px);
+  }
+}
+
+/* 20261021 source-reference portraits: transparent original busts and laboratory.
+   The registered face stage remains square; the centre crops only empty pixels.
+   The existing WebGL view keeps its previous card and iframe geometry.
+   The laboratory plate is the console interior of the binding Master Home
+   reference (873x633); the characters and their baked labels are removed and
+   locally reconstructed, every other pixel is original reference material. */
+body.nx-app.nx-reference #nxApp {
+  background: #d9e6f2 !important;
+}
+body.nx-app.nx-reference #nxChat {
+  background: linear-gradient(165deg, rgba(246,250,254,.96), rgba(222,234,246,.94)) !important;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner,
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner:is(.active, :hover) {
+  border-color: rgba(218, 247, 255, .72);
+  background: transparent;
+  box-shadow: 0 0 14px #76ceff25;
+  filter: none;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] {
+  border-color: transparent;
+  box-shadow: none;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner::before,
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner::after,
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner .nx-holo-avatar::before,
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner .nx-holo-avatar::after {
+  display: none;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner .nx-holo-avatar {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] .nx-holo-avatar {
+  aspect-ratio: 505 / 341;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-puppet-stage {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-holo-avatar > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner > span:last-child {
+  background: linear-gradient(180deg, #153b6200, #204e7bc2 38%, #285d8cc9);
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners > .nx-partner:focus-visible {
+  outline: 3px solid #d8f7ff;
+  outline-offset: 5px;
+}
+@media (min-width: 1660px) {
+  body.nx-app.nx-reference #nxAiRoom {
+    width: 100%;
+    padding: 0;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-ai-room-head {
+    padding-inline: 2%;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) {
+    display: block;
+    height: calc(100% - 24px);
+    padding: 0;
+  }
+  /* Character placement follows the binding reference: the traced silhouettes of
+     the three characters are placed on the reference figure boxes of
+     "NEXUS AI Master Home Kontrollzentrum.png" (19.93 device px per percent of
+     `left`, 0.625 projection zoom of #nxApp). */
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner {
+    position: absolute;
+    left: 14.6%;
+    top: calc(10.14vh - 24px);
+    width: 17.5vw;
+    height: 40.9vh;
+    justify-content: flex-start;
+    transform: translateX(-50%);
+    border-radius: 1vw 1vw 1.5vw 1.5vw;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] {
+    left: 49.3%;
+    top: calc(5.35vh - 24px);
+    width: 31vw;
+    height: 44.7vh;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="gpt"] {
+    left: 81.2%;
+    top: calc(9.17vh - 24px);
+    height: 40vh;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner .nx-holo-avatar,
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] .nx-holo-avatar {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner > span:last-child {
+    position: absolute;
+    inset: auto 0 0;
+    min-height: 7.5vh;
+    padding: .4vh .3vw .6vh;
+    border-radius: 0 0 1.5vw 1.5vw;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-partner-name {
+    font-size: clamp(15px, .85vw, 33px);
+    letter-spacing: .12em;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-partner-role {
+    font-size: clamp(10px, .52vw, 20px);
+    margin-top: .35vh;
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-partner-status {
+    font-size: clamp(9px, .42vw, 16px);
+    margin-top: .35vh;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-glass-wave {
+    height: 1.1vh;
+    margin: .25vh 0 0;
+    gap: .16vw;
+    vertical-align: middle;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-glass-wave i {
+    width: .12vw;
+    height: .8vh;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-glass-wave i:nth-child(3n) { height: 1.6vh; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) .nx-glass-wave i:nth-child(4n) { height: 2.2vh; }
+}
+/* Match the unextended original main-area projection on wide desktops. */
+@media (min-width: 1660px) {
+  body.nx-app.nx-reference #nxChat { background-size: 100% 100% !important; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner { left: 11.7%; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] { left: 43.87%; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="gpt"] { left: 76.14%; }
+}
+
+/* Final source-reference proportion polish. Keep all controls and live values.
+   Original laboratory pixels already contain the glass frames and platforms. */
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner,
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner:is(.active, :hover) {
+  border-color: transparent;
+  box-shadow: none;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner > span:last-child {
+  background: linear-gradient(180deg, #173b6200, #204f7a24 45%, #1c4b794d);
+  text-shadow: 0 1px 5px #143b69, 0 0 12px #143b6980;
+}
+body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] .nx-holo-avatar {
+  aspect-ratio: 1254 / 998;
+}
+@media (min-width: 1660px) {
+  body.nx-app.nx-reference #nxSide {
+    padding-top: .9vh;
+    gap: .6vh;
+  }
+  body.nx-app.nx-reference .side-brand {
+    gap: 1.3vw;
+    padding: 0 0 .8vh;
+  }
+  body.nx-app.nx-reference .side-brand .logo-mark {
+    width: min(4.4vw, 176px);
+    height: min(4.4vw, 176px);
+    font-size: min(3.2vw, 124px);
+  }
+  body.nx-app.nx-reference .logo-title { font-size: min(1.35vw, 54px); }
+  body.nx-app.nx-reference .logo-sub { font-size: min(.6vw, 24px); }
+  body.nx-app.nx-reference #btnNewChat {
+    min-height: 4.8vh;
+    font-size: min(.9vw, 36px);
+    padding-inline: .9vw;
+    border-radius: .8vw;
+  }
+  body.nx-app.nx-reference #btnNewChat .nx-glass-icon,
+  body.nx-app.nx-reference .nx-glass-nav-button .nx-glass-icon {
+    width: 1.35vw;
+    height: 1.35vw;
+    flex-basis: 1.35vw;
+  }
+  body.nx-app.nx-reference #nxGlassNav { gap: 0; }
+  body.nx-app.nx-reference .nx-glass-nav-button {
+    min-height: 4.85vh;
+    padding: .4vh .6vw;
+    gap: 1vw;
+    font-size: min(.9vw, 36px);
+  }
+  body.nx-app.nx-reference .nx-glass-nav-section {
+    min-height: 5.4vh;
+    margin-top: 2.1vh;
+    padding-top: 0;
+  }
+  body.nx-app.nx-reference #sideMore,
+  body.nx-app.nx-reference #sideStatus {
+    font-size: min(.65vw, 26px);
+  }
+  body.nx-app.nx-reference #nxGlassSideBrand {
+    gap: .8vw;
+    padding-top: 1.5vh;
+  }
+  body.nx-app.nx-reference #nxGlassSideBrand .nx-glass-mini-logo {
+    width: 2.4vw;
+    height: 2.4vw;
+    font-size: 1.7vw;
+  }
+  body.nx-app.nx-reference .nx-glass-side-wordmark {
+    gap: .3vh;
+    font-size: .78vw;
+  }
+  body.nx-app.nx-reference .nx-glass-side-wordmark small { font-size: .63vw; }
+  body.nx-app.nx-reference .nx-glass-home {
+    width: 2.7vw;
+    height: 2.7vw;
+  }
+  body.nx-app.nx-reference .nx-glass-home .nx-glass-icon {
+    width: 1.5vw;
+    height: 1.5vw;
+  }
+  body.nx-app.nx-reference #nxTop > .top-title::before {
+    content: "NEXUS ROOM - MASTER HOME";
+    display: block;
+    margin-bottom: .2vh;
+    color: #193650;
+    font-size: .8vw;
+    font-weight: 600;
+    letter-spacing: .015em;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  body.nx-app.nx-reference #nxTop .top-title #chatTitle {
+    font-size: .55vw;
+    line-height: 1.2;
+  }
+  body.nx-app.nx-reference #nxTop .top-title #chatModel { font-size: .4vw; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner .nx-holo-avatar {
+    width: 42.03vh;
+    height: 42.03vh;
+    max-width: none;
+    flex: 0 0 auto;
+    align-self: center;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="gpt"] .nx-holo-avatar {
+    width: 43.45vh;
+    height: 43.45vh;
+  }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] .nx-holo-avatar {
+    width: 104.2%;
+    height: auto;
+    aspect-ratio: 1254 / 998;
+  }
+  body.nx-app.nx-reference .nx-glass-dock-button {
+    gap: .7vh;
+    padding: .7vh .4vw;
+    font-size: min(1vw, 40px);
+    line-height: 1.2;
+  }
+  body.nx-app.nx-reference .nx-glass-dock-button .nx-glass-icon {
+    width: 2.4vw;
+    height: 2.4vw;
+    flex-basis: auto;
+  }
+  body.nx-app.nx-reference #nxGlassCore {
+    position: relative;
+    overflow: visible;
+  }
+  body.nx-app.nx-reference #nxGlassCore::before {
+    content: "";
+    position: absolute;
+    inset: 20% -84%;
+    border: 1px solid #d3f5ff80;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, transparent 48%, #72c9ff24 52%, transparent 66%);
+    box-shadow: 0 0 10px #9ceaff4d, 0 0 0 8px #a6dfff1a, 0 0 18px #3cbdff4d;
+    transform: rotate(-3deg);
+    pointer-events: none;
+  }
+  body.nx-app.nx-reference .nx-glass-core-mark {
+    position: relative;
+    z-index: 1;
+  }
+  body.nx-app.nx-reference .nx-glass-metric {
+    padding: .5vw;
+    gap: .12vh;
+    border-radius: .9vw;
+  }
+  body.nx-app.nx-reference .nx-glass-metric-heading {
+    gap: .55vw;
+    font-size: .85vw;
+    line-height: 1.2;
+  }
+  body.nx-app.nx-reference .nx-glass-metric-heading .nx-glass-icon {
+    width: 1.4vw;
+    height: 1.4vw;
+    flex-basis: 1.4vw;
+  }
+  body.nx-app.nx-reference .nx-glass-metric-value {
+    font-size: 1vw;
+    line-height: 1.2;
+  }
+  body.nx-app.nx-reference .nx-glass-metric-detail {
+    font-size: .75vw;
+    line-height: 1.2;
+  }
+  body.nx-app.nx-reference .nx-glass-meter { height: .4vh; }
+}
+/* Final reference scale for header and composer; history remains scrollable. */
+@media (min-width: 1660px) {
+  body.nx-app.nx-reference #nxTop { gap: .4vw; }
+  body.nx-app.nx-reference #nxTop > .top-title { flex: 0 1 17vw; min-width: 280px; max-width: 17vw; }
+  body.nx-app.nx-reference #nxTop > .top-title::before { font-size: clamp(14px,.85vw,34px); white-space: nowrap; }
+  body.nx-app.nx-reference #nxGlassHeaderStatus { gap: .4vw; }
+  body.nx-app.nx-reference .nx-glass-chip { min-height: 3.3vh; padding: .5vh .55vw; gap: .3vw; font-size: clamp(12px,.67vw,27px); }
+  body.nx-app.nx-reference .nx-glass-chip .nx-glass-icon { width: 1vw; height: 1vw; flex-basis: 1vw; }
+  body.nx-app.nx-reference #nxGlassHeaderTools { gap: .4vw; }
+  body.nx-app.nx-reference #nxGlassClock { min-width: 8.4vw; min-height: 5.1vh; font-size: clamp(11px,.65vw,27px); justify-content: center; }
+  body.nx-app.nx-reference #nxGlassTime { font-size: clamp(20px,1.2vw,48px); }
+  body.nx-app.nx-reference .nx-glass-tool { width: 2.2vw; height: 4.6vh; }
+  body.nx-app.nx-reference .nx-glass-tool .nx-glass-icon { width: 1.3vw; height: 1.3vw; flex-basis: 1.3vw; }
+  body.nx-app.nx-reference #nxComposer .composer-box { padding: .4vh .8vw; }
+  body.nx-app.nx-reference #nxInput { font-size: clamp(15px,1vw,40px); }
+  body.nx-app.nx-reference #nxComposer .composer-icon { width: 2vw; height: 5vh; flex-basis: 2vw; }
+  body.nx-app.nx-reference #nxComposer .composer-icon .nx-glass-icon { width: 1.45vw; height: 1.45vw; }
+  body.nx-app.nx-reference #btnSend { width: 3.7vw; height: 3.7vw; flex-basis: 3.7vw; }
+  body.nx-app.nx-reference #btnSend .nx-glass-icon { width: 1.7vw; height: 1.7vw; }
+  body.nx-app.nx-reference #nxGlassTarget { width: 11vw; font-size: clamp(13px,.75vw,30px); }
+  body.nx-app.nx-reference #nxGlassTargetSelect { flex: 1; min-width: 0; max-width: none; }
+  body.nx-app.nx-reference #messages { margin-top: 4vh; }
+}
+
+/* Binding Master Home composition. The scene is supplied artwork; the inset
+   console, portraits, telemetry, composer and navigation remain live DOM.
+   Zoom retains the tested square face coordinates and existing control layout. */
+body.nx-app.nx-reference #nxReferenceStage { display: contents; }
+body.nx-app.nx-reference #nxReferenceScene { display: none; }
+body.nx-app.nx-reference .logo-mark,
+body.nx-app.nx-reference .nx-glass-mini-logo,
+body.nx-app.nx-reference .nx-glass-core-mark { font-family: Arial, sans-serif; }
+@media (min-width: 1660px) and (min-height: 560px) {
+  body.nx-app.nx-reference {
+    background: #173c63 url("/static/assets/master-glass/reference-final/master-home-backdrop.png") center / cover no-repeat !important;
+  }
+  body.nx-app.nx-reference #nxDesktopBgWrap,
+  body.nx-app.nx-reference #nxDesktopDim { display: none; }
+  body.nx-app.nx-reference #nxReferenceStage {
+    display: block;
+    position: fixed;
+    left: 18.84vw;
+    top: 15.41vh;
+    width: 61.72vw;
+    height: 67.27vh;
+    z-index: 2;
+  }
+  body.nx-app.nx-reference #nxApp {
+    --sidebar-w: 15.2vw;
+    position: relative;
+    width: 98.752vw;
+    height: 107.632vh;
+    zoom: .625;
+    border: 2px solid #e5f7ff;
+    border-radius: 2vw;
+    box-shadow: 0 0 0 3px #8fb1ceb3, inset 0 0 0 6px #effaffb3, 0 0 20px #69caff59;
+    background: #dae9f7 !important;
+  }
+  body.nx-app.nx-reference #nxSide {
+    border-radius: 1.8vw;
+    background: linear-gradient(110deg, #e6f0fa, #bdd2e7 60%, #e8f2fb) !important;
+    padding-inline: 1vw;
+  }
+  body.nx-app.nx-reference #nxChat { border-radius: 0 1.8vw 1.8vw 0; }
+  body.nx-app.nx-reference #nxTop {
+    background: linear-gradient(110deg, #95b1cd, #b2c7dd 50%, #91aecb) !important;
+    border-bottom: 1px solid #d8eefc73;
+    border-radius: 0 1.8vw 1.2vw 1.2vw;
+  }
+  body.nx-app.nx-reference #nxTop > .top-title { flex-basis: 17vw; min-width: 0; }
+  body.nx-app.nx-reference #nxAiRoom { height: 54.64vh; margin-top: 2.4vh; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner { height: 43.3vh; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="nexus"] { height: 46.7vh; }
+  body.nx-app.nx-reference #nxAiRoom .nx-partners:not(.nx-vrm-active) > .nx-partner[data-partner="gpt"] { height: 42.4vh; }
+  body.nx-app.nx-reference #nxGlassTelemetry { width: 94%; margin-inline: auto; }
+  body.nx-app.nx-reference #nxComposer { padding-inline: 1.8vw; }
+  body.nx-app.nx-reference .nx-glass-dock-button,
+  body.nx-app.nx-reference .nx-glass-metric {
+    border-radius: .6vw;
+    border-color: #eaf8ff8f;
+    box-shadow: inset 0 1px #ffffffa6, 0 0 8px #7bd3ff33, 0 3px 10px #163c6840;
+  }
+  body.nx-app.nx-reference #nxReferenceScene {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  body.nx-app.nx-reference .nx-reference-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  body.nx-app.nx-reference .nx-reference-art-link {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: var(--w);
+    height: var(--h);
+    min-height: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 1vw;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: auto;
+  }
+  body.nx-app.nx-reference .nx-reference-art-link:hover {
+    border-color: #c8f4ff;
+    box-shadow: 0 0 18px #5bcaff;
+    background: #c8f4ff0a;
+  }
+  body.nx-app.nx-reference .nx-reference-art-link:focus-visible {
+    outline: 3px solid #f2fbff;
+    outline-offset: 4px;
+    box-shadow: 0 0 22px #23aaff;
+  }
+  body.nx-app.nx-reference #nxReferenceLiveHealth {
+    position: absolute;
+    left: 84%;
+    top: 66%;
+    width: 4.4%;
+    height: 9.6%;
+    display: grid;
+    place-items: center;
+    border: 3px solid #b9f1ff;
+    border-radius: 50%;
+    background: radial-gradient(circle, #08284c 40%, #145b8c 66%, #87dfff 70%, #072444 75%);
+    box-shadow: inset 0 0 15px #37bbff, 0 0 15px #56caff;
+    color: #f3fbff;
+    font-size: clamp(12px, 1.55vw, 60px);
+    font-weight: 500;
+    text-shadow: 0 0 8px #68cfff;
+    pointer-events: auto;
+    align-content: center;
+    gap: .2vh;
+  }
+  body.nx-app.nx-reference .nx-reference-health-value { font: inherit; }
+  body.nx-app.nx-reference .nx-reference-health-label { font-size: .38vw; letter-spacing: .12em; }
+  body.nx-app.nx-reference #nxReferenceLiveHealth[data-quality="unknown"] { font-size: .75vw; }
+}
+
+/* 20261028 tiles: sichtbare App-Kacheln im Glas-Design */
+body.nx-app.nx-reference .nx-reference-art-link.nx-reference-app-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .55vw;
+  color: #eaf8ff; cursor: pointer; text-align: center;
+  background: linear-gradient(160deg, #ffffff22, #7fd4ff10); border-color: #9fe6ff66;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 14px #36b8ff44, inset 0 0 18px #ffffff14;
+}
+body.nx-app.nx-reference .nx-reference-app-tile:hover { background: linear-gradient(160deg, #ffffff33, #7fd4ff22); }
+body.nx-app.nx-reference .nx-reference-app-logo {
+  display: grid; place-items: center; width: 4.2vw; height: 4.2vw; min-width: 44px; min-height: 44px;
+  border-radius: 1.1vw; color: #fff; box-shadow: 0 0 16px #ffffff40;
+}
+body.nx-app.nx-reference .nx-reference-app-logo .nx-glass-icon, body.nx-app.nx-reference .nx-reference-app-logo svg { width: 62%; height: 62%; display: block; }
+body.nx-app.nx-reference .nx-reference-app-logo .nx-glass-icon { width: 62%; height: 62%; display: grid; place-items: center; }
+body.nx-app.nx-reference .nx-reference-app-logo .nx-glass-icon svg { width: 100%; height: 100%; }
+body.nx-app.nx-reference [data-app="whatsapp"] .nx-reference-app-logo { background: #25d366; }
+body.nx-app.nx-reference [data-app="facebook"] .nx-reference-app-logo { background: #1877f2; }
+body.nx-app.nx-reference [data-app="youtube"] .nx-reference-app-logo { background: #ff0033; }
+body.nx-app.nx-reference [data-app="files"] .nx-reference-app-logo { background: #f2b632; }
+body.nx-app.nx-reference [data-app="mail"] .nx-reference-app-logo { background: #3b82f6; }
+body.nx-app.nx-reference .nx-reference-app-name {
+  font: 600 clamp(12px, 1.05vw, 18px)/1.2 "Segoe UI", system-ui, sans-serif; color: #ffffff;
+  text-shadow: 0 1px 6px #001a33cc; letter-spacing: .02em;
+}
+body.nx-app.nx-reference .nx-reference-app-state { font-size: clamp(10px, .75vw, 13px); color: #bfefff; min-height: 1em; text-shadow: 0 1px 4px #001a33; }
+body.nx-app.nx-reference [data-app="studio"] .nx-reference-app-logo { background: linear-gradient(135deg, #7c3aed, #22d3ee); }
+
+/* NEXUS All (20261028): breiter Balken unten, von unter NEXUS Studio bis unter 100-Health */
+body.nx-app.nx-reference [data-app="nexusall"] { flex-direction: row !important; justify-content: flex-start !important; align-items: center !important; gap: 16px; padding: 0 22px !important; }
+body.nx-app.nx-reference [data-app="nexusall"] .nx-reference-app-logo { background: linear-gradient(135deg, #7c3aed, #22d3ee, #f43f5e); flex: none; }
+body.nx-app.nx-reference [data-app="nexusall"] .nx-reference-app-name { font-size: 1.15em; letter-spacing: .02em; }
+
+/* Lokale KI fix 20261028: live telemetry pinned above the composer. */
+body.nx-app.nx-reference #nxChat > #nxGlassTelemetry { flex: 0 0 auto; position: relative; z-index: 3; margin: 0 auto 6px; background: rgba(236,244,255,.92); border-radius: 14px; padding: 4px; }

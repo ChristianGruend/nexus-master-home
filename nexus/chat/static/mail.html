@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXUS Mail</title>
+<style>
+body{margin:0;font-family:Segoe UI,system-ui,sans-serif;background:linear-gradient(135deg,#f7fbff,#e3f1ff 55%,#eef1f4);color:#1d2b3a;height:100vh;display:flex}
+nav{width:220px;padding:18px;background:rgba(255,255,255,.55);backdrop-filter:blur(14px);border-right:1px solid #c9d6e2}
+nav h1{font-size:18px;color:#3a8fd8;margin:0 0 16px}
+nav button{display:block;width:100%;text-align:left;margin:4px 0;padding:9px 12px;border:1px solid #d5e3ef;border-radius:10px;background:rgba(255,255,255,.7);cursor:pointer}
+nav button.new{background:#8cc8ff;color:#fff;border:0;font-weight:600}
+main{flex:1;display:flex;flex-direction:column;padding:18px;gap:12px}
+#search{padding:9px 12px;border-radius:10px;border:1px solid #c9d6e2;background:rgba(255,255,255,.75)}
+.panes{flex:1;display:flex;gap:12px}.list,.read{background:rgba(255,255,255,.6);border:1px solid #d5e3ef;border-radius:14px;padding:14px}
+.list{width:38%}.read{flex:1}.hint{color:#7a8a99}
+</style></head><body>
+<nav><h1>NEXUS Mail</h1>
+<button class="new">Neue Nachricht</button>
+<button>Posteingang</button><button>Gesendet</button><button>Entwürfe</button><button>Archiv</button><button>Papierkorb</button>
+<button>Einstellungen</button></nav>
+<main><input id="search" placeholder="Suchen …">
+<div class="panes"><section class="list"><h3>Posteingang</h3><ul><li><a href="#mail-phishing-alert" onclick="showPhishingHint()">Warnhinweis: Vorsicht bei E-Mails mit verdächtigem Inhalt (Phishing)</a></li><li><button id="read-m1" class="item-btn">Nachricht 1: Willkommensmeldung</button></li><li><button id="read-m2" class="item-btn">Nachricht 2: System-Update Hinweis</button></li><li><button id="read-m3" class="item-btn">Nachricht 3: Kontaktanfrage</button></li><li><button id="read-m4" class="item-btn">Nachricht 4: Archivierungs-Tipps</button></li></ul></section>
+<section class="read"><p class="hint">Lesebereich – noch keine Funktionen. Bauauftrag: BAUAUFTRAG_NEXUS_MAIL_20261029.md</p></section></div></main>
+</body></html>

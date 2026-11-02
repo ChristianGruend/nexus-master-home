@@ -1,0 +1,580 @@
+openapi: 3.1.0
+info:
+  title: NEXUS Agent Bridge Protocol v1.1
+  description: |
+    Agent Bridge Protocol fuer externe Agenten (Eddie, Custom GPT Actions, Scripts).
+
+    Live (WoZiPC): protocol version 1.1.0, process_level SAFE_WRITE (Env NEXUS_BRIDGE_PROCESS_LEVEL).
+    Permission levels: READ_ONLY, SAFE_WRITE, PRIVILEGED.
+    PRIVILEGED tasks require local approval_id via /approvals (not on Funnel allowlist).
+
+    Auth: Bearer NEXUS_BRIDGE_TOKEN (Env oder workspace/bridge/.token).
+    Niemals ein reales Token in dieser Datei hinterlegen.
+    Separat von NEXUS_ASSISTANT_TOKEN (/api/assistant).
+
+    Public-Pfad: Tailscale Funnel -> Allowlist Gateway :8300 -> Origin :8299.
+    Nur Bridge-Pfade auf dem Gateway; Chat/Voice/Media bleiben lokal.
+    Kein generic remote shell. Kein Cloudflare.
+
+    Task-Namen und Modes immer via GET /api/capabilities abfragen (nicht hardcoden).
+    Source-of-Truth Connector: NEXUS_CHATGPT_CONNECTOR_FINAL/openapi.yaml (synchron halten).
+  version: "1.1.0"
+  contact:
+    name: NEXUS / WoZiPC
+
+servers:
+  - url: "https://wozipc-nexus.tailaf0b38.ts.net"
+    description: >
+      Public HTTPS via Tailscale Funnel (free).
+      Funnel targets Allowlist Gateway 127.0.0.1:8300 (NOT raw :8299).
+      Only bridge paths are exposed; other paths return 403.
+      Auth: Bearer NEXUS_BRIDGE_TOKEN. process_level SAFE_WRITE. No router port / UPnP.
+  - url: "http://127.0.0.1:8299"
+    description: Lokal WoZiPC Origin (in-process Bridge)
+  - url: "http://127.0.0.1:8300"
+    description: Lokal Allowlist Gateway (wenn gestartet)
+  - url: "http://192.0.2.12:8299"
+    description: LAN WoZiPC
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/bridge/health:
+    get:
+      operationId: nexusHealth
+      summary: Bridge health
+      description: |
+        Bridge health + protocol version + process_level + registered task names.
+        Aliases (gleiche Auth, Bridge-Health-Payload): GET /api/bridge/status, GET /api/v1/status.
+      tags: [Health]
+      responses:
+        "200":
+          description: Bridge healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "401":
+          description: Missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/status:
+    get:
+      operationId: nexusStatus
+      summary: Nexus engine status (not Bridge health)
+      description: |
+        Lightweight Nexus ENGINE.status snapshot (host/runtime).
+        On Origin :8299 this endpoint does NOT require Bridge Bearer.
+        On Funnel/Gateway it is allowlisted; prefer Bearer when calling via public URL.
+        For Bridge protocol health use nexusHealth (/api/bridge/health) instead.
+        Alias note: /api/bridge/status and /api/v1/status are Bridge-health aliases (see nexusHealth).
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: Engine status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+
+  /api/capabilities:
+    get:
+      operationId: nexusCapabilities
+      summary: Capabilities + registered tasks
+      description: |
+        Returns permission levels, process_level, and every registered task with its
+        READ_ONLY / SAFE_WRITE / PRIVILEGED mode. Alias: GET /api/bridge/capabilities.
+      tags: [Discovery]
+      responses:
+        "200":
+          description: Capabilities payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapabilitiesResponse"
+        "401":
+          description: Missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/message:
+    post:
+      operationId: nexusMessage
+      summary: Lightweight bridge message / handshake
+      description: |
+        Short bridge message (not Chat engine). Alias: POST /api/bridge/message.
+        Handshake phrases containing NEXUS_BRIDGE_OK return NEXUS_BRIDGE_OK.
+      tags: [Messaging]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageRequest"
+            examples:
+              handshake:
+                value:
+                  message: NEXUS_BRIDGE_OK handshake
+                  source: chatgpt
+      responses:
+        "200":
+          description: Bridge reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Invalid request
+        "401":
+          description: Missing or invalid Bearer token
+
+  /api/task:
+    post:
+      operationId: nexusCreateTask
+      summary: Create and run a registered task
+      description: |
+        Runs a registered bridge task. Names/modes from /api/capabilities.
+        params: task-specific object (required for most tool tasks, e.g. path, content, echo).
+        Top-level unknown keys (except task/name/type/params/source/client/message/text/session_id/approval_id)
+        are also folded into params by the live Bridge.
+        PRIVILEGED tasks must include approval_id from local Approvals UI.
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCreateRequest"
+            examples:
+              ping:
+                summary: READ_ONLY ping
+                value:
+                  task: ping
+                  params:
+                    echo: phase2-smoke
+                  source: phase2
+              read_file:
+                summary: READ_ONLY read_file
+                value:
+                  task: read_file
+                  params:
+                    path: README.md
+              system_status:
+                summary: READ_ONLY system_status
+                value:
+                  task: system_status
+                  params: {}
+              write_file:
+                summary: SAFE_WRITE write_file (project root sandbox)
+                value:
+                  task: write_file
+                  params:
+                    path: workspace/files/phase2_smoke.txt
+                    content: ok
+      responses:
+        "200":
+          description: Task finished or awaiting local approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskCreateResponse"
+        "400":
+          description: Unknown task, failed execution, or missing approval
+        "401":
+          description: Missing or invalid Bearer token
+
+  /api/task/{task_id}:
+    get:
+      operationId: nexusGetTask
+      summary: Get task status by id
+      tags: [Tasks]
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Task record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskGetResponse"
+        "404":
+          description: Task not found
+        "401":
+          description: Missing or invalid Bearer token
+
+  /api/task/{task_id}/cancel:
+    post:
+      operationId: nexusCancelTask
+      summary: Cancel a running or queued task
+      tags: [Tasks]
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Cancel accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskGetResponse"
+        "404":
+          description: Task not found
+        "401":
+          description: Missing or invalid Bearer token
+
+  /api/task/{task_id}/log:
+    get:
+      operationId: nexusTaskLog
+      summary: Get task execution log
+      tags: [Tasks]
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Task log lines
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskLogResponse"
+        "404":
+          description: Task not found
+        "401":
+          description: Missing or invalid Bearer token
+
+  /api/v1/tasks:
+    get:
+      operationId: nexusListBridgeTasks
+      summary: List bridge tasks
+      description: |
+        Bridge task list. Alias: GET /api/bridge/tasks.
+        Not the same as GET /api/tasks (Master project tasks).
+      tags: [Tasks]
+      responses:
+        "200":
+          description: Task list
+        "401":
+          description: Missing or invalid Bearer token
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: |
+        Token aus Env NEXUS_BRIDGE_TOKEN bzw. workspace/bridge/.token.
+        Niemals Token in OpenAPI/Repo committen. ChatGPT Auth = API Key as Bearer.
+
+  parameters:
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      description: Task id returned by nexusCreateTask (path /api/task/{id})
+      schema:
+        type: string
+        minLength: 1
+
+  schemas:
+    PermissionLevel:
+      type: string
+      enum: [READ_ONLY, SAFE_WRITE, PRIVILEGED]
+      description: |
+        Live process_level default SAFE_WRITE (NEXUS_BRIDGE_PROCESS_LEVEL).
+        PRIVILEGED always requires local approval_id.
+
+    TaskName:
+      type: string
+      description: |
+        Registered task name. Live registry (1.1.0) includes:
+        READ_ONLY: ping, system_status, inspect_server, read_file, list_files,
+        git_status, git_diff, git_log, capability_check, nexus_status, media_status,
+        voice_status, llm_status, termux_status, android_status, android_devices,
+        service_status, nexus_control_status;
+        SAFE_WRITE: write_file, patch_file, create_file, create_dir, move_file,
+        copy_file, delete_file, git_add, git_commit, python_run_project_script,
+        android_screenshot;
+        PRIVILEGED: powershell_registered_action, service_start, service_stop,
+        service_restart, nexus_start, nexus_stop, nexus_restart, git_push,
+        android_install_apk.
+        Always confirm via GET /api/capabilities.
+      minLength: 1
+
+    TaskStatus:
+      type: string
+      enum: [queued, running, succeeded, failed, cancelled, awaiting_approval]
+
+    ErrorResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+
+    HealthResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        ok:
+          type: boolean
+        protocol:
+          type: string
+          example: NEXUS_AGENT_BRIDGE_PROTOCOL
+        version:
+          type: string
+          example: "1.1.0"
+        marker:
+          type: string
+          example: NEXUS_AGENT_BRIDGE_V1
+        master_marker:
+          type: string
+        server:
+          type: string
+        port:
+          type: integer
+        ssl_port:
+          type: integer
+        auth:
+          type: object
+          additionalProperties: true
+          properties:
+            required:
+              type: boolean
+            scheme:
+              type: string
+            env:
+              type: string
+              example: NEXUS_BRIDGE_TOKEN
+            token_mask:
+              type: string
+            separate_from_assistant:
+              type: boolean
+        permissions:
+          type: object
+          additionalProperties: true
+          properties:
+            process_level:
+              $ref: "#/components/schemas/PermissionLevel"
+            levels:
+              type: array
+              items:
+                $ref: "#/components/schemas/PermissionLevel"
+            privileged_requires_approval:
+              type: boolean
+        tasks_registered:
+          type: array
+          items:
+            type: string
+
+    StatusResponse:
+      type: object
+      additionalProperties: true
+      description: Nexus ENGINE.status payload
+      properties:
+        success:
+          type: boolean
+        session_id:
+          type: string
+        project_id:
+          type: string
+
+    CapabilityTask:
+      type: object
+      required: [name, permission]
+      properties:
+        name:
+          $ref: "#/components/schemas/TaskName"
+        permission:
+          $ref: "#/components/schemas/PermissionLevel"
+
+    CapabilitiesResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        protocol:
+          type: string
+        version:
+          type: string
+          example: "1.1.0"
+        schema:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionLevel"
+        process_level:
+          $ref: "#/components/schemas/PermissionLevel"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CapabilityTask"
+        executors:
+          type: object
+          additionalProperties: true
+        approvals:
+          type: object
+          additionalProperties: true
+        openai_required:
+          type: boolean
+          example: false
+        cost_rule:
+          type: string
+          example: LOCAL->FREE->NOT
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+        notes:
+          type: array
+          items:
+            type: string
+
+    MessageRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+        source:
+          type: string
+        session_id:
+          type: string
+        client:
+          type: string
+
+    MessageResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        reply:
+          type: string
+        source:
+          type: string
+        protocol:
+          type: string
+        version:
+          type: string
+        process_level:
+          $ref: "#/components/schemas/PermissionLevel"
+        handshake:
+          type: boolean
+
+    TaskCreateRequest:
+      type: object
+      required: [task]
+      properties:
+        task:
+          $ref: "#/components/schemas/TaskName"
+        params:
+          type: object
+          additionalProperties: true
+          description: |
+            Task-specific parameters. Examples:
+            ping.echo, read_file.path, write_file.path+content, list_files.path,
+            termux_phase_a_control.action (required allowlisted Phase-A action: health, chat_e2e, shared_room_e2e, voice_status, files_e2e, memory_e2e, wozipc_probe, device_control, quick_actions, agents_skills, autostart_ensure, file_status, status_nexus, autostart_status; phone path = Phase-A 8766 via adb forward tcp:18766, legacy 8765 agent retired),
+            android_push_file.source+destination+overwrite+device (source is a relative path strictly under workspace/NEXUS_ANDROID_FINAL; absolute/traversal/symlink sources blocked),
+            patch_file.path+old_text+new_text (canonical; legacy find/replace normalized internally), move_file/copy_file src+dst,
+            powershell_registered_action.action (required registered action name; no free command),
+            delete_file.path+confirm, git_*, python_run_project_script, etc.
+        source:
+          type: string
+        client:
+          type: string
+        session_id:
+          type: string
+        approval_id:
+          type: string
+          description: Required for PRIVILEGED; from local /approvals only
+
+    TaskRecord:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        task:
+          type: string
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        permission:
+          $ref: "#/components/schemas/PermissionLevel"
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+        result:
+          type: object
+          additionalProperties: true
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        approval_id:
+          type: string
+          nullable: true
+
+    TaskCreateResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        task:
+          $ref: "#/components/schemas/TaskRecord"
+        message:
+          type: string
+        error:
+          type: string
+        awaiting_approval:
+          type: boolean
+
+    TaskGetResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        task:
+          $ref: "#/components/schemas/TaskRecord"
+
+    TaskLogResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        task_id:
+          type: string
+        log:
+          type: array
+          items:
+            type: string

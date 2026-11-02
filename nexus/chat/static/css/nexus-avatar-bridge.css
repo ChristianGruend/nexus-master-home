@@ -1,0 +1,5 @@
+/* NEXUS Avatar-Bridge 20261026 */
+.nx-holo-avatar[data-live]{position:relative}
+.nx-holo-avatar .nxl-host{position:absolute;inset:0;display:block;border-radius:inherit;overflow:hidden;pointer-events:none}
+.nx-holo-avatar[data-live] img.nxl-under{opacity:0}
+.nx-holo-avatar .nxl-host canvas{object-fit:cover}

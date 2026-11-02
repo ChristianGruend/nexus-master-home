@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#dfe8f3">
+<title>NEXUS Phone</title>
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="/static/css/m2.css?v=m2d">
+<link rel="stylesheet" href="/static/css/irobot-m2.css?v=ir8">
+</head>
+<body>
+<div id="app">
+  <!-- Kopfzeile (Smart View) -->
+  <header class="top glass">
+    <div><div id="clock" class="clock">--:--</div><div id="date" class="date"></div></div>
+    <div class="brand"><span class="logo">▲</span> NEXUS</div>
+    <button id="wx" class="wx" title="Wetter (Open-Meteo)"><span id="wxIcon">☁</span><span id="wxTemp">--°</span></button>
+  </header>
+
+  <main id="home" class="view active">
+    <!-- Hero (Viki) + Erde (Crystal OS) -->
+    <section class="hero">
+      <canvas id="globe" width="360" height="360" aria-hidden="true"></canvas>
+      <img class="face" src="/static/assets/avatar/nexus.webp" alt="NEXUS">
+      <div class="quick left">
+        <button data-go="chat"><i>💬</i>Chat</button>
+        <button data-go="apps"><i>▦</i>Apps</button>
+        <button data-agent="aether"><i>📚</i>Wissen</button>
+      </div>
+      <div class="quick right">
+        <button data-go="media"><i>🎵</i>Media</button>
+        <button data-go="gallery"><i>🖼</i>Galerie</button>
+        <button data-go="system"><i>⚙</i>System</button>
+      </div>
+      <div class="hero-cap"><b>NEXUS</b><span>Dein KI-Begleiter</span><em id="health" class="dot">…</em></div>
+    </section>
+
+    <!-- Hey-Nexus-Leiste -->
+    <form id="askBar" class="ask glass">
+      <span>🔍</span><input id="askIn" placeholder="Hey Nexus …" autocomplete="off">
+      <button type="button" id="micBtn" class="mic" title="Sprechen">🎤</button>
+    </form>
+
+    <!-- Agenten (Viki / Crystal) -->
+    <section class="agents">
+      <button class="agent glass" data-agent="hermes"><img src="/static/assets/avatar/hermes_card.webp" alt=""><b>HERMES</b><small>System &amp; Aufträge</small></button>
+      <button class="agent glass" data-agent="aether"><img src="/static/assets/avatar/aether_card.webp" alt=""><b>AETHER</b><small>Wissen &amp; Forschung</small></button>
+    </section>
+
+    <!-- Widgets (Smart View) -->
+    <section class="widgets">
+      <button class="w glass" data-go="map"><b>📍 Standort</b><span id="wLoc">Karte öffnen</span></button>
+      <button class="w glass" id="wWx"><b>🌤 Wetter</b><span id="wWxTxt">lädt …</span></button>
+      <button class="w glass" data-go="notes"><b>📝 Notizen</b><span id="wNotes">…</span></button>
+      <button class="w glass" data-go="calendar"><b>📅 Kalender</b><span id="wCal">…</span></button>
+    </section>
+  </main>
+
+  <!-- Chat -->
+  <section id="chat" class="view">
+    <div class="vhead glass"><button class="back">‹</button><b id="chatTitle">NEXUS</b><select id="chatTarget"><option value="nexus">NEXUS</option><option value="hermes">HERMES</option><option value="aether">AETHER</option></select></div>
+    <div id="msgs" class="msgs"></div>
+    <form id="chatForm" class="ask glass"><input id="chatIn" placeholder="Nachricht …" autocomplete="off"><button type="button" class="mic" id="micBtn2">🎤</button><button class="send">➤</button></form>
+  </section>
+
+  <section id="gallery" class="view"><div class="vhead glass"><button class="back">‹</button><b>Galerie</b></div><div id="galGrid" class="grid"></div></section>
+  <section id="media" class="view"><div class="vhead glass"><button class="back">‹</button><b>Media</b></div><audio id="player" controls preload="none"></audio><ul id="mediaList" class="list"></ul></section>
+  <section id="map" class="view"><div class="vhead glass"><button class="back">‹</button><b>Karte</b></div><form id="mapForm" class="ask glass"><input id="mapQ" placeholder="Ort suchen …"><button class="send">➤</button></form><iframe id="mapFrame" title="Karte" loading="lazy"></iframe></section>
+  <section id="notes" class="view"><div class="vhead glass"><button class="back">‹</button><b>Notizen</b></div><form id="noteForm" class="ask glass"><input id="noteIn" placeholder="Neue Notiz …"><button class="send">＋</button></form><ul id="noteList" class="list"></ul></section>
+  <section id="calendar" class="view"><div class="vhead glass"><button class="back">‹</button><b>Kalender</b></div><ul id="calList" class="list"></ul></section>
+  <section id="system" class="view"><div class="vhead glass"><button class="back">‹</button><b>System</b></div><pre id="sysOut" class="glass pre">lädt …</pre><a class="btn glass" href="/m">Klassische Ansicht (/m)</a><p class="mut" style="margin:12px 4px">Erdansicht: NASA Earth Observatory / Visible Earth – „Blue Marble Next Generation“ (Dez. 2004), gemeinfrei. Lokal gespeichert, offline verfügbar.</p></section>
+  <section id="camera" class="view"><div class="vhead glass"><button class="back">‹</button><b>Kamera</b><button id="camFlip" title="Kamera wechseln">🔄</button></div>
+    <div id="camHint" class="hint glass" hidden></div>
+    <div class="cam glass"><video id="camVideo" playsinline muted autoplay></video><img id="camShot" alt="" hidden><canvas id="camCanvas" hidden></canvas></div>
+    <label class="chk"><input type="checkbox" id="camSave" checked> Foto in Galerie speichern (PC: workspace/screens)</label>
+    <input id="camPrompt" class="ask glass inp" value="Was siehst du? Antworte kurz auf Deutsch.">
+    <div class="row"><button id="camSnap" class="btn2">📸 Foto</button><button id="camAsk" class="btn2 pri" disabled>👁 Was siehst du?</button><button id="camRetake" class="btn2" disabled>↺</button></div>
+    <div id="camOut" class="msg a out" hidden></div>
+  </section>
+  <section id="control" class="view"><div class="vhead glass"><button class="back">‹</button><b>PC-Steuerung (WoZiPC)</b></div>
+    <h4>Media am PC</h4>
+    <div class="row wrap"><button class="btn2" data-media="prev">⏮</button><button class="btn2" data-media="pause">⏸</button><button class="btn2" data-media="resume">▶</button><button class="btn2" data-media="next">⏭</button><button class="btn2" data-media="stop">⏹</button></div>
+    <h4>Apps &amp; Webseiten öffnen</h4>
+    <div id="ctlApps" class="chips"></div>
+    <form id="ctlUrlForm" class="ask glass"><input id="ctlUrl" placeholder="https://… am PC öffnen" inputmode="url"><button class="send">➤</button></form>
+    <form id="ctlAppForm" class="ask glass"><input id="ctlApp" placeholder="Programm starten (z. B. notepad, rechner)"><button class="send">▶</button></form>
+    <form id="ctlCloseForm" class="ask glass"><input id="ctlClose" placeholder="Programm schließen (Name)"><button class="send warn">✖</button></form>
+    <p class="mut">Starten, Schließen und fremde Webseiten fragen vorher nach. Aktionen laufen am PC, nicht am Handy.</p>
+    <div id="ctlOut" class="pre glass" hidden></div>
+  </section>
+  <section id="apps" class="view"><div class="vhead glass"><button class="back">‹</button><b>Apps</b></div>
+    <div class="appgrid">
+      <button data-go="chat"><i>💬</i>Chat</button><button data-agent="hermes"><i>🛠</i>Hermes</button><button data-agent="aether"><i>📚</i>Aether</button><button data-go="media"><i>🎵</i>Media</button>
+      <button data-go="gallery"><i>🖼</i>Galerie</button><button data-go="map"><i>🗺</i>Karte</button><button data-go="notes"><i>📝</i>Notizen</button><button data-go="calendar"><i>📅</i>Kalender</button>
+      <button data-go="system"><i>⚙</i>System</button><a href="/m"><i>📞</i>Anruf</a><button data-go="camera"><i>📷</i>Kamera</button><button data-go="control"><i>🖥</i>PC-Steuerung</button>
+    </div></section>
+
+  <!-- Bottom-Nav -->
+  <nav class="nav glass">
+    <button data-go="home">⌂<small>Home</small></button>
+    <button data-go="chat">💬<small>Chat</small></button>
+    <button id="nBtn" class="n" title="Sprachmodus">N</button>
+    <button data-go="apps">▦<small>Apps</small></button>
+    <button data-go="system">⚙<small>System</small></button>
+  </nav>
+  <div id="toast" class="toast"></div>
+</div>
+<script src="/static/js/m2.js?v=m2d"></script>
+<script src="/static/js/irobot.js?v=ir8"></script>
+<script src="/static/js/irobot-m2.js?v=ir8"></script>
+</body>
+</html>

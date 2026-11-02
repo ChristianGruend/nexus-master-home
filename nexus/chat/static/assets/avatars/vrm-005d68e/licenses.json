@@ -1,0 +1,82 @@
+{
+  "task": "005D.68E",
+  "checked_at_utc": "2026-10-20T06:37:02.841927+00:00",
+  "description": "Unmodified VRoid originals. Attribution follows official pixiv sources; embedded VRM author fields remain blank and unchanged.",
+  "model_mirror_revision": "e16eb187100149a315ad92c3c9968f1d5baa6c7d",
+  "model_mirror_is_author": false,
+  "models": [
+    {
+      "partner": "nexus",
+      "display_name": "NEXUS",
+      "original_model": "HairSample_Male",
+      "author": "pixiv Inc. / VRoid official sample models",
+      "author_evidence": "Official pixiv/VRoid page names HairSample_Male under CC0 models.",
+      "embedded_author_field": "",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "official_license_source": "https://vroid.pixiv.help/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use",
+      "official_license_evidence": "licenses/nexus-official-license.html.txt",
+      "official_license_evidence_sha256": "f3ec88300a483cfbe19f967ca058270d770d546297db27694e2e8c7c02dd1569",
+      "original_preview": "https://vroid.pixiv.help/hc/article_attachments/42654801508505",
+      "pinned_download": "https://raw.githubusercontent.com/madjin/vrm-samples/e16eb187100149a315ad92c3c9968f1d5baa6c7d/vroid/beta/HairSample_Male.vrm",
+      "file": "nexus.vrm",
+      "file_bytes": 18481892,
+      "file_sha256": "7aeca142dabbc26ba0f5b9c998c8f3cb6df341287d67788427ac837223785a3f",
+      "modifications": "None"
+    },
+    {
+      "partner": "hermes",
+      "display_name": "HERMES",
+      "original_model": "Sakurada Fumiriya",
+      "author": "pixiv Inc.",
+      "author_evidence": "Official model page records pixiv Inc.'s copyright and related-rights waiver.",
+      "embedded_author_field": "",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "official_license_source": "https://vroid.pixiv.help/hc/en-us/articles/360014788554-Sakurada-Fumiriya",
+      "official_license_evidence": "licenses/hermes-official-license.html.txt",
+      "official_license_evidence_sha256": "58906689b57464958fee7033e577b54bedf2a2de735749510be59db592b21b4e",
+      "original_preview": "https://hub.vroid.com/en/characters/6912965120285194650/models/2261505926203110716",
+      "pinned_download": "https://raw.githubusercontent.com/madjin/vrm-samples/e16eb187100149a315ad92c3c9968f1d5baa6c7d/vroid/beta/Sakurada_Fumiriya.vrm",
+      "file": "hermes.vrm",
+      "file_bytes": 19342280,
+      "file_sha256": "d8fb05f33e377df028cb6b9d58c441ce68326c41fa23f6c735d40c65ae3dc710",
+      "modifications": "None"
+    },
+    {
+      "partner": "gpt",
+      "display_name": "NEXUS GPT",
+      "original_model": "Vita / beta AvatarSample_3",
+      "author": "pixiv Inc.",
+      "author_evidence": "Official beta AvatarSample_3 page records pixiv Inc.'s copyright and related-rights waiver; embedded original title is Vita.",
+      "embedded_author_field": "",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "official_license_source": "https://vroid.pixiv.help/hc/en-us/articles/360014900113",
+      "official_license_evidence": "licenses/gpt-official-license.html.txt",
+      "official_license_evidence_sha256": "816159f36b82b39c657fa2b9af78d0849ea0112508329ed1550da2b47a4405ae",
+      "original_preview": "https://hub.vroid.com/en/characters/6193066630030526355/models/3525604181073039892",
+      "pinned_download": "https://raw.githubusercontent.com/madjin/vrm-samples/e16eb187100149a315ad92c3c9968f1d5baa6c7d/vroid/beta/Vita.vrm",
+      "file": "gpt.vrm",
+      "file_bytes": 14359044,
+      "file_sha256": "f2bf78f28a24e2f75f5ca0b6c3b646654c394e4b03592dfaa0d0633ef0972b4d",
+      "modifications": "None"
+    }
+  ],
+  "libraries": [
+    {
+      "name": "Three.js",
+      "version": "0.180.0",
+      "license": "MIT",
+      "source": "https://github.com/mrdoob/three.js/tree/r180",
+      "license_file": "../../../vendor/avatar3d/three-0.180.0/LICENSE"
+    },
+    {
+      "name": "@pixiv/three-vrm",
+      "version": "3.5.5",
+      "license": "MIT",
+      "source": "https://github.com/pixiv/three-vrm/tree/v3.5.5",
+      "license_file": "../../../vendor/avatar3d/three-vrm-3.5.5/LICENSE"
+    }
+  ]
+}

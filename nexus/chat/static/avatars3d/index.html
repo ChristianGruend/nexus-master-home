@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NEXUS · Drei 3D-Charaktere</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="viewer.css?v=005d68g">
+  <script>if(new URLSearchParams(location.search).has('embedded'))document.documentElement.classList.add('embedded');window.addEventListener('error',()=>{const e=document.getElementById('loadStatus');if(e)e.textContent='3D-Ladefehler · Originalporträts bleiben verfügbar.';if(parent!==window)parent.postMessage({type:'nexus:vrm-status',status:'error'},location.origin);});</script>
+  <script type="importmap">
+    {"imports":{
+      "three":"/static/vendor/avatar3d/three-0.180.0/build/three.module.js",
+      "three/addons/":"/static/vendor/avatar3d/three-0.180.0/examples/jsm/",
+      "@pixiv/three-vrm":"/static/vendor/avatar3d/three-vrm-3.5.5/three-vrm.module.js"
+    }}
+  </script>
+</head>
+<body>
+  <header class="viewer-head">
+    <div><p>MASTER HOME · CHARAKTERDESIGN</p><h1>Drei unabhängige 3D-Charaktere</h1></div>
+    <a href="/">Zurück zum Chat</a>
+  </header>
+  <p id="loadStatus" role="status" aria-live="polite">Drei lokale CC0-Modelle werden geladen…</p>
+  <main id="stage" aria-label="HERMES, NEXUS und NEXUS GPT nebeneinander">
+    <canvas id="vrmCanvas" aria-label="3D-Darstellung HERMES, NEXUS und NEXUS GPT"></canvas>
+    <div class="model-grid">
+      <article class="model-card" data-partner="hermes"><div class="viewport"></div><h2>HERMES</h2><p>Sakurada Fumiriya · CC0</p><span class="model-status">wird geladen…</span></article>
+      <article class="model-card" data-partner="nexus"><div class="viewport"></div><h2>NEXUS</h2><p>HairSample_Male · CC0</p><span class="model-status">wird geladen…</span></article>
+      <article class="model-card" data-partner="gpt"><div class="viewport"></div><h2>NEXUS GPT</h2><p>Vita · CC0</p><span class="model-status">wird geladen…</span></article>
+    </div>
+  </main>
+  <section class="controls" aria-label="Einzelne Animationssteuerung">
+    <div class="control-top"><h2>Animation einzeln prüfen</h2><button id="viewMode" type="button">Ganzkörperansicht</button><label class="check"><input id="autoMotion" type="checkbox">Automatisch blinzeln</label><a id="designComparison" href="index.html?original=1">Originalmodelle vergleichen</a></div>
+    <p class="note">Kapuze und blaues Visier · silberne Flügelelemente · silberblondes Haar und violettes Headset.</p>
+    <div class="control-grid">
+      <label>Figur<select id="target"><option value="nexus">NEXUS</option><option value="hermes">HERMES</option><option value="gpt">NEXUS GPT</option></select></label>
+      <label>Mund oder Mimik<select id="expression"><option value="aa">Mund A</option><option value="ih">Mund I</option><option value="ou">Mund U</option><option value="ee">Mund E</option><option value="oh">Mund O</option><option value="blink">Blinzeln</option><option value="blinkLeft">Linkes Auge schließen</option><option value="blinkRight">Rechtes Auge schließen</option><option value="happy">Freude</option><option value="angry">Ärger</option><option value="sad">Trauer</option><option value="relaxed">Entspannt</option></select></label>
+      <label>Stärke <output id="weightValue">0</output><input id="weight" type="range" min="0" max="1" step="0.05" value="0"></label>
+      <label>Kopf drehen<input id="headYaw" type="range" min="-30" max="30" value="0"></label>
+      <label>Kopf neigen<input id="headPitch" type="range" min="-20" max="20" value="0"></label>
+      <label>Augen seitlich<input id="eyeYaw" type="range" min="-15" max="15" value="0"></label>
+      <label>Augen auf / ab<input id="eyePitch" type="range" min="-12" max="12" value="0"></label>
+      <button id="reset" type="button">Figur zurücksetzen</button>
+    </div>
+    <p id="controlStatus" role="status">Steuerung nach dem Laden verfügbar.</p>
+  </section>
+  <footer>Three.js 0.180.0 · three-vrm 3.5.5 · <a href="/static/assets/avatars/vrm-005d68e/licenses.json">Modellquellen und Lizenznachweise</a></footer>
+  <script type="module" src="viewer.js?v=005d68g3"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "name": "Nexus",
+  "short_name": "Nexus",
+  "description": "NEXUS AI Master - Handy-App",
+  "lang": "de",
+  "start_url": "/m2",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#eaf2fb",
+  "background_color": "#f4f8fd",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "id": "/m",
+  "shortcuts": [
+    {
+      "name": "Chat",
+      "url": "/m2#chat"
+    },
+    {
+      "name": "Klassisch (/m)",
+      "url": "/m"
+    }
+  ]
+}

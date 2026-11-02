@@ -1,0 +1,8 @@
+#btnMasterOrders{white-space:nowrap;border:1px solid #3c637c;background:#14263b;color:#e9f6ff;border-radius:9px;padding:8px 12px;cursor:pointer}
+#masterOrders{color:#e9f2ff;background:#101b2a;border:1px solid #3d647e;border-radius:16px;width:min(960px,94vw);max-height:88vh;padding:22px;font:14px/1.55 system-ui;overflow:auto}
+#masterOrders::backdrop{background:#020814b8;backdrop-filter:blur(4px)}
+#masterOrders h2{margin:0;font-size:23px}#masterOrders h3{margin:22px 0 8px}#masterOrders p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}
+.master-head,.master-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.master-head{justify-content:space-between}.master-actions{margin:12px 0}
+#masterOrders button{background:#203b55;color:#effaff;border:1px solid #4d718b;border-radius:8px;padding:8px 12px;cursor:pointer}#masterOrders button:disabled{opacity:.45;cursor:default}#masterOrders a{color:#69e5de}#masterOrders p button{margin-left:10px}
+.master-card,#masterResult{padding:12px;margin:10px 0;border:1px solid #314d66;border-radius:10px;background:#152437}.master-card summary{cursor:pointer;overflow-wrap:anywhere}.master-mono{font:12px/1.6 ui-monospace,Consolas,monospace;overflow-wrap:anywhere}.master-error{color:#ffba9c}#masterUpdated{display:block;color:#a8bed1}#masterWorkState{color:#73dfdf}#masterReceipts{max-height:260px;overflow:auto}
+@media(max-width:640px){#masterOrders{padding:14px}#btnMasterOrders{font-size:12px;padding:6px}#nx-master-tiles{display:none!important}}

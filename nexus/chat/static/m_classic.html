@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#0b0e14"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="NEXUS"/>
+<title>NEXUS</title>
+<link rel="manifest" href="/static/manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png"/>
+<link rel="stylesheet" href="/static/css/mobile.css?v=mcall7"/>
+<link rel="stylesheet" href="/static/css/irobot-m.css?v=ir8"/>
+
+<style>
+.m-https-banner{display:block;margin:8px 10px;padding:12px 14px;border-radius:12px;background:#3a1a0a;border:1px solid #c45c26;color:#ffe8d6;font-size:14px;line-height:1.4}
+.m-https-banner[hidden]{display:none!important}
+.m-https-banner b{display:block;margin-bottom:6px;color:#ffb080}
+.m-https-link{display:inline-block;margin:8px 0;padding:8px 12px;border-radius:8px;background:#c45c26;color:#fff;text-decoration:none;font-weight:600;word-break:break-all}
+.m-https-link:active{opacity:.85}
+.m-offline-banner{display:block;margin:8px 10px;padding:10px 14px;border-radius:12px;background:#1a2030;border:1px solid #3d4a66;color:#c8d2e8;font-size:13px;line-height:1.4}
+.m-offline-banner[hidden]{display:none!important}
+.m-offline-banner b{color:#9ecbff}
+.m-chip.warn{border-color:#c45c26;color:#ffb080}
+.m-online-only{opacity:.9}
+.m-online-only .tag{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:6px;font-size:11px;background:#3a1a0a;color:#ffb080;border:1px solid #c45c26}
+.m-local-ok .tag{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:6px;font-size:11px;background:#0d2a1a;color:#8dffb0;border:1px solid #2a8a55}
+</style>
+<link rel="stylesheet" href="/static/css/nexus-live-avatar.css?v=av4">
+</head>
+<body>
+<div id="mApp">
+
+<div id="mOfflineBanner" class="m-offline-banner" hidden>
+  <b>Offline / Host nicht erreichbar</b>
+  <div class="m-muted">UI-Shell aus Cache. Chat, Memory, Dateien, System und lokale KI brauchen LAN zum PC (NEXUS :8299/:8443). Maps/Nominatim brauchen Internet.</div>
+</div>
+<div id="mHttpsBanner" class="m-https-banner" hidden>
+  <b>Mikrofon braucht HTTPS</b>
+  <div class="m-muted">Android blockiert getUserMedia ohne sicheren Kontext. Bitte diese Seite per HTTPS oeffnen:</div>
+  <a id="mHttpsLink" class="m-https-link" href="#">https://HOST:8443/m</a>
+  <div class="m-muted">Einmal "Erweitert" / "Weiter" tippen (Selbstsigniertes Zertifikat), dann Mikrofon erlauben.</div>
+</div>
+  <header id="mHead">
+    <span class="brand-mark">N</span>
+    <span class="brand">NEXUS</span>
+    <span id="mVoiceChip" class="m-chip">Voice Aus</span>
+    <span id="mHealth" class="m-chip ok">—</span>
+    <span id="mNetChip" class="m-chip ok">Netz -</span>
+  </header>
+  <div id="mViews">
+    <section class="m-view active" data-view="chat">
+      <div id="mMsgs"></div>
+    </section>
+    <section class="m-view" data-view="widgets">
+            <div class="card m-dash m-local-ok"><b>System (Live)</b><span class="tag">LOCAL</span>
+        <div class="m-dash-row"><span class="k">CPU</span><span class="v" id="wCpu">—</span></div>
+        <div class="m-dash-row"><span class="k">RAM</span><span class="v" id="wRam">—</span></div>
+        <div class="m-dash-row"><span class="k">DISK</span><span class="v" id="wDisk">—</span></div>
+        <div class="m-dash-row"><span class="k">Battery</span><span class="v unk" id="wBat">UNKNOWN</span></div>
+        <div class="m-dash-row"><span class="k">LLM</span><span class="v" id="wLlm">—</span></div>
+        <div class="m-dash-row"><span class="k">Bridge</span><span class="v" id="wBridge">—</span></div>
+        <div class="m-dash-row"><span class="k">Netz</span><span class="v" id="wNet">—</span></div>
+        <button type="button" id="mDashRefresh" class="m-mini-btn">Aktualisieren</button>
+      </div>
+<div class="card m-dash" id="mOsCard"><b>NEXUS OS Status</b><span class="tag" id="mOsHealthTag">…</span>
+        <div id="mOsRows"></div>
+        <div class="m-muted" id="mOsFoot">Quelle: /api/nexus-os/status</div>
+      </div>
+<div class="card"><b>Health</b><div id="wHealth">—</div></div>
+      <div class="card"><b>Ollama</b><div id="wOllama">—</div></div>
+      <div class="card"><b>Module</b><div id="wMods">—</div></div>
+      <div class="card m-local-ok"><b>Lokal (LAN/Host)</b><span class="tag">LOCAL</span>
+        <div class="m-muted">UI-Shell (PWA-Cache), Chat+Ollama wenn Modell up, Memory, Dateien (Sandbox), System/Metrics, Skills (Discovery), Voice TTS/STT am Host.</div>
+      </div>
+      <div class="card m-online-only"><b>Online-only</b><span class="tag">ONLINE</span>
+        <div class="m-muted">OpenStreetMap/Nominatim, Web-Suche, YouTube-Suche, Edge-TTS (Cloud), externe iframes. Ohne Internet eingeschraenkt.</div>
+      </div>
+      <div class="card"><b>Screen-Share</b><div>Auf Mobilgeräten oft blockiert — Desktop-UI nutzen.</div></div>
+      <div class="card"><b>Anruf / LAN</b>
+        <div class="m-muted">Handy → HTTPS bevorzugen: <code>https://&lt;PC-IP&gt;:8443/m</code> (Mikrofon). HTTP :8299 nur Chat.</div>
+        <div class="m-muted" id="mLanTip">Firewall: auf dem PC <code>enable_lan_firewall.ps1</code> (TCP 8299 + 8443).</div>
+      </div>
+    </section>
+    <section class="m-view" data-view="music">
+      <div class="card">Medien-Steuerung</div>
+      <div class="m-media">
+        <button type="button" onclick="media('prev')">⏮</button>
+        <button type="button" onclick="media('pause')">⏸</button>
+        <button type="button" onclick="media('play')">▶</button>
+        <button type="button" onclick="media('next')">⏭</button>
+      </div>
+    </section>
+    <section class="m-view" data-view="galerie">
+      <div class="card"><b>Galerie</b><div class="m-muted">Bilder aus workspace/media, screens, downloads</div>
+        <button type="button" id="mGalRefresh" class="m-mini-btn">Aktualisieren</button>
+      </div>
+      <div id="mGallery" class="m-gallery"></div>
+      <div id="mGalEmpty" class="card m-muted" hidden>Keine Bilder gefunden. Lege jpg/png unter workspace/media ab.</div>
+      <div id="mLightbox" class="m-lightbox" hidden>
+        <button type="button" id="mLbClose" class="m-lb-close" aria-label="Schließen">✕</button>
+        <img id="mLbImg" alt=""/>
+        <div id="mLbCap" class="m-lb-cap"></div>
+      </div>
+    </section>
+    <section class="m-view" data-view="maps">
+      <div class="card"><b>Maps</b>
+        <div class="m-map-tools">
+          <input id="mMapQ" type="search" placeholder="Ort suchen (z.B. München)…" autocomplete="off"/>
+          <button type="button" id="mMapGo" class="m-mini-btn">Suchen</button>
+        </div>
+        <div class="m-muted m-online-only">OpenStreetMap <span class="tag">ONLINE</span> — braucht Internet (Nominatim/Tiles).</div>
+      </div>
+      <div class="m-map-wrap">
+        <iframe id="mMapFrame" title="OpenStreetMap"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=11.4,48.05,11.7,48.25&amp;layer=mapnik"
+          loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <a id="mMapLink" class="m-link card" href="https://www.openstreetmap.org/#map=12/48.137/11.575" target="_blank" rel="noopener">In OSM öffnen</a>
+    </section>
+    <section class="m-view" data-view="mehr">
+      <div class="card" id="mInstallCard" hidden>
+        <b>Handy-App</b>
+        <div class="m-install-hint">Als App auf dem Homescreen installieren.</div>
+        <button type="button" id="mInstallBtn" class="m-install-btn">App installieren</button>
+        <p class="m-install-note" id="mInstallNote">Android: Chrome-Menü (⋮) → „App installieren“ / „Zum Startbildschirm“. PWA-Install oft nur mit HTTPS oder localhost; im LAN per HTTP geht oft trotzdem „Zum Startbildschirm hinzufügen“. iOS Safari: Teilen → „Zum Home-Bildschirm“.</p>
+      </div>
+      <div class="card"><a href="/" class="m-link">Desktop-UI öffnen</a></div>
+      <div class="card">Version <span id="mVer">—</span></div>
+      <div class="card"><b>PWA</b><div id="mPwaMode">Browser</div></div>
+      <div class="card"><b>SW Cache</b><div id="mSwVer">-</div></div>
+      <div class="card"><b>Anruf-Modus</b>
+        <div class="m-muted">Taste „Anrufen“ → durchgehend hören → Agent (inkl. Bauen/Tools) → Amala TTS → wieder hören. Mittendrin unterbrechen (Barge-in) möglich.</div>
+      </div>
+    </section>
+  </div>
+  <div id="mComposer">
+    <div class="m-box">
+      <button id="mVoiceMsg" type="button" class="m-voice-msg" title="Sprachnachricht (halten)" aria-label="Sprachnachricht">🎤</button>
+      <button id="mCallBtn" type="button" class="m-call-btn" title="Anrufen" aria-label="Anrufen">📞</button>
+      <button id="mLive" type="button" title="Kurz Live" aria-label="Live" hidden>🎙</button>
+      <textarea id="mInput" rows="1" placeholder="Nachricht an NEXUS…"></textarea>
+      <button id="mSend" type="button" aria-label="Senden">↑</button>
+    </div>
+  </div>
+  <nav id="mNav">
+    <button type="button" data-view="chat" class="active">Chat</button>
+    <button type="button" data-view="widgets">Widgets</button>
+    <button type="button" data-view="music">Musik</button>
+    <button type="button" data-view="galerie">Galerie</button>
+    <button type="button" data-view="maps">Maps</button>
+    <button type="button" data-view="mehr">Mehr</button>
+  </nav>
+</div>
+
+<!-- Anruf-Overlay -->
+<div id="mCallOverlay" class="m-call-overlay" hidden>
+  <div class="m-call-bg"></div>
+  <div class="m-call-panel">
+    <div class="m-call-avatar" aria-hidden="true">N</div>
+    <div class="m-call-name">NEXUS</div>
+    <div id="mCallStatus" class="m-call-status" data-state="idle">Bereit</div>
+    <div id="mCallTimer" class="m-call-timer">00:00</div>
+    <div id="mCallHint" class="m-call-hint">Wie ein Telefonat — Tools &amp; Bauen laufen weiter.</div>
+    <div id="mCallTranscript" class="m-call-transcript" hidden></div>
+    <div class="m-call-actions">
+      <button type="button" id="mCallMute" class="m-call-act" aria-pressed="false">
+        <span class="ico">🔇</span><span class="lbl">Stumm</span>
+      </button>
+      <button type="button" id="mCallHang" class="m-call-act hang" aria-label="Auflegen">
+        <span class="ico">✕</span><span class="lbl">Auflegen</span>
+      </button>
+      <button type="button" id="mCallShowText" class="m-call-act" aria-pressed="false">
+        <span class="ico">💬</span><span class="lbl">Text</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<audio id="mTts" preload="none" playsinline></audio>
+<script src="/static/js/mobile.js?v=mcall8"></script>
+<script src="/static/js/nexus_os_status_m.js?v=os3"></script>
+<script src="/static/js/irobot.js?v=ir8"></script>
+<script src="/static/js/irobot-m.js?v=ir8"></script>
+<script src="/static/js/nexus-live-avatar.js?v=av4" defer></script>
+<script src="/static/js/nexus-live-hook.js?v=av4" defer></script>
+</body>
+</html>

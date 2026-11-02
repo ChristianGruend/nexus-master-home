@@ -1,0 +1,36 @@
+/* One image coordinate system for the portrait and every facial feature. */
+.nx-holo-avatar[data-rig-mode="registered"] > img {
+  visibility: hidden;
+}
+.nx-holo-avatar[data-rig-mode="registered"] .nx-puppet-stage {
+  transform: translateY(calc(var(--nx-head-y, 0) * 1px)) rotate(calc(var(--nx-head-r, 0) * 1deg));
+  transform-origin: 58% 46%;
+  will-change: transform;
+}
+.nx-holo-avatar .nx-puppet-stage > .nx-avatar-original,
+.nx-holo-avatar .nx-puppet-stage > .nx-face-overlay {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 50%;
+}
+.nx-holo-avatar .nx-puppet-stage > .nx-avatar-original {
+  transform: none;
+  filter: none;
+  scale: none;
+  translate: none;
+  animation: none;
+  will-change: auto;
+}
+.nx-face-overlay {
+  overflow: hidden;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nx-holo-avatar[data-rig-mode="registered"] .nx-puppet-stage {
+    transform: none;
+  }
+}

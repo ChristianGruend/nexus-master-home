@@ -1,0 +1,120 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXUS Studio</title>
+<style>
+:root{--bg:#050b1a;--pan:#0a1630cc;--bd:#1d3b6e;--neon:#2f8cff;--neon2:#53d0ff;--tx:#dbe7ff;--mut:#7f95bd;--ok:#3fd68b;--err:#ff5c6c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 30% 0%,#0d2a5c 0%,#050b1a 55%) fixed;color:var(--tx);font:14px "Segoe UI",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:190px 1fr 290px;gap:14px;padding:14px;min-height:100vh}
+.pan{background:var(--pan);border:1px solid var(--bd);border-radius:12px;padding:12px;box-shadow:0 0 18px #0a3a8a33 inset}
+h1{margin:0;font-size:30px;letter-spacing:.5px}h1 span{color:var(--neon2)}h2{margin:0 0 8px;font-size:17px}h3{margin:0 0 6px;font-size:14px;color:var(--neon2)}
+.sub{color:var(--mut);margin-top:2px}.side{display:flex;flex-direction:column;gap:4px;position:sticky;top:14px;height:calc(100vh - 28px)}
+.logo{font-weight:800;font-size:20px;color:var(--neon2);text-align:center;margin:6px 0 14px}
+.side button{all:unset;cursor:pointer;padding:9px 10px;border-radius:8px;color:var(--tx)}.side button:hover,.side button.on{background:linear-gradient(90deg,#1554c0,#0b2b66)}
+.side .st{margin-top:auto;font-size:12px;color:var(--mut)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--err)}.dot.on{background:var(--ok)}
+.main{display:flex;flex-direction:column;gap:14px;min-width:0}.hdr{display:flex;justify-content:space-between;align-items:end}
+.editor{display:grid;grid-template-columns:240px 1fr;gap:14px}
+.ba{position:relative;height:300px;border-radius:10px;overflow:hidden;background:#000;user-select:none;cursor:crosshair}
+.ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.ba .aft{clip-path:inset(0 0 0 var(--x,50%))}
+.ba .bar{position:absolute;top:0;bottom:0;left:var(--x,50%);width:2px;background:var(--neon2);box-shadow:0 0 8px var(--neon2)}
+.ba .lb{position:absolute;bottom:6px;padding:2px 8px;background:#000a;border-radius:6px;font-size:12px}.ba .rect{position:absolute;border:2px dashed #ff0;display:none}
+input[type=range]{width:100%}input,select{background:#061026;color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px}
+.prompt{display:flex;gap:8px;margin-top:8px}.prompt input{flex:1}
+.btn{cursor:pointer;border:0;border-radius:8px;padding:8px 14px;color:#fff;background:linear-gradient(90deg,#1f6fff,#2aa7ff)}.btn.g{background:#0d2148;border:1px solid var(--bd)}
+.qa{display:flex;flex-direction:column;gap:6px}.qa .btn{text-align:left}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.tile{position:relative;border-radius:10px;overflow:hidden;height:130px;background:#0b1b3a;border:1px solid var(--bd);cursor:pointer}
+.tile img{width:100%;height:100%;object-fit:cover;opacity:.85}.tile div{position:absolute;left:0;right:0;bottom:0;padding:6px;background:linear-gradient(transparent,#000c)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.ph{border-radius:8px;overflow:hidden;background:#0b1b3a;border:1px solid var(--bd);cursor:pointer}.ph.sel{outline:2px solid var(--neon2)}
+.ph img{width:100%;height:95px;object-fit:cover;display:block}.ph div{padding:4px 6px;font-size:11px;color:var(--mut)}
+.row{display:grid;grid-template-columns:1fr 200px 280px;gap:14px}.more .btn{display:block;width:100%;margin-bottom:6px;text-align:left}
+.vars{display:flex;gap:6px;flex-wrap:wrap}.vars .btn.on{outline:2px solid var(--neon2)}
+.tree div{display:flex;justify-content:space-between;padding:2px 0}.tree .s{padding-left:16px;color:var(--mut)}
+#out{white-space:pre-wrap;font:12px Consolas,monospace;max-height:260px;overflow:auto;background:#030817;border-radius:8px;padding:8px;margin-top:8px}
+.vlist img{height:56px;border-radius:6px;margin:2px;cursor:pointer;border:1px solid var(--bd)}
+.tag{display:inline-block;background:#0d2a5c;border-radius:10px;padding:1px 8px;margin:2px;font-size:11px}
+</style></head><body><div class="app">
+<nav class="pan side" id="nav"><div class="logo">NEXUS</div>
+<button data-go="home" class="on">Startseite</button><button data-go="edit">Bildbearbeitung</button><button data-go="lib">Fotoverwaltung</button>
+<button data-go="cats">Kategorien</button><button data-go="search">Suche</button><button data-go="dups">Duplikate</button><button data-go="settings">Einstellungen</button>
+<button onclick="location.href='/'">← NEXUS Home</button>
+<div class="st"><div><span class="dot" id="dNexus"></span>NEXUS</div><div><span class="dot" id="dAi"></span><span id="aiTxt">Lokale KI prüfen…</span></div><div id="libTxt"></div></div></nav>
+<main class="main">
+<div class="hdr"><div><h1>NEXUS <span>Studio</span></h1><div class="sub">KI-Bildbearbeitung &amp; Intelligente Fotoverwaltung – lokal</div></div><div class="sub">Deine Fotos. Unsere KI. Deine Kontrolle.</div></div>
+<section class="pan editor" id="edit"><div><h2>KI-Bildbearbeitung</h2><div class="sub">Sag einfach, was du willst. Jede Änderung wird eine neue Version – das Original bleibt unberührt.</div>
+<div id="selInfo" class="sub" style="margin-top:10px">Kein Bild gewählt – unten im Fotogrid anklicken.</div><div id="kw"></div>
+<div class="sub" style="margin-top:8px">Bereich wählen: im Bild ziehen (für Objekt entfernen / Hintergrund).</div><div id="rectTxt" class="sub"></div></div>
+<div><div class="ba" id="ba"><img id="imgB" alt=""><img id="imgA" class="aft" alt=""><div class="bar"></div><div class="rect" id="rect"></div>
+<span class="lb" style="left:6px">Vorher</span><span class="lb" style="right:6px" id="aftLb">Nachher</span></div>
+<input type="range" id="sl" min="0" max="100" value="50">
+<div class="prompt"><input id="cmd" placeholder="Was soll ich mit diesem Bild machen?"><button class="btn" id="go">Bearbeiten ›</button></div></div></section>
+<section class="pan" id="cats"><h2>Automatische Kategorisierung <span class="sub" id="catInfo"></span></h2><div class="tiles" id="tiles"></div>
+<div style="margin-top:8px"><button class="btn g" id="catRun">Nicht kategorisierte jetzt analysieren (llava lokal)</button></div></section>
+<div class="row" id="lib"><section class="pan"><h2>Deine Fotos – clever organisiert <span class="sub" id="gridInfo"></span></h2><div class="grid" id="grid"></div></section>
+<section class="pan more"><h3>Weitere Funktionen</h3><button class="btn g" data-go="dups">Dubletten finden</button><button class="btn g" id="qBtn">Qualität prüfen</button>
+<button class="btn g" data-go="search">Suchen</button><button class="btn g" id="batchBtn">Batch: alle optimieren</button><button class="btn g" id="impBtn">Import / Export</button><button class="btn g" id="verBtn">Sicherung: Originale prüfen</button><button class="btn g" id="orgBtn">Ordnerschema vorschlagen</button></section>
+<section class="pan"><h3>Varianten</h3><div class="vars" id="vars"></div><div class="vlist" id="vlist"></div>
+<button class="btn" style="width:100%;margin-top:8px" id="saveVar">Als neue Version speichern</button></section></div>
+<section class="pan" id="panel"><h2 id="pTitle">Protokoll</h2><div id="pBody"></div><div id="out"></div></section>
+</main>
+<aside style="display:flex;flex-direction:column;gap:14px"><section class="pan qa"><h3>Schnellaktionen</h3>
+<button class="btn g" data-op="remove_object">Objekt entfernen</button><button class="btn g" data-op="bg_replace">Hintergrund ändern</button><button class="btn g" data-op="bg_blur">Hintergrund unscharf</button>
+<button class="btn g" data-op="auto">Farben optimieren</button><button class="btn g" data-op="style_transfer">Stil übertragen</button><button class="btn g" data-op="outpaint">Bild erweitern (Outpainting)</button>
+<button class="btn g" data-op="restore">Bild restaurieren</button></section>
+<section class="pan tree" id="settings"><h3>Kategorien</h3><div id="tree"></div></section></aside></div>
+<script>
+const $=s=>document.querySelector(s),api=(p,b)=>fetch(p,b?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}:{}).then(r=>r.json());
+let S={items:[],sel:null,ver:null,rect:null,variant:"natural"};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function log(t,o){$("#out").textContent=(new Date().toLocaleTimeString()+"  "+t+(o?"\n"+JSON.stringify(o,null,1):"")+"\n\n"+$("#out").textContent).slice(0,20000)}
+async function status(){try{const s=await api("/api/studio/status");$("#dNexus").classList.add("on");S.status=s;const st=s.stats;
+$("#libTxt").textContent=`${st.total} Bilder · ${st.categorized} kategorisiert · ${st.versions} Versionen`;
+$("#catInfo").textContent=s.job.running?`Analyse läuft: ${s.job.done}/${s.job.total}`:`${st.categorized}/${st.total} analysiert · Taxonomie: ${s.taxonomy.source}`;
+let h="";for(const[c,n]of Object.entries(st.tree).sort((a,b)=>b[1].count-a[1].count)){h+=`<div><a href="#" onclick="return filt('${esc(c)}')">${esc(c)}</a><b>${n.count}</b></div>`;for(const[sc,k]of Object.entries(n.sub))h+=`<div class=s><span>${esc(sc)}</span><span>${k}</span></div>`}
+$("#tree").innerHTML=h||"<div class=sub>Noch keine Bilder.</div>";return s}catch(e){$("#dNexus").classList.remove("on")}}
+async function ai(){try{const h=await fetch("/api/ai/status").then(r=>r.json());const ok=h.reachable!==false;$("#dAi").classList.toggle("on",ok);$("#aiTxt").textContent=ok?"Lokale KI aktiv":"Lokale KI aus"}catch(e){$("#aiTxt").textContent="Lokale KI unbekannt"}}
+async function lib(params=""){const r=await api("/api/studio/library"+params);S.items=r.items||[];
+$("#gridInfo").textContent=`${S.items.length} Treffer`;$("#grid").innerHTML=S.items.map(i=>`<div class="ph${S.sel&&S.sel.id==i.id?" sel":""}" onclick="pick('${i.id}')"><img loading=lazy src="/api/studio/img/${i.id}/thumb"><div>${esc(i.category||"–")}<br>${esc(i.date)} · Q ${i.quality.score}</div></div>`).join("");
+if(!params){const by={};for(const i of S.items){const c=i.category||"Unkategorisiert";(by[c]=by[c]||[]).push(i)}
+$("#tiles").innerHTML=Object.entries(by).sort((a,b)=>b[1].length-a[1].length).map(([c,l])=>`<div class=tile onclick="filt('${esc(c)}')"><img src="/api/studio/img/${l[0].id}/thumb"><div><b>${esc(c)}</b><br>${l.length} Bilder</div></div>`).join("")}}
+function filt(c){lib("?category="+encodeURIComponent(c));log("Filter Kategorie: "+c);return false}
+function pick(id){const i=S.items.find(x=>x.id==id)||S.sel;S.sel=i;S.rect=null;$("#rect").style.display="none";$("#rectTxt").textContent="";
+$("#imgB").src=`/api/studio/img/${id}/original`;const v=i.versions.at(-1);$("#imgA").src=v?`/api/studio/img/${id}/v${v.n}`:`/api/studio/img/${id}/original`;$("#aftLb").textContent=v?`Nachher (v${v.n} ${v.op})`:"Nachher (noch keine Version)";
+$("#selInfo").innerHTML=`<b>${esc(i.name)}</b><br>${i.width}×${i.height} · ${esc(i.date)} · Qualität ${i.quality.score}/100 (Schärfe ${i.quality.sharpness})<br>${esc(i.category||"unkategorisiert")} / ${esc(i.subcategory||"")}<br><span class=sub>${esc(i.description)}</span>`;
+$("#kw").innerHTML=(i.keywords||[]).map(k=>`<span class=tag>${esc(k)}</span>`).join("");
+$("#vlist").innerHTML=`<img title="Original" src="/api/studio/img/${id}/thumb" onclick="showV(0)">`+i.versions.map(v=>`<img title="v${v.n} ${v.op}" src="/api/studio/img/${id}/v${v.n}" onclick="showV(${v.n})">`).join("");
+document.querySelectorAll(".ph").forEach(p=>p.classList.toggle("sel",p.getAttribute("onclick").includes(id)))}
+function showV(n){const id=S.sel.id;$("#imgA").src=n?`/api/studio/img/${id}/v${n}`:`/api/studio/img/${id}/original`;$("#aftLb").textContent=n?`Nachher (v${n})`:"Original"}
+async function refreshSel(){const r=await api("/api/studio/library");S.items=r.items;pick(S.sel.id);status()}
+function need(){if(!S.sel){log("Bitte zuerst ein Bild im Fotogrid wählen.");return false}return true}
+async function edit(op){if(!need())return;log(`Bearbeite ${S.sel.name}: ${op} …`);const r=await api("/api/studio/edit",{id:S.sel.id,op,rect:S.rect});log(r.success?`Neue Version v${r.version.n} (${op}) gespeichert – Original unverändert`:`${op}: ${r.error}`+(S.status&&S.status.blocked_ops[op]?"\n"+S.status.blocked_ops[op]:""),r.success?r.version:null);if(r.success)refreshSel()}
+$("#go").onclick=async()=>{if(!need())return;const t=$("#cmd").value.trim();if(!t)return;log("Befehl an NEXUS GPT: "+t);$("#go").disabled=true;
+try{const r=await api("/api/studio/command",{id:S.sel.id,text:t,rect:S.rect});log(`Plan (${r.plan.source}): ${r.plan.ops.join(", ")||"keine"}`,r.results);refreshSel()}finally{$("#go").disabled=false}};
+document.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>edit(b.dataset.op));
+const VARS=[["Original",null],["Natürlich","natural"],["Warm","warm"],["Kühler","cool"],["Künstlerisch","artistic"]];
+$("#vars").innerHTML=VARS.map(([l,o])=>`<button class="btn g${o==S.variant?" on":""}" data-v="${o||""}">${l}</button>`).join("");
+document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{S.variant=b.dataset.v||null;document.querySelectorAll("[data-v]").forEach(x=>x.classList.toggle("on",x==b));if(!S.variant&&S.sel)showV(0)});
+$("#saveVar").onclick=()=>S.variant?edit(S.variant):log("Original ist bereits gespeichert (unverändert).");
+$("#sl").oninput=e=>$("#ba").style.setProperty("--x",e.target.value+"%");
+// Rechteck ziehen -> Pixelkoordinaten im Original
+(()=>{const ba=$("#ba"),rc=$("#rect");let st=null;ba.onmousedown=e=>{if(!S.sel)return;const b=ba.getBoundingClientRect();st=[e.clientX-b.left,e.clientY-b.top];rc.style.display="block"};
+ba.onmousemove=e=>{if(!st)return;const b=ba.getBoundingClientRect(),x=e.clientX-b.left,y=e.clientY-b.top;Object.assign(rc.style,{left:Math.min(x,st[0])+"px",top:Math.min(y,st[1])+"px",width:Math.abs(x-st[0])+"px",height:Math.abs(y-st[1])+"px"})};
+ba.onmouseup=e=>{if(!st)return;const b=ba.getBoundingClientRect(),W=S.sel.width,H=S.sel.height,sc=Math.min(b.width/W,b.height/H),ox=(b.width-W*sc)/2,oy=(b.height-H*sc)/2;
+const x1=(parseFloat(rc.style.left)-ox)/sc,y1=(parseFloat(rc.style.top)-oy)/sc,w=parseFloat(rc.style.width)/sc,h=parseFloat(rc.style.height)/sc;st=null;
+if(w<5||h<5){rc.style.display="none";S.rect=null;$("#rectTxt").textContent="";return}S.rect=[Math.max(0,Math.round(x1)),Math.max(0,Math.round(y1)),Math.round(w),Math.round(h)];$("#rectTxt").textContent="Bereich: "+S.rect.join(", ")}})();
+function panel(t,h){$("#pTitle").textContent=t;$("#pBody").innerHTML=h;$("#panel").scrollIntoView({behavior:"smooth"})}
+const go={home:()=>scrollTo({top:0,behavior:"smooth"}),edit:()=>$("#edit").scrollIntoView({behavior:"smooth"}),lib:()=>{lib();$("#lib").scrollIntoView({behavior:"smooth"})},cats:()=>$("#cats").scrollIntoView({behavior:"smooth"}),
+search:()=>{panel("Suche",`<div class=prompt><input id=sq placeholder="Motiv / Schlagwort"><select id=sc><option value="">alle Kategorien</option>${Object.keys((S.status||{}).stats?.tree||{}).map(c=>`<option>${esc(c)}</option>`).join("")}</select><input id=sf type=date><input id=st type=date><input id=sm type=number min=0 max=100 placeholder="min. Qualität" style="width:110px"><button class=btn id=sgo>Suchen</button></div>`);
+$("#sgo").onclick=()=>{const p=new URLSearchParams({q:$("#sq").value,category:$("#sc").value,from:$("#sf").value,to:$("#st").value,min_quality:$("#sm").value||0});lib("?"+p);log("Suche: "+p);$("#lib").scrollIntoView({behavior:"smooth"})}},
+dups:async()=>{const r=await api("/api/studio/duplicates");panel("Dubletten & ähnliche Bilder",`<div class=sub>${esc(r.method)} · ${r.pairs.length} Paare</div>`+r.pairs.map(p=>`<div style="margin:6px 0"><img style="height:70px" src="/api/studio/img/${p.a}/thumb"> <img style="height:70px" src="/api/studio/img/${p.b}/thumb"> <b>${p.type}</b> Abstand ${p.distance}</div>`).join("")||"Keine.")},
+settings:()=>{const s=S.status||{};panel("Einstellungen & Status",`<div>Bibliothek: ${esc(s.library)}</div><div>Taxonomie-Quelle: ${esc(s.taxonomy?.source)} (Hermes-Datei)</div><div>Klassische Operationen: ${(s.ops||[]).join(", ")}</div><h3 style="margin-top:8px">Offen / BLOCKED</h3>${Object.entries(s.blocked_ops||{}).map(([k,v])=>`<div><b>${k}</b>: ${esc(v)}</div>`).join("")}`)}};
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{document.querySelectorAll("#nav [data-go]").forEach(x=>x.classList.toggle("on",x.dataset.go==b.dataset.go));go[b.dataset.go]()});
+$("#catRun").onclick=async()=>{const r=await api("/api/studio/categorize",{});log("Kategorisierung: "+(r.success?r.started+" Bilder gestartet":r.error))};
+$("#qBtn").onclick=()=>{const l=[...S.items].sort((a,b)=>a.quality.score-b.quality.score);panel("Qualität (niedrigste zuerst)",l.map(i=>`<div>${esc(i.name)} – <b>${i.quality.score}</b>/100 · Schärfe ${i.quality.sharpness} · Helligkeit ${i.quality.brightness} · ${i.quality.megapixel} MP</div>`).join(""))};
+$("#batchBtn").onclick=async()=>{if(!confirm(`Für ${S.items.length} Bilder je eine neue Version 'auto' anlegen?`))return;for(const i of S.items){const r=await api("/api/studio/edit",{id:i.id,op:"auto"});log(`${i.name}: ${r.success?"v"+r.version.n:r.error}`)}status()};
+$("#impBtn").onclick=()=>{panel("Import / Export",`<div class=prompt><input id=if placeholder="Ordner auf G:, z.B. G:\\Fotos"><input id=il type=number value=20 style="width:80px"><button class=btn id=igo>Kopien importieren</button></div><div class=sub>Import legt schreibgeschützte KOPIEN an (SHA-256 geprüft). Export: Versionen liegen in workspace\\studio\\versions.</div>`);
+$("#igo").onclick=async()=>{const r=await api("/api/studio/import",{folder:$("#if").value,limit:+$("#il").value});log("Import",r);lib();status()}};
+$("#verBtn").onclick=async()=>{const r=await api("/api/studio/verify",{});log(`Originale geprüft: ${r.checked}, alle unverändert: ${r.all_ok}`,r.items.filter(i=>!i.source_unchanged||!i.copy_unchanged))};
+$("#orgBtn").onclick=async()=>{const r=await api("/api/studio/organize/propose",{});panel("Ordnerschema (Vorschlag)",`<div class=sub>${esc(r.hinweis)}</div>`+r.plan.slice(0,200).map(p=>`<div>${esc(p.to)}</div>`).join("")+`<button class=btn id=oapp style="margin-top:8px">Freigeben & Kopien anlegen</button>`);
+$("#oapp").onclick=async()=>{if(!confirm("Freigabe: Kopien gemäß Vorschlag anlegen?"))return;log("Ordnerschema",await api("/api/studio/organize/apply",{nonce:r.nonce,confirm:true}))}};
+status().then(()=>lib());ai();setInterval(status,5000);
+</script><script src="/static/js/studio_fx.js?v=st0x20261028"></script></body></html>

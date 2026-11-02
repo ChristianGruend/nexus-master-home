@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="de"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>NEXUS OS GPT</title>
+<link rel="manifest" href="/static/nexus-os-gpt.webmanifest">
+<!-- NEXUS OS GPT 3.0.0 – eine UI-Codebasis fuer PWA (/m im Core) und native Huelle (ai.nexus.os.mobile).
+     Quelle: G:\meine-ki\NEXUS_OS_GPT\ui\index.html  – nicht direkt im Ziel editieren, sync.ps1 nutzen. -->
+<style>
+:root{--bg:#000;--bg2:#0d0d0f;--bg3:#17171a;--ln:#26262b;--tx:#ececf1;--mu:#8e8ea0;--ac:#7c5cff;--ac2:#00d4ff;--ok:#2ecc71;--bad:#ff5c5c;--r:22px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+.ib:active{background:var(--bg3)}
+.ib svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+header{display:flex;align-items:center;gap:4px;padding:6px 8px;flex:0 0 auto}
+header .t{flex:1;text-align:center;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mu)}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+#route{font-size:12px;color:var(--mu);font-weight:400}
+main{flex:1;overflow-y:auto;padding:8px 16px 16px;scroll-behavior:smooth}
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+.logo{width:76px;height:76px;border-radius:24px;background:radial-gradient(circle at 30% 30%,var(--ac2),var(--ac) 60%,#1a0f4d);display:grid;place-items:center;font-weight:800;font-size:30px;box-shadow:0 0 40px #7c5cff55}
+.empty h1{margin:0;font-size:24px}
+.sugg{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:460px}
+.sugg button{background:var(--bg2);border:1px solid var(--ln);border-radius:16px;padding:12px;text-align:left;font-size:14px;color:var(--tx)}
+.sugg button small{display:block;color:var(--mu)}
+.msg{margin:14px 0;display:flex}
+.msg.me{justify-content:flex-end}
+.msg .b{max-width:86%;white-space:pre-wrap;word-wrap:break-word}
+.msg.me .b{background:var(--bg3);padding:10px 14px;border-radius:20px 20px 6px 20px}
+.msg.ai .b{padding:2px 2px}
+.msg.ai .who{font-size:12px;color:var(--mu);margin-bottom:2px}
+.msg.err .b{color:var(--bad)}
+.msg .b code{background:var(--bg3);padding:1px 5px;border-radius:6px;font-size:14px}
+.msg .b pre{background:var(--bg2);border:1px solid var(--ln);padding:10px;border-radius:12px;overflow-x:auto;white-space:pre}
+.acts{display:flex;gap:2px;margin-top:4px}.acts .ib{width:34px;height:34px}.acts svg{width:18px;height:18px;color:var(--mu)}
+.typing::after{content:"▍";animation:bl 1s infinite;color:var(--ac2)}@keyframes bl{50%{opacity:0}}
+footer{flex:0 0 auto;padding:6px 10px 10px}
+.box{display:flex;align-items:flex-end;gap:6px;background:var(--bg2);border:1px solid var(--ln);border-radius:28px;padding:6px}
+textarea{flex:1;resize:none;border:0;outline:0;background:none;color:var(--tx);font:inherit;max-height:140px;padding:9px 6px}
+#send{background:var(--tx);color:#000}#send:disabled{opacity:.3}
+#live.on{background:var(--ok,#2ecc71);color:#fff;animation:pu 1.2s infinite}#mic.on{background:var(--bad);color:#fff;animation:pu 1.2s infinite}@keyframes pu{50%{box-shadow:0 0 0 8px #ff5c5c33}}
+.hint{text-align:center;font-size:11px;color:var(--mu);margin-top:6px}
+#scrim{position:fixed;inset:0;background:#0009;opacity:0;pointer-events:none;transition:.25s;z-index:5}
+#scrim.on{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:84%;max-width:340px;background:var(--bg2);z-index:6;transform:translateX(-100%);transition:transform .25s;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 10px) 10px 10px}
+#drawer.on{transform:none}
+.dsec{color:var(--mu);font-size:12px;margin:14px 8px 6px;text-transform:uppercase;letter-spacing:.06em}
+.di{display:flex;align-items:center;gap:12px;width:100%;padding:11px 10px;border-radius:12px;text-align:left}
+.di:active,.di.cur{background:var(--bg3)}
+.di svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;flex:0 0 auto}
+.di span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#hist{flex:1;overflow-y:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:82dvh;background:var(--bg2);border-radius:22px 22px 0 0;z-index:7;transform:translateY(105%);transition:transform .25s;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+#sheet.on{transform:none}
+#sheet .hd{display:flex;align-items:center;padding:10px 12px 4px}#sheet .hd b{flex:1;font-size:18px;padding-left:6px}
+#sheetBody{overflow-y:auto;padding:6px 16px 20px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--ln);font-size:15px}.kv span:last-child{color:var(--mu);text-align:right}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.app{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;text-align:center}
+.app img,.app i{width:52px;height:52px;border-radius:16px;background:var(--bg3);display:block}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.pill{background:var(--bg3);border:1px solid var(--ln);border-radius:999px;padding:10px 16px}
+.pill:active{background:var(--ln)}
+input.f{width:100%;background:var(--bg3);border:1px solid var(--ln);color:var(--tx);border-radius:12px;padding:11px;font:inherit}
+label.sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+#toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--ln);padding:9px 16px;border-radius:999px;font-size:14px;display:none;z-index:9}
+</style></head><body>
+<header>
+  <button class="ib" id="menuBtn" aria-label="Menü"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16"/></svg></button>
+  <div class="t"><span class="dot" id="dot"></span>NEXUS OS GPT <span id="route"></span></div>
+  <button class="ib" id="newBtn" aria-label="Neuer Chat"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+</header>
+<main id="main"></main>
+<footer>
+  <div class="box">
+    <button class="ib" id="toolsBtn" aria-label="Werkzeuge"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <textarea id="inp" rows="1" placeholder="Frag NEXUS …"></textarea>
+    <button class="ib" id="live" aria-label="Live-Gespräch"><svg viewBox="0 0 24 24"><path d="M4 12h2M8 8v8M12 5v14M16 8v8M20 12h-2"/></svg></button>
+    <button class="ib" id="mic" aria-label="Sprechen"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+    <button class="ib" id="send" aria-label="Senden" disabled><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  </div>
+  <div class="hint" id="hint">NEXUS läuft lokal · PC über Tailscale/WLAN</div>
+</footer>
+<div id="scrim"></div>
+<nav id="drawer">
+  <button class="di" id="dNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Neuer Chat</span></button>
+  <div class="dsec">Funktionen</div>
+  <button class="di" data-tool="status"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Status &amp; Geräte</span></button>
+  <button class="di" data-tool="apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>Apps</span></button>
+  <button class="di" data-tool="files"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Dateien</span></button>
+  <button class="di" data-tool="media"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg><span>Media &amp; Steuerung</span></button>
+  <button class="di" data-tool="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 00-2-1.2L14 3h-4l-.5 2.6a7 7 0 00-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 005 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 002 1.2L10 21h4l.5-2.6a7 7 0 002-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg><span>Einstellungen</span></button>
+  <button class="di" id="dClassic"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 9h16"/></svg><span>Klassisches Cockpit</span></button>
+  <div class="dsec">Verlauf</div>
+  <div id="hist"></div>
+</nav>
+<section id="sheet"><div class="hd"><b id="sheetT"></b><button class="ib" id="sheetX"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="sheetBody"></div></section>
+<div id="toast"></div>
+<script>
+'use strict';
+const VERSION='3.1.1';
+const $=id=>document.getElementById(id);
+const N=window.NexusOS||null, NATIVE=!!N, WEB_ORIGIN=/^https?:$/.test(location.protocol);
+function nat(fn,...a){try{if(!N||typeof N[fn]!=='function')return null;const r=N[fn](...a);if(r==null||r==='')return null;try{return JSON.parse(r)}catch(e){return r}}catch(e){return {ok:false,error:'BRIDGE_ERROR'}}}
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2600)}
+/* ---------- Einstellungen (nur lokal) ---------- */
+const DEF={pcBase:'',voiceReply:false,phoneAi:true,phoneAiModel:'qwen2.5:1.5b',sid:'NEXUS-OS-GPT'};
+let cfg=Object.assign({},DEF,JSON.parse(localStorage.getItem('nxgpt.cfg')||'{}'));
+const saveCfg=()=>localStorage.setItem('nxgpt.cfg',JSON.stringify(cfg));
+/* ---------- Verbindung: Core (PC) -> PC_FALLBACK lokale Handy-KI ---------- */
+const CANDS=[{url:'http://wozipc-nexus:8299',route:'Tailscale'},{url:'http://192.0.2.11:8299',route:'Tailscale'},{url:'http://192.0.2.12:8299',route:'WLAN'}];
+const CORE={base:null,route:null};
+function tmo(ms){const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal}
+async function probe(u){try{const r=await fetch(u+'/manifest.webmanifest',{signal:tmo(2500),cache:'no-store'});return r.ok}catch(e){return false}}
+async function connect(){
+  const list=[];
+  if(cfg.pcBase)list.push({url:cfg.pcBase.replace(/\/+$/,''),route:'Eigene'});
+  if(WEB_ORIGIN)list.unshift({url:location.origin,route:location.hostname.startsWith('100.')||location.hostname.includes('wozipc')?'Tailscale':'LAN'});
+  const last=localStorage.getItem('nxgpt.coreLast');
+  CANDS.forEach(c=>list.push(c)); if(last){const i=list.findIndex(c=>c.url===last);if(i>0)list.unshift(list.splice(i,1)[0])}
+  for(const c of list){ if(await probe(c.url)){CORE.base=c.url;CORE.route=c.route;localStorage.setItem('nxgpt.coreLast',c.url);if(NATIVE)nat('setCoreActive',c.url);break} }
+  if(!CORE.base){CORE.route=null}
+  $('dot').className='dot '+(CORE.base?'ok':'bad');
+  $('route').textContent=CORE.base?CORE.route:(cfg.phoneAi?'Handy-KI':'offline');
+  return !!CORE.base;
+}
+/* ---------- Verlauf ---------- */
+let chats=JSON.parse(localStorage.getItem('nxgpt.chats')||'[]'), cur=null;
+const saveChats=()=>{chats=chats.slice(0,50);localStorage.setItem('nxgpt.chats',JSON.stringify(chats))};
+function newChat(){cur={id:'c'+Date.now(),title:'Neuer Chat',msgs:[],at:Date.now()};render();renderHist();closeDrawer()}
+function openChat(id){cur=chats.find(c=>c.id===id)||cur;render();renderHist();closeDrawer()}
+function renderHist(){$('hist').innerHTML=chats.map(c=>`<button class="di${cur&&c.id===cur.id?' cur':''}" data-id="${c.id}"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>${esc(c.title)}</span></button>`).join('')||'<div class="hint">Noch keine Chats</div>'}
+function md(s){let h=esc(s);h=h.replace(/```([\s\S]*?)```/g,(m,c)=>'<pre>'+c.replace(/^\w*\n/,'')+'</pre>');h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');return h}
+function msgHtml(m,i){if(m.who==='me')return `<div class="msg me"><div class="b">${esc(m.text)}</div></div>`;
+  return `<div class="msg ai${m.err?' err':''}"><div><div class="who">${esc(m.meta||'NEXUS')}</div><div class="b${m.live?' typing':''}">${md(m.text)}</div>${m.live?'':`<div class="acts"><button class="ib" data-copy="${i}" aria-label="Kopieren"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h8"/></svg></button><button class="ib" data-say="${i}" aria-label="Vorlesen"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4zM15.5 8.5a5 5 0 010 7"/></svg></button></div>`}</div></div>`}
+function render(){const m=$('main');
+  if(!cur||!cur.msgs.length){m.innerHTML=`<div class="empty"><div class="logo">N</div><h1>Was kann ich für dich tun?</h1><div class="sugg">
+  <button data-s="Wie ist der Status von meinem PC?">Status<small>PC &amp; Handy prüfen</small></button>
+  <button data-s="Öffne WhatsApp">Apps<small>„Öffne WhatsApp“</small></button>
+  <button data-s="Taschenlampe an">Steuerung<small>„Taschenlampe an“</small></button>
+  <button data-s="Was kannst du alles?">Hilfe<small>Was kann NEXUS?</small></button></div></div>`;return}
+  m.innerHTML=cur.msgs.map(msgHtml).join('');m.scrollTop=1e9}
+function persist(){if(!cur)return;const i=chats.findIndex(c=>c.id===cur.id);cur.at=Date.now();if(i>=0)chats.splice(i,1);chats.unshift(cur);saveChats();renderHist()}
+/* ---------- Lokale Sprachbefehle (direkt am Gerät) ---------- */
+let APPS=null;
+function apps(){if(APPS)return APPS;const r=nat('apps',false);APPS=(Array.isArray(r)?r:(r&&r.apps)||[]).filter(a=>!a.system||/whatsapp|youtube|chrome|kamera|camera|galerie|gallery|telefon|phone|kontakte|einstellungen|settings/i.test(a.label||''));return APPS}
+function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function findApp(q){q=norm(q);if(!q)return null;let best=null,bs=0;for(const a of apps()){const l=norm(a.label||a.name);let s=l===q?3:l.startsWith(q)?2:l.includes(q)?1:0;if(s>bs){bs=s;best=a}}return best}
+function localCommand(t){
+  const s=norm(t);
+  if(NATIVE){
+    let m=/^(?:oeffne|offne|starte|open)\s+(.+?)(?:\s+app)?$/.exec(s);
+    if(m){const a=findApp(m[1]);if(a){const r=nat('launchApp',a.pkg||a.package,a.cls||a.activity||'');return (r&&r.ok===false)?'Konnte '+(a.label||m[1])+' nicht starten ('+(r.error||'Fehler')+').':'Ich öffne '+(a.label||m[1])+'.'}}
+    m=/^taschenlampe\s+(an|aus|ein)$/.exec(s);
+    if(m){const r=nat('torch',m[1]!=='aus');return r&&r.ok===false?'Taschenlampe: '+(r.error||'Fehler'):'Taschenlampe '+(m[1]==='aus'?'aus':'an')+'.'}
+    const mk={'pause':'PLAY_PAUSE','stopp':'PLAY_PAUSE','weiter':'PLAY_PAUSE','play':'PLAY_PAUSE','naechster titel':'NEXT','nachster titel':'NEXT','vorheriger titel':'PREVIOUS','lauter':'VOL_UP','leiser':'VOL_DOWN'}[s];
+    if(mk){nat('media',mk);return 'Media: '+t+'.'}
+  }
+  return null;
+}
+/* ---------- Chat: Core-Stream -> Core-JSON -> Handy-KI (PC_FALLBACK) ---------- */
+let busy=false;
+async function streamCore(text,onTok){
+  const r=await fetch(CORE.base+'/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,session_id:cfg.sid+'-'+cur.id}),signal:tmo(120000),cache:'no-store'});
+  if(!r.ok||!r.body)throw Error('STREAM_HTTP_'+r.status);
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf='',acc='',done=null;
+  for(;;){const x=await rd.read();if(x.done)break;buf+=dec.decode(x.value,{stream:true}).replace(/\r\n/g,'\n');let i;
+    while((i=buf.indexOf('\n\n'))>=0){const ev=buf.slice(0,i);buf=buf.slice(i+2);const d=ev.split('\n').filter(l=>l.startsWith('data:')).map(l=>l.slice(5).replace(/^ /,'')).join('\n');if(!d)continue;if(d==='[DONE]')return (done&&done.reply)||acc;
+      let o;try{o=JSON.parse(d)}catch(e){continue}if(o.type==='token'&&o.text){acc+=o.text;onTok(acc)}else if(o.type==='done')done=o;else if(o.type==='error')throw Error(o.error||'STREAM_ERROR')}}
+  if(!acc&&!done)throw Error('STREAM_EMPTY');return (done&&done.reply)||acc}
+async function jsonCore(text){const r=await fetch(CORE.base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,session_id:cfg.sid+'-'+cur.id}),signal:tmo(120000)});const j=await r.json();const t=String(j.reply||j.response||'').trim();if(!t)throw Error(j.error||'EMPTY');return t}
+async function phoneAi(text,onTok){
+  const hist=cur.msgs.filter(m=>!m.err&&!m.live).slice(-8).map(m=>({role:m.who==='me'?'user':'assistant',content:m.text}));
+  const r=await fetch('http://127.0.0.1:11434/api/chat',{method:'POST',body:JSON.stringify({model:cfg.phoneAiModel,messages:[{role:'system',content:'Du bist NEXUS, ein hilfreicher Assistent. Antworte kurz auf Deutsch.'}].concat(hist),stream:false}),signal:tmo(90000)});
+  const j=await r.json();const t=(j.message&&j.message.content||'').trim();if(!t)throw Error('PHONE_AI_EMPTY');return t}
+async function send(text){
+  text=String(text||$('inp').value).trim();if(!text||busy)return;
+  if(!cur)newChat(); $('inp').value='';autoGrow();
+  if(cur.title==='Neuer Chat')cur.title=text.slice(0,40);
+  cur.msgs.push({who:'me',text});
+  const loc=localCommand(text);
+  if(loc){cur.msgs.push({who:'ai',text:loc,meta:'NEXUS · Gerät'});render();persist();speak(loc);return}
+  const m={who:'ai',text:'',live:true,meta:'NEXUS'};cur.msgs.push(m);render();busy=true;$('send').disabled=true;
+  const upd=a=>{m.text=a;const b=$('main').querySelector('.msg:last-child .b');if(b){b.innerHTML=md(a)}$('main').scrollTop=1e9};
+  try{
+    if(!CORE.base)await connect();
+    if(CORE.base){try{m.text=await streamCore(text,upd)}catch(e){if(m.text)throw e;m.text=await jsonCore(text)}m.meta='NEXUS · PC ('+CORE.route+')'}
+    else if(NATIVE&&cfg.phoneAi){m.text=await phoneAi(text);m.meta='NEXUS · Handy-KI (PC_FALLBACK)'}
+    else throw Error('Keine Verbindung zum PC');
+  }catch(e){
+    if(!m.text&&NATIVE&&cfg.phoneAi&&CORE.base){try{m.text=await phoneAi(text);m.meta='NEXUS · Handy-KI (PC_FALLBACK)';CORE.base=null;connect()}catch(e2){}}
+    if(!m.text){m.err=true;m.text='Fehler: '+(e&&e.message||e)+'. PC nicht erreichbar – Tailscale/WLAN prüfen.';m.meta='NEXUS';CORE.base=null;connect()}
+  }
+  m.live=false;busy=false;$('send').disabled=!$('inp').value.trim();render();persist();if(!m.err)speak(m.text);
+}
+/* ---------- Sprache: nativ (SpeechRecognizer/TTS) oder Web Speech API ---------- */
+let listening=false,webRec=null,voiceTurn=false;
+function speak(t){if(live)voiceTurn=true;if(!cfg.voiceReply&&!voiceTurn){return}voiceTurn=false;t=String(t).replace(/[`*#]/g,'').slice(0,800);if(NATIVE)nat('speak',t);else if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(t);u.lang='de-DE';speechSynthesis.cancel();speechSynthesis.speak(u)}}
+function setMic(on){listening=on;$('mic').classList.toggle('on',on);$('hint').textContent=on?'Ich höre zu …':'NEXUS läuft lokal · PC über Tailscale/WLAN'}
+/* 3.1.1 Sprach-Reparatur + Live-Gespraech: Wake-Wort (Vosk) gibt das Mikrofon frei, solange Google-Erkennung laeuft */
+let live=false,liveMiss=0,liveTimer=null,ttsOn=false;
+const SPERR={SPEECH_ERROR_7:'Nichts verstanden \u2013 bitte nochmal sprechen',SPEECH_ERROR_6:'Keine Sprache geh\u00f6rt',SPEECH_ERROR_9:'Mikrofon-Berechtigung fehlt',SPEECH_ERROR_8:'Spracherkennung belegt \u2013 kurz warten',SPEECH_ERROR_2:'Netzwerkfehler der Spracherkennung',SPEECH_ERROR_5:'Spracherkennung abgebrochen',SPEECH_ERROR_3:'Mikrofon-Fehler',SPEECH_ERROR_11:'Deutsches Sprachpaket fehlt',SPEECH_ERROR_13:'Deutsches Sprachpaket fehlt',SPEECH_ERROR_12:'Sprache nicht unterst\u00fctzt',RECOGNITION_UNAVAILABLE:'Keine Spracherkennung auf dem Ger\u00e4t'};
+function wakeP(p){if(NATIVE)nat('wakePause',p)}
+function listenNative(){nat('stopSpeaking');ttsOn=false;wakeP(true);const r=nat('startListening','de-DE');if(r&&r.ok===false){wakeP(false);toast('Mikrofon: '+(r.error||'Fehler'));return false}setMic(true);if(live)$('hint').textContent='Live: Ich h\u00f6re zu \u2026';return true}
+function liveNext(ms){if(!live)return;clearTimeout(liveTimer);liveTimer=setTimeout(()=>{if(!live)return;if(listening||busy||ttsOn)return liveNext(700);listenNative()},ms||350)}
+function liveToggle(){
+  if(!NATIVE){toast('Live-Gespr\u00e4ch nur in der App');return}
+  live=!live;$('live').classList.toggle('on',live);clearTimeout(liveTimer);
+  if(live){liveMiss=0;toast('Live-Gespr\u00e4ch an \u2013 einfach reden. Unterbrechen: Mikrofon tippen. Beenden: \u201eStopp\u201c oder Live-Taste');listenNative()}
+  else{nat('stopListening');nat('stopSpeaking');ttsOn=false;setMic(false);wakeP(false);toast('Live-Gespr\u00e4ch aus')}}
+function micToggle(){
+  if(listening){if(NATIVE){nat('stopListening');if(!live)wakeP(false)}else if(webRec)webRec.stop();setMic(false);return}
+  if(NATIVE){listenNative();return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Spracheingabe wird von diesem Browser nicht unterstützt');return}
+  webRec=new SR();webRec.lang='de-DE';webRec.interimResults=true;
+  webRec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;$('inp').value=t;autoGrow();if(e.results[e.results.length-1].isFinal){setMic(false);voiceTurn=true;send(t)}};
+  webRec.onerror=e=>{setMic(false);toast('Sprache: '+e.error)};webRec.onend=()=>setMic(false);webRec.start();setMic(true)}
+window.NexusEvents={emit(ev,d){try{
+  if(ev==='speech'&&d){if(d.type==='partial'){$('inp').value=String(d.data||'');autoGrow()}
+    else if(d.type==='result'){const t=String((d.data||[])[0]||'');setMic(false);if(!live)wakeP(false);
+      if(live&&/^(stopp?|ende|beenden|tschüss|live aus)\b/i.test(t.trim())){liveToggle();return}
+      if(t){liveMiss=0;voiceTurn=true;Promise.resolve(send(t)).finally(()=>{if(live)setTimeout(()=>{if(!ttsOn)liveNext(300)},2500)})}else if(live)liveNext(300)}
+    else if(d.type==='tts_start'){ttsOn=true}
+    else if(d.type==='tts_idle'){ttsOn=false;if(live)liveNext(300)}
+    else if(d.type==='error'){setMic(false);const c=String(d.code||d.data||d.error||'Fehler');
+      if(live&&/SPEECH_ERROR_(6|7)/.test(c)&&++liveMiss<4){liveNext(300);return}
+      if(live){liveToggle()}else wakeP(false);toast('Sprache: '+(SPERR[c]||c))}}
+  else if(ev==='resume'||ev==='network'){connect()}
+  else if(ev==='apps'){APPS=null}
+  else if(ev==='back'){if($('sheet').classList.contains('on'))closeSheet();else if($('drawer').classList.contains('on'))closeDrawer()}
+  else if(ev==='files'&&d){toast('Datei: '+(d.name||d.uri||'gewählt'))}
+}catch(e){}}};
+/* ---------- Werkzeuge (Sheets) ---------- */
+function kv(k,v){return `<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`}
+async function tool(name){closeDrawer();const B=$('sheetBody');$('sheet').classList.add('on');$('scrim').classList.add('on');
+  if(name==='status'){$('sheetT').textContent='Status & Geräte';B.innerHTML='Lade …';await connect();
+    let h=kv('Version','NEXUS OS GPT '+VERSION)+kv('Laufzeit',NATIVE?'Native App':'Web-App (PWA)')+kv('PC-Core',CORE.base?CORE.route+' · '+CORE.base:'nicht erreichbar');
+    if(CORE.base){try{const s=await (await fetch(CORE.base+'/api/nexus-os/status',{signal:tmo(4000)})).json();for(const [k,v] of Object.entries(s).slice(0,12))if(typeof v!=='object')h+=kv(k,String(v))}catch(e){h+=kv('Core-Status','nicht lesbar')}}
+    if(NATIVE){const d=nat('device')||{};for(const [k,v] of Object.entries(d).slice(0,14))h+=kv(k,typeof v==='object'?JSON.stringify(v).slice(0,60):String(v));const v=nat('voiceStatus');if(v)h+=kv('Sprache',JSON.stringify(v).slice(0,60))}
+    B.innerHTML=h;return}
+  if(name==='apps'){$('sheetT').textContent='Apps';if(!NATIVE){B.innerHTML='<p class="hint">Apps starten geht nur in der installierten NEXUS OS GPT App.</p>';return}
+    const L=apps().slice().sort((a,b)=>String(a.label).localeCompare(String(b.label)));
+    B.innerHTML='<input class="f" id="aq" placeholder="App suchen …"><div class="grid" id="ag" style="margin-top:12px"></div>';
+    const draw=q=>{$('ag').innerHTML=L.filter(a=>!q||norm(a.label).includes(norm(q))).slice(0,120).map((a,i)=>`<button class="app" data-pkg="${esc(a.pkg||a.package)}" data-cls="${esc(a.cls||a.activity||'')}"><i></i>${esc(a.label)}</button>`).join('')};
+    draw('');$('aq').oninput=e=>draw(e.target.value);return}
+  if(name==='files'){$('sheetT').textContent='Dateien';
+    B.innerHTML=NATIVE?'<div class="row"><button class="pill" data-n="openDocument">Datei öffnen</button><button class="pill" data-n="openTree">Ordner freigeben</button></div><p class="hint">Dateien werden über den Android-Dateiauswahldialog geöffnet. NEXUS ändert keine Originale.</p>':'<p class="hint">Dateizugriff am Handy gibt es in der installierten App. Am PC: NEXUS Master Home → Dateien.</p>';return}
+  if(name==='media'){$('sheetT').textContent='Media & Steuerung';
+    B.innerHTML=NATIVE?'<div class="row"><button class="pill" data-m="PREVIOUS">⏮</button><button class="pill" data-m="PLAY_PAUSE">⏯</button><button class="pill" data-m="NEXT">⏭</button><button class="pill" data-m="VOL_DOWN">🔉</button><button class="pill" data-m="VOL_UP">🔊</button></div><div class="row"><button class="pill" data-t="1">🔦 Licht an</button><button class="pill" data-t="0">Licht aus</button></div>':'<p class="hint">Steuerung nur in der installierten App.</p>';return}
+  if(name==='settings'){$('sheetT').textContent='Einstellungen';
+    B.innerHTML=`<label class="sw">Antworten vorlesen<input type="checkbox" id="sVoice" ${cfg.voiceReply?'checked':''}></label><label class="sw">Handy-KI als PC_FALLBACK<input type="checkbox" id="sPhone" ${cfg.phoneAi?'checked':''}></label><div class="hint" style="text-align:left">Eigene PC-Adresse (leer = automatisch Tailscale → WLAN)</div><input class="f" id="sBase" value="${esc(cfg.pcBase)}" placeholder="http://192.0.2.12:8299"><div class="row"><button class="pill" id="sSave">Speichern</button><button class="pill" id="sClear">Verlauf löschen</button></div>`;
+    $('sSave').onclick=()=>{cfg.voiceReply=$('sVoice').checked;cfg.phoneAi=$('sPhone').checked;cfg.pcBase=$('sBase').value.trim();saveCfg();CORE.base=null;connect();toast('Gespeichert')};
+    $('sClear').onclick=()=>{if(confirm('Ganzen Chat-Verlauf auf diesem Gerät löschen?')){chats=[];saveChats();newChat()}};return}
+}
+function closeSheet(){$('sheet').classList.remove('on');if(!$('drawer').classList.contains('on'))$('scrim').classList.remove('on')}
+function openDrawer(){$('drawer').classList.add('on');$('scrim').classList.add('on')}
+function closeDrawer(){$('drawer').classList.remove('on');if(!$('sheet').classList.contains('on'))$('scrim').classList.remove('on')}
+/* ---------- Bedienung ---------- */
+function autoGrow(){const t=$('inp');t.style.height='auto';t.style.height=Math.min(140,t.scrollHeight)+'px';$('send').disabled=busy||!t.value.trim()}
+$('inp').addEventListener('input',autoGrow);
+$('inp').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!/Android|iPhone/.test(navigator.userAgent)){e.preventDefault();send()}});
+$('send').onclick=()=>send();$('mic').onclick=micToggle;$('live').onclick=liveToggle;$('menuBtn').onclick=openDrawer;$('newBtn').onclick=newChat;$('dNew').onclick=newChat;
+$('toolsBtn').onclick=()=>tool('status');$('sheetX').onclick=closeSheet;$('scrim').onclick=()=>{closeSheet();closeDrawer()};
+$('dClassic').onclick=()=>{location.href=NATIVE?'classic.html':'/m-classic'};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-tool],[data-id],[data-s],[data-copy],[data-say],[data-pkg],[data-n],[data-m],[data-t]');if(!t)return;
+  if(t.dataset.tool)tool(t.dataset.tool);else if(t.dataset.id)openChat(t.dataset.id);else if(t.dataset.s)send(t.dataset.s);
+  else if(t.dataset.copy){const x=cur.msgs[+t.dataset.copy].text;(navigator.clipboard?navigator.clipboard.writeText(x):Promise.reject()).then(()=>toast('Kopiert'),()=>toast('Kopieren nicht möglich'))}
+  else if(t.dataset.say){voiceTurn=true;speak(cur.msgs[+t.dataset.say].text)}
+  else if(t.dataset.pkg){const r=nat('launchApp',t.dataset.pkg,t.dataset.cls);if(r&&r.ok===false)toast(r.error||'Start fehlgeschlagen')}
+  else if(t.dataset.n)nat(t.dataset.n);else if(t.dataset.m)nat('media',t.dataset.m);else if(t.dataset.t)nat('torch',t.dataset.t==='1')});
+/* Wischgeste: vom linken Rand -> Menü */
+let tx0=null;document.addEventListener('touchstart',e=>{const x=e.touches[0].clientX;tx0=x<24?x:null},{passive:true});
+document.addEventListener('touchmove',e=>{if(tx0!=null&&e.touches[0].clientX-tx0>60){openDrawer();tx0=null}},{passive:true});
+$('drawer').addEventListener('touchstart',e=>{tx0=-e.touches[0].clientX},{passive:true});
+$('drawer').addEventListener('touchmove',e=>{if(tx0<0&&-tx0-e.touches[0].clientX>60){closeDrawer();tx0=null}},{passive:true});
+if('serviceWorker' in navigator&&WEB_ORIGIN&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js').catch(()=>{});
+cur=chats[0]&&chats[0].msgs.length?chats[0]:null;render();renderHist();connect();
+window.__nxgpt={VERSION,CORE,connect,localCommand,send};
+</script><style id="nxSyncCss">
+.msg.ai .b{max-width:100%}.cb{width:min(340px,82vw);max-width:100%;margin:8px 0;border-radius:10px;overflow:hidden;background:#0b1220;border:1px solid #243049}
+.cbh{display:flex;justify-content:space-between;align-items:center;padding:4px 10px;font-size:12px;color:#9fb0cc;background:#121b2e}
+.cbh button{background:#1f2a44;color:#dbe6ff;border:0;border-radius:6px;padding:3px 9px;font-size:12px}
+.cb pre{margin:0;padding:10px;overflow:auto;font-size:12.5px;line-height:1.45;color:#e6edf7;background:transparent;white-space:pre}
+.msg .b h3,.msg .b h4{margin:8px 0 4px}.msg .b ul,.msg .b ol{margin:4px 0 4px 18px;padding:0}
+.acts .tb{background:none;border:1px solid rgba(127,140,170,.35);color:inherit;border-radius:8px;padding:3px 8px;font-size:12px;margin-left:4px}
+#nxSyncBar{padding:8px 12px;font-size:12px;opacity:.85;display:flex;flex-direction:column;gap:6px}
+#nxSyncBar select{width:100%;padding:6px;border-radius:8px}
+</style>
+<script id="nxSync">
+/* 2026-10-28 SYNC: gemeinsamer Verlauf, Modell und Health mit NEXUS Master Home (PC).
+   Nutzt dieselben Core-Endpoints wie Master Home: /api/sessions, /api/session, /api/session/rev,
+   /api/sessions/new, /api/chat/stream (regenerate/edit), /api/ai/models, /api/health.
+   Ohne PC bleibt der lokale Verlauf + Handy-KI (PC_FALLBACK) wie bisher. */
+(function(){
+const SH={list:[],sig:'',ctrl:null,edit:false,timer:null};
+const _send=send,_newChat=newChat,_openChat=openChat,_renderHist=renderHist;
+const shared=()=>!!(CORE.base&&cur&&cur.shared);
+async function cj(p,o){const r=await fetch(CORE.base+p,Object.assign({cache:'no-store',signal:tmo(8000)},o||{}));return r.json()}
+function toMsgs(s){return (s.messages||[]).map(m=>m.role==='user'?{who:'me',text:String(m.content||'')}:{who:'ai',text:String(m.content||''),meta:'NEXUS · PC'+(m.model?' · '+m.model:''),err:m.success===false})}
+async function loadShared(id){const j=await cj('/api/session?id='+encodeURIComponent(id||''));const s=j.session||{};
+  cur={id:s.id,shared:true,title:s.title||'Neuer Chat',msgs:toMsgs(s),at:Date.now()};
+  SH.sig=s.id+'|'+(s.messages||[]).length+'|'+(s.updated||'');render();await refreshList()}
+async function refreshList(){try{const j=await cj('/api/sessions');SH.list=j.sessions||[]}catch(e){}renderHist()}
+window.md=md=function(s){const blocks=[];s=String(s||'').replace(/```([\w+-]*)[^\n]*\n?([\s\S]*?)(```|$)/g,(m,l,c)=>{blocks.push({l,c});return '\u0000'+(blocks.length-1)+'\u0000'});
+  let h=esc(s).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>')
+   .replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^## (.*)$/gm,'<h3>$1</h3>').replace(/^# (.*)$/gm,'<h3>$1</h3>')
+   .replace(/(^|\n)(?:[-*] .*(?:\n|$))+/g,m=>'<ul>'+m.trim().split('\n').map(x=>'<li>'+x.replace(/^[-*] /,'')+'</li>').join('')+'</ul>')
+   .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return h.replace(/\u0000(\d+)\u0000/g,(m,i)=>{const b=blocks[+i];return `<div class="cb"><div class="cbh"><span>${esc(b.l||'code')}</span><button data-code="${i}">Kopieren</button></div><pre><code>${esc(b.c.replace(/\n$/,''))}</code></pre></div>`})};
+const _msgHtml=msgHtml;
+window.msgHtml=msgHtml=function(m,i){let h=_msgHtml(m,i);if(!cur||!cur.shared)return h;
+  const last=cur.msgs.length-1;
+  if(m.live)return h.replace('</div></div>','</div><div class="acts"><button class="tb" data-stop="1">■ Abbrechen</button></div></div>');
+  if(m.who==='ai'&&i===last)h=h.replace('</button></div></div></div>','</button><button class="tb" data-regen="1">↻ Neu generieren</button></div></div></div>');
+  if(m.who==='me'&&i===last-1)h=h.replace('</div></div>','</div><div class="acts" style="justify-content:flex-end"><button class="tb" data-edit="1">✎ Bearbeiten</button></div></div>');
+  return h};
+window.renderHist=renderHist=function(){if(!CORE.base||!SH.list.length)return _renderHist();
+  $('hist').innerHTML='<div class="hint" style="text-align:left;padding:6px 12px">Gemeinsam mit PC (Master Home)</div>'+SH.list.slice(0,40).map(c=>`<button class="di${cur&&c.id===cur.id?' cur':''}" data-id="${esc(c.id)}"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>${esc(c.title||c.id)}</span></button>`).join('')};
+window.openChat=openChat=async function(id){if(CORE.base&&/^CHAT-/.test(id)){try{await cj('/api/sessions/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})})}catch(e){}await loadShared(id);closeDrawer();return}_openChat(id)};
+window.newChat=newChat=async function(){if(!CORE.base)return _newChat();try{await cj('/api/sessions/new',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const r=await cj('/api/session/rev');await loadShared(r.id)}catch(e){_newChat()}closeDrawer()};
+$('newBtn').onclick=()=>newChat();$('dNew').onclick=()=>newChat();
+async function streamShared(body,onTok){SH.ctrl=new AbortController();const to=setTimeout(()=>SH.ctrl&&SH.ctrl.abort(),300000);
+  try{const r=await fetch(CORE.base+'/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:SH.ctrl.signal,cache:'no-store'});
+  if(!r.ok||!r.body)throw Error('STREAM_HTTP_'+r.status);const rd=r.body.getReader(),dec=new TextDecoder();let buf='',acc='',done=null;
+  for(;;){const x=await rd.read();if(x.done)break;buf+=dec.decode(x.value,{stream:true}).replace(/\r\n/g,'\n');let i;
+    while((i=buf.indexOf('\n\n'))>=0){const ev=buf.slice(0,i);buf=buf.slice(i+2);const d=ev.split('\n').filter(l=>l.startsWith('data:')).map(l=>l.slice(5).replace(/^ /,'')).join('\n');if(!d)continue;if(d==='[DONE]')return (done&&done.reply)||acc;
+      let o;try{o=JSON.parse(d)}catch(e){continue}if(o.type==='token'&&o.text){acc+=o.text;onTok(acc)}else if(o.type==='done')done=o}}
+  return (done&&done.reply)||acc}finally{clearTimeout(to);SH.ctrl=null}}
+async function sharedTurn(text,flags){
+  const m={who:'ai',text:'',live:true,meta:'NEXUS · PC'};
+  if(text)cur.msgs.push({who:'me',text});cur.msgs.push(m);render();busy=true;$('send').disabled=true;
+  const upd=a=>{m.text=a;const b=$('main').querySelector('.msg:last-child .b');if(b)b.innerHTML=md(a);$('main').scrollTop=1e9};
+  try{m.text=await streamShared(Object.assign({message:text||'',session_id:cur.id},flags||{}),upd)}
+  catch(e){m.err=!m.text;if(!m.text)m.text=(e&&e.name==='AbortError')?'Abgebrochen.':'Fehler: '+(e&&e.message||e)}
+  m.live=false;busy=false;$('send').disabled=!$('inp').value.trim();
+  try{await loadShared(cur.id)}catch(e){render()}if(!m.err)speak(m.text)}
+window.send=send=async function(text){
+  if(!CORE.base||busy)return _send(text);
+  text=String(text||$('inp').value).trim();if(!text)return;
+  const loc=localCommand(text);if(loc){$('inp').value='';autoGrow();toast(loc);speak(loc);return}
+  if(!cur||!cur.shared){try{const r=await cj('/api/session/rev');await loadShared(r.id)}catch(e){return _send(text)}}
+  $('inp').value='';autoGrow();const flags=SH.edit?{edit:true}:null;SH.edit=false;
+  if(flags){const lu=cur.msgs.map(x=>x.who).lastIndexOf('me');if(lu>=0)cur.msgs.splice(lu)}
+  await sharedTurn(text,flags)};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-code],[data-stop],[data-regen],[data-edit]');if(!t)return;e.stopPropagation();
+  if(t.dataset.code!=null){const pre=t.closest('.cb').querySelector('code').textContent;(navigator.clipboard?navigator.clipboard.writeText(pre):Promise.reject()).then(()=>toast('Code kopiert'),()=>toast('Kopieren nicht möglich'))}
+  else if(t.dataset.stop){if(SH.ctrl)SH.ctrl.abort()}
+  else if(t.dataset.regen&&!busy){const lu=cur.msgs.map(x=>x.who).lastIndexOf('me');if(lu>=0)cur.msgs.splice(lu+1);cur.msgs.pop&&0;const q=lu>=0?cur.msgs[lu].text:'';cur.msgs.splice(lu);sharedTurn(q,{regenerate:true})}
+  else if(t.dataset.edit&&!busy){const lu=cur.msgs.map(x=>x.who).lastIndexOf('me');if(lu<0)return;$('inp').value=cur.msgs[lu].text;autoGrow();$('inp').focus();SH.edit=true;toast('Nachricht bearbeiten und senden')}},true);
+/* Modell + Health: gleiche Quelle wie Master Home (ai_models.json / /api/health) */
+function bar(){let b=$('nxSyncBar');if(!b){b=document.createElement('div');b.id='nxSyncBar';$('hist').before(b)}return b}
+async function status(){if(!CORE.base)return;try{const h=await cj('/api/health');const sc=h.score!=null?h.score:'?';
+  $('route').textContent=CORE.route+' · '+sc+' Health';
+  const a=await cj('/api/ai/models');const inst=(a.models_installed||[]).map(x=>typeof x==='string'?x:(x.name||x.model)).filter(n=>n&&!/embed/.test(n));const curM=a.chat_model_preferred||'';
+  if(curM&&!inst.includes(curM))inst.unshift(curM);
+  bar().innerHTML=`<div>Health ${esc(String(sc))} · Modell (wie PC)</div><select id="nxModel">${inst.map(n=>`<option${n===curM?' selected':''}>${esc(n)}</option>`).join('')}</select>`;
+  $('nxModel').onchange=async e=>{try{await cj('/api/ai/models',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_model:e.target.value,never_pull:true})});toast('Modell: '+e.target.value)}catch(x){toast('Modell nicht gesetzt')}}}catch(e){}}
+async function poll(){if(!CORE.base||busy||document.hidden)return;try{const r=await cj('/api/session/rev');const s=r.id+'|'+r.count+'|'+(r.updated||'');
+  if(!cur||!cur.shared||s!==SH.sig){await loadShared(r.id)}}catch(e){}}
+async function start(){for(let i=0;i<40&&!CORE.base;i++)await new Promise(r=>setTimeout(r,250));if(!CORE.base)return;
+  try{const r=await cj('/api/session/rev');await loadShared(r.id)}catch(e){}status();setInterval(poll,3000);setInterval(status,30000)}
+window.__nxsync={loadShared,poll,SH};start();
+})();
+</script>
+</body></html>

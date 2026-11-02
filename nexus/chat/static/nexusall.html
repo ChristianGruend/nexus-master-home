@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NEXUS All – Browser · Player · Downloader</title>
+<!-- NA05 20261028: Glas-Design Weiss/Babyblau/Silber -->
+<style>
+:root{--glass:rgba(255,255,255,.62);--glass2:rgba(255,255,255,.82);--line:#c3cad4;--silver:#9aa4b2;--tx:#14213d;--mu:#4a5872;--ac:#89cff0;--ac-d:#1f6fa8;--ok:#13804a;--er:#b42318;--sh:0 8px 30px rgba(31,111,168,.12)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;color:var(--tx);font:14px/1.4 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;min-height:0;
+ background:radial-gradient(900px 500px at 0% 0%,#d9efff 0,transparent 60%),radial-gradient(900px 600px at 100% 100%,#e8edf3 0,transparent 60%),linear-gradient(135deg,#f6f9fc,#eaf4fb)}
+.glass{background:var(--glass);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 10px 0;padding:8px 12px}
+.logo{font-weight:800;font-size:18px;color:var(--ac-d);letter-spacing:.3px;white-space:nowrap}
+.logo span{color:var(--silver);font-weight:600}
+button{background:var(--glass2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:6px 11px;cursor:pointer;font:inherit}
+button:hover{border-color:var(--ac-d);background:#fff}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ac-d);outline-offset:1px}
+button.pri{background:linear-gradient(180deg,#a9dcf5,var(--ac));border-color:#6bb8de;font-weight:700;color:#0b2a44}
+button.dan{color:var(--er)}button.sm{padding:3px 8px;font-size:12px}
+input,select{background:rgba(255,255,255,.9);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font:inherit}
+#addr{flex:1 1 260px;min-width:160px}
+label.ck{font-size:12px;color:var(--mu);display:flex;align-items:center;gap:4px;white-space:nowrap}
+#msg{font-size:12px;color:var(--mu);flex:1 1 100%;min-height:16px}
+main{flex:1;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,1fr);gap:10px;padding:10px;min-height:0}
+.pane{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+#tabs{display:flex;gap:4px;padding:8px 8px 0;overflow-x:auto;flex:none}
+.tab{padding:5px 10px;border-radius:10px 10px 0 0;background:rgba(255,255,255,.45);color:var(--mu);cursor:pointer;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--line);border-bottom:0}
+.tab.on{background:#fff;color:var(--tx)}.tab b{margin-left:6px;color:var(--silver)}
+#frames{flex:1;position:relative;background:transparent;margin:0 8px;border:1px solid var(--line);border-radius:0 12px 12px 12px;overflow:hidden;min-height:200px}
+#frames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff}#frames iframe.on{display:block}
+#start{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;color:var(--mu)}
+#start h2{margin:0;color:var(--ac-d);font-size:22px}#start .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.hint{font-size:12px;color:var(--mu);padding:6px 12px;flex:none}
+.right{display:grid;grid-template-rows:auto minmax(0,1fr) minmax(120px,auto);gap:10px;min-height:0}
+.player{padding:10px}
+video,audio{width:100%;background:#0d1b2a;border-radius:12px;max-height:38vh;display:block}
+#now{padding:6px 2px 0;color:var(--mu);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mu)}
+.fx .on{background:var(--ac);border-color:#6bb8de;color:#0b2a44;font-weight:600}
+#meter{flex:1 1 80px;height:6px;border-radius:4px;background:#e3e8ee;overflow:hidden;min-width:60px}#meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac-d))}
+.libhead{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);flex:none}
+.ltab{border-radius:999px}.ltab.on{background:var(--ac);border-color:#6bb8de;font-weight:700;color:#0b2a44}
+#search{flex:1 1 120px;min-width:100px;padding:4px 10px}
+#lib{overflow:auto;padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-content:start}
+.card{background:var(--glass2);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-width:0}
+.card:hover,.card.on{border-color:var(--ac-d);box-shadow:0 0 0 2px rgba(137,207,240,.6)}
+.th{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,#e9f5fc,#dde3ea);display:grid;place-items:center;color:var(--silver);font-size:26px}
+.th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.th .du{position:absolute;right:6px;bottom:6px;background:rgba(20,33,61,.78);color:#fff;font-size:11px;padding:1px 6px;border-radius:6px}
+.card .n{padding:6px 8px 0;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .m{display:flex;justify-content:space-between;align-items:center;padding:2px 8px 6px;font-size:11px;color:var(--mu)}
+.empty{grid-column:1/-1;color:var(--mu);text-align:center;padding:24px}
+#q{overflow:auto;padding:6px 10px;max-height:28vh}
+.job{font-size:12px;padding:6px 0;border-bottom:1px solid #dfe4ea;display:grid;grid-template-columns:1fr auto;gap:4px;align-items:center}
+.job .u{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{grid-column:1/-1;height:8px;background:#e3e8ee;border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ac-d));transition:width .5s}
+.stat{grid-column:1/-1;color:var(--mu);font-variant-numeric:tabular-nums}
+.st-done{color:var(--ok);font-weight:600}.st-failed,.err{color:var(--er)}.st-running{color:var(--ac-d);font-weight:600}
+h3{margin:8px 10px 0;font-size:13px;color:var(--mu);font-weight:700;flex:none}
+dialog{border:1px solid var(--line);border-radius:16px;padding:18px;background:rgba(255,255,255,.95);color:var(--tx);box-shadow:var(--sh);max-width:420px}
+dialog::backdrop{background:rgba(20,33,61,.25);backdrop-filter:blur(3px)}
+@media(max-width:980px){main{grid-template-columns:1fr;grid-auto-rows:auto}.pane.browser{min-height:55vh}.right{grid-template-rows:auto auto auto}#lib{max-height:60vh}}
+/* NA08 Feinschliff: Raster, Abstaende, Kontrast, responsive */
+:root{--glass:rgba(255,255,255,.76);--mu:#36435c;--gap:12px}
+html,body{overflow:hidden}
+header{margin:var(--gap) var(--gap) 0;row-gap:6px}
+main{grid-template-columns:minmax(0,1.3fr) minmax(400px,1fr);gap:var(--gap);padding:var(--gap)}
+.right{grid-template-rows:auto minmax(210px,1fr) clamp(120px,17vh,210px);gap:var(--gap)}
+.right>.pane{min-height:0}
+.player{display:flex;flex-direction:column;gap:2px}
+video{aspect-ratio:16/9;object-fit:contain;max-height:23vh;margin:0 auto}
+.sec{font-weight:700;color:var(--ac-d);font-size:13px;margin-right:4px;white-space:nowrap}
+.sechead{display:flex;align-items:center;justify-content:space-between;padding:0 2px 6px}
+#lib{flex:1;min-height:0;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));grid-auto-rows:max-content;gap:10px;padding:10px}
+.card{height:auto;flex:none}.th{flex:none}
+.card .n{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;height:2.7em;margin:6px 8px 0;padding:0}
+.th .ic{width:34%;max-height:58%;fill:none;stroke:var(--silver);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#q{flex:1;max-height:none}
+.pane>h3{margin:10px 12px 4px}
+#start{background:linear-gradient(160deg,rgba(255,255,255,.6),rgba(217,239,255,.5))}
+#start .chips button{padding:8px 14px}
+#msg:empty{display:none}
+@media(max-width:980px){html,body{overflow:auto;height:auto}main{grid-template-columns:1fr}.right{grid-template-rows:auto auto auto}.pane.browser{min-height:46vh}#lib{max-height:52vh}#q{max-height:36vh}video{max-height:34vh}}
+</style></head><body>
+<header class="glass"><span class="logo">NEXUS <span>All</span></span>
+<button id="back" title="Zurück">←</button><button id="newtab" title="Neuer Tab">＋</button>
+<input id="addr" placeholder="Adresse oder Suchbegriff … (Enter)" aria-label="Adresse"/>
+<select id="qual" title="Qualität" aria-label="Qualität"><option value="best">Video – beste</option><option value="1080">Video 1080p</option><option value="720">Video 720p</option><option value="audio">Musik mp3</option><option value="audio_m4a">Musik m4a</option></select>
+<label class="ck"><input type="checkbox" id="subs"/> UT de/en</label>
+<label class="ck" title="Audio beim Download auf ~-14 LUFS normalisieren (ffmpeg loudnorm)"><input type="checkbox" id="ln"/> Lautheit angleichen</label>
+<button class="pri" id="dl">⬇ Herunterladen</button><button id="win" title="Seite im App-Fenster öffnen (für Seiten, die Einbettung blocken)">⧉ App-Fenster</button>
+<span id="msg" role="status"></span></header>
+<main>
+<section class="pane glass browser"><h3 class="sec" style="margin:10px 12px 0">Browser</h3><div id="tabs"></div><div id="frames"><div id="start"><h2>Wohin heute?</h2><div>Adresse oder Suchbegriff oben eingeben. Seiten, die Einbettung verbieten, öffnest du mit „⧉ App-Fenster“.</div>
+<div class="chips"><button data-go="https://duckduckgo.com/html/">DuckDuckGo</button><button data-go="https://archive.org/details/movies">Archive.org Filme</button><button data-go="https://commons.wikimedia.org">Wikimedia Commons</button></div></div></div>
+<div class="hint">„Herunterladen“ nimmt immer die URL in der Adressleiste.</div></section>
+<section class="right">
+<div class="glass player"><div class="sechead"><span class="sec">Player</span></div><video id="vid" controls preload="metadata" crossorigin="anonymous"></video><audio id="aud" controls style="display:none" crossorigin="anonymous"></audio>
+<div id="now">Nichts ausgewählt</div>
+<div class="fx" id="fx"><b style="color:var(--tx)">Sound</b><button class="sm" id="fxAuto" aria-pressed="true">Auto: An</button>
+<button class="sm" data-pre="film">Film</button><button class="sm" data-pre="musik">Musik</button><button class="sm" data-pre="sprache">Sprache</button>
+<span id="meter" title="Ausgangspegel"><i></i></span><span id="fxInfo">–</span></div></div>
+<div class="pane glass"><div class="libhead"><span class="sec">Bibliothek</span><button class="ltab on" data-tab="filme">🎬 Filme</button><button class="ltab" data-tab="musik">🎵 Musik</button><button class="ltab" data-tab="papierkorb">🗑 Papierkorb</button><input id="search" placeholder="Suchen …" aria-label="Bibliothek durchsuchen"/></div><div id="lib"></div></div>
+<div class="pane glass"><h3 class="sec">Downloader</h3><div id="q"></div></div>
+</section></main>
+<dialog id="dlg"><div id="dlgTxt" style="margin-bottom:14px"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button id="dlgNo">Abbrechen</button><button class="pri" id="dlgYes">OK</button></div></dialog>
+<script>
+const $=s=>document.querySelector(s);let tabs=[],cur=-1,curItem=null,lastSave=0,libTab="filme";
+function norm(v){v=v.trim();if(!v)return"";if(/^https?:\/\//i.test(v))return v;if(/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(v))return"https://"+v;return"https://duckduckgo.com/html/?q="+encodeURIComponent(v)}
+function startVis(){const t=tabs[cur];$("#start").style.display=(t&&t.url)?"none":"flex"}
+function addTab(url){const f=document.createElement("iframe");f.referrerPolicy="no-referrer";f.allow="autoplay; fullscreen; encrypted-media";$("#frames").appendChild(f);tabs.push({url:"",f,hist:[]});sel(tabs.length-1);if(url)go(url)}
+function sel(i){cur=i;tabs.forEach((t,k)=>t.f.classList.toggle("on",k===i&&!!t.url));$("#addr").value=tabs[i]?tabs[i].url:"";draw();startVis()}
+function draw(){$("#tabs").innerHTML="";tabs.forEach((t,k)=>{const d=document.createElement("div");d.className="tab"+(k===cur?" on":"");d.textContent=t.url?t.url.replace(/^https?:\/\//,"").slice(0,40):"Neuer Tab";const x=document.createElement("b");x.textContent="×";x.onclick=e=>{e.stopPropagation();t.f.remove();tabs.splice(k,1);if(!tabs.length)addTab("");else sel(Math.min(k,tabs.length-1))};d.appendChild(x);d.onclick=()=>sel(k);$("#tabs").appendChild(d)})}
+function go(v){const u=norm(v);if(!u)return;const t=tabs[cur];if(t.url)t.hist.push(t.url);t.url=u;t.f.src=u;$("#addr").value=u;sel(cur)}
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+$("#addr").onkeydown=e=>{if(e.key==="Enter")go($("#addr").value)};$("#newtab").onclick=()=>addTab("");
+$("#back").onclick=()=>{const t=tabs[cur];if(t&&t.hist.length){t.url=t.hist.pop();t.f.src=t.url;$("#addr").value=t.url;sel(cur)}};
+function msg(s,c){$("#msg").textContent=s;$("#msg").style.color=c||""}
+async function api(p,b){const r=await fetch(p,b?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}:{cache:"no-store"});return r.json()}
+function confirmBox(txt,yes){return new Promise(res=>{const d=$("#dlg");$("#dlgTxt").textContent=txt;$("#dlgYes").textContent=yes||"OK";$("#dlgYes").onclick=()=>{d.close();res(true)};$("#dlgNo").onclick=()=>{d.close();res(false)};d.showModal()})}
+$("#dl").onclick=async()=>{const u=norm($("#addr").value);if(!u)return msg("Keine URL","var(--er)");msg("Prüfe Medien …");const r=await api("/api/nexusall/download",{url:u,quality:$("#qual").value,subs:$("#subs").checked?"de,en":"",loudnorm:$("#ln").checked});msg(r.success?"Eingereiht: "+r.job_id:(r.message||("Fehler: "+r.error)),r.success?"var(--ok)":"var(--er)");loadQ()};
+$("#win").onclick=async()=>{const u=norm($("#addr").value);if(!u)return;const r=await api("/api/nexusall/open_window",{url:u});msg(r.success?"App-Fenster offen":"Fehler: "+r.error,r.success?"var(--ok)":"var(--er)")};
+/* ---------- NA06 Soundverbesserung (Web Audio) ---------- */
+const PRESETS={film:{dlg:4,bass:3,tre:1,label:"Film"},musik:{dlg:0,bass:4,tre:2,label:"Musik"},sprache:{dlg:6,bass:-2,tre:1,label:"Sprache"}};
+const FX={ctx:null,nodes:null,src:new Map(),auto:localStorage.nxaFxAuto!=="0",preset:localStorage.nxaFxPreset||"film",agc:1,target:-14};
+function fxBuild(){if(FX.ctx)return;const c=new (window.AudioContext||window.webkitAudioContext)();const bass=c.createBiquadFilter();bass.type="lowshelf";bass.frequency.value=120;
+const dlg=c.createBiquadFilter();dlg.type="peaking";dlg.frequency.value=2500;dlg.Q.value=1;const tre=c.createBiquadFilter();tre.type="highshelf";tre.frequency.value=8000;
+const comp=c.createDynamicsCompressor();comp.threshold.value=-24;comp.knee.value=12;comp.ratio.value=3;comp.attack.value=.01;comp.release.value=.25;
+const agc=c.createGain();const lim=c.createDynamicsCompressor();lim.threshold.value=-1.5;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.001;lim.release.value=.08;
+const an=c.createAnalyser();an.fftSize=2048;const inp=c.createGain();const byp=c.createGain();
+inp.connect(bass);bass.connect(dlg);dlg.connect(tre);tre.connect(comp);comp.connect(agc);agc.connect(lim);lim.connect(an);inp.connect(byp);
+const out=c.createGain();an.connect(out);out.connect(c.destination);byp.connect(c.destination);FX.ctx=c;FX.nodes={inp,bass,dlg,tre,comp,agc,lim,an,byp,out};fxApply();setInterval(fxMeter,200)}
+function fxAttach(el){fxBuild();if(!FX.src.has(el)){const s=FX.ctx.createMediaElementSource(el);s.connect(FX.nodes.inp);FX.src.set(el,s)}if(FX.ctx.state==="suspended")FX.ctx.resume()}
+function fxApply(){const n=FX.nodes;document.querySelectorAll("[data-pre]").forEach(b=>b.classList.toggle("on",FX.auto&&b.dataset.pre===FX.preset));
+$("#fxAuto").textContent="Auto: "+(FX.auto?"An":"Aus");$("#fxAuto").classList.toggle("on",FX.auto);$("#fxAuto").setAttribute("aria-pressed",FX.auto);
+if(!n)return;const p=PRESETS[FX.preset];const t=FX.ctx.currentTime;n.bass.gain.setTargetAtTime(p.bass,t,.05);n.dlg.gain.setTargetAtTime(p.dlg,t,.05);n.tre.gain.setTargetAtTime(p.tre,t,.05);
+n.byp.gain.setTargetAtTime(FX.auto?0:1,t,.03);n.out.gain.setTargetAtTime(FX.auto?1:0,t,.03);
+if(!FX.auto){n.agc.gain.setTargetAtTime(1,t,.05)}window.NXA_FX={auto:FX.auto,preset:FX.preset}}
+/* Auto-Lautheit: RMS-Messung (Annaeherung an LUFS, ungewichtet) -> langsame Verstaerkungsregelung Richtung -14 dB, Limiter -1.5 dBFS verhindert Clipping */
+const buf=new Float32Array(2048);
+function fxMeter(){const n=FX.nodes;if(!n)return;n.an.getFloatTimeDomainData(buf);let s=0,pk=0;for(const v of buf){s+=v*v;const a=Math.abs(v);if(a>pk)pk=a}
+const rms=Math.sqrt(s/buf.length);const db=rms>1e-5?20*Math.log10(rms):-99;$("#meter i").style.width=Math.max(0,Math.min(100,(db+60)/60*100))+"%";
+if(FX.auto&&db>-50){const err=FX.target-db;FX.agc=Math.min(8,Math.max(.25,FX.agc*Math.pow(10,(err*.08)/20)));n.agc.gain.setTargetAtTime(FX.agc,FX.ctx.currentTime,.3)}
+$("#fxInfo").textContent=FX.auto?(PRESETS[FX.preset].label+" · "+(db>-90?db.toFixed(1):"–")+" dB · Gain "+(20*Math.log10(FX.agc)).toFixed(1)+" dB"):"Aus (Originalton)";
+window.NXA_FX_LEVEL={db,peak:pk,gainDb:20*Math.log10(FX.agc)}}
+$("#fxAuto").onclick=()=>{FX.auto=!FX.auto;localStorage.nxaFxAuto=FX.auto?"1":"0";fxApply()};
+document.querySelectorAll("[data-pre]").forEach(b=>b.onclick=()=>{FX.preset=b.dataset.pre;FX.auto=true;localStorage.nxaFxPreset=FX.preset;localStorage.nxaFxAuto="1";fxApply()});
+fxApply();
+/* ---------- Player ---------- */
+function fmtDur(s){if(!s&&s!==0)return"";s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return(h?h+":"+String(m).padStart(2,"0"):m)+":"+String(x).padStart(2,"0")}
+function play(it){curItem=it;const v=$("#vid"),a=$("#aud");const el=it.kind==="audio"?a:v;(it.kind==="audio"?v:a).pause();v.style.display=it.kind==="audio"?"none":"";a.style.display=it.kind==="audio"?"":"none";
+try{fxAttach(el)}catch(e){console.warn("FX",e)}el.src=it.url;el.onloadedmetadata=()=>{if(it.resume>5&&it.resume<el.duration-5)el.currentTime=it.resume};el.play().catch(()=>{});
+if(FX.auto&&it.kind==="audio"&&FX.preset==="film"){FX.preset="musik";fxApply()}else if(FX.auto&&it.kind==="video"&&FX.preset==="musik"&&!localStorage.nxaFxPreset){FX.preset="film";fxApply()}
+$("#now").textContent="▶ "+it.name;document.querySelectorAll(".card").forEach(n=>n.classList.toggle("on",n.dataset.id===it.id));window.NX_PLAYING=it.id}
+["#vid","#aud"].forEach(s=>{$(s).ontimeupdate=e=>{const now=Date.now();if(curItem&&now-lastSave>5000){lastSave=now;api("/api/nexusall/resume",{id:curItem.id,pos:e.target.currentTime})}}});
+const ICO={film:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>',musik:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',trash:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'};
+/* ---------- Bibliothek (NA03) + Papierkorb (NA01) ---------- */
+document.querySelectorAll(".ltab").forEach(b=>b.onclick=()=>{libTab=b.dataset.tab;document.querySelectorAll(".ltab").forEach(x=>x.classList.toggle("on",x===b));loadLib()});
+async function loadLib(){const box=$("#lib");const q=($("#search").value||"").toLowerCase();
+if(libTab==="papierkorb"){const r=await api("/api/nexusall/trash");box.innerHTML="";const its=(r.items||[]).filter(i=>!q||(i.origin||i.trash_id).toLowerCase().includes(q));
+if(!its.length)box.innerHTML='<div class="empty">Papierkorb ist leer.</div>';
+its.forEach(it=>{const d=document.createElement("div");d.className="card";d.innerHTML='<div class="th">'+ICO.trash+'</div><div class="n"></div><div class="m"><span>'+it.size_mb+' MB</span><span><button class="sm" data-a="r">↺</button> <button class="sm dan" data-a="p">✕</button></span></div>';
+d.querySelector(".n").textContent=(it.origin||it.trash_id).split("/").pop();d.querySelector('[data-a="r"]').title="Wiederherstellen";d.querySelector('[data-a="p"]').title="Endgültig löschen";
+d.querySelector('[data-a="r"]').onclick=async e=>{e.stopPropagation();const x=await api("/api/nexusall/trash/restore",{trash_id:it.trash_id});msg(x.success?"Wiederhergestellt":"Fehler: "+x.error,x.success?"var(--ok)":"var(--er)");loadLib()};
+d.querySelector('[data-a="p"]').onclick=async e=>{e.stopPropagation();if(!await confirmBox("„"+d.querySelector(".n").textContent+"“ endgültig löschen? Das kann nicht rückgängig gemacht werden.","Endgültig löschen"))return;const x=await api("/api/nexusall/trash/purge",{trash_id:it.trash_id,confirm:"ENDGUELTIG"});msg(x.success?"Endgültig gelöscht":"Fehler: "+x.error,x.success?"var(--ok)":"var(--er)");loadLib()};
+box.appendChild(d)});return}
+const r=await api("/api/nexusall/library?type="+(libTab==="musik"?"audio":"video")+"&q="+encodeURIComponent(q));box.innerHTML="";
+if(!(r.items||[]).length)box.innerHTML='<div class="empty">'+(q?"Nichts gefunden.":(libTab==="musik"?"Noch keine Musik – „Musik mp3/m4a“ wählen und herunterladen.":"Noch keine Filme."))+'</div>';
+(r.items||[]).forEach(it=>{const d=document.createElement("div");d.className="card";d.dataset.id=it.id;
+d.innerHTML='<div class="th">'+(it.kind==="audio"?ICO.musik:ICO.film)+(it.thumb?'<img loading="lazy" alt="" src="'+it.thumb+'" onerror="this.remove()">':"")+(it.duration?'<span class="du">'+fmtDur(it.duration)+'</span>':"")+'</div><div class="n"></div><div class="m"><span>'+it.size_mb+' MB</span><button class="sm dan" title="In den Papierkorb">🗑</button></div>';
+d.querySelector(".n").textContent=it.name;d.title=it.name;d.onclick=()=>play(it);
+d.querySelector("button").onclick=async e=>{e.stopPropagation();if(!await confirmBox("„"+it.name+"“ in den Papierkorb verschieben? (Wiederherstellen jederzeit möglich)","In Papierkorb"))return;const x=await api("/api/nexusall/delete",{id:it.id,confirm:true});msg(x.success?"In den Papierkorb verschoben":"Fehler: "+x.error,x.success?"var(--ok)":"var(--er)");loadLib()};
+box.appendChild(d)})}
+$("#search").oninput=()=>loadLib();
+/* ---------- Downloads mit Live-Ladebalken (NA02) ---------- */
+function fmtB(b){if(!b)return"–";const u=["B","KB","MB","GB"];let i=0;while(b>=1024&&i<3){b/=1024;i++}return b.toFixed(i?1:0)+" "+u[i]}
+function fmtEta(s){if(s==null)return"–";s=Math.round(s);return s>=3600?Math.floor(s/3600)+" h "+Math.floor(s%3600/60)+" min":(s>=60?Math.floor(s/60)+" min "+(s%60)+" s":s+" s")}
+const STL={queued:"wartet",running:"lädt",done:"fertig",failed:"Fehler",cancelled:"abgebrochen"};
+let doneSeen=new Set();async function loadQ(){const r=await api("/api/nexusall/queue");const box=$("#q");box.innerHTML="";let newDone=false;const js=(r.jobs||[]).slice(0,20);
+if(!js.length)box.innerHTML='<div class="empty">Keine Downloads.</div>';
+js.forEach(j=>{const d=document.createElement("div");d.className="job";d.dataset.job=j.id;const pct=Math.max(0,Math.min(100,j.progress||0));
+d.innerHTML='<span class="u"></span><span><span class="st-'+j.status+'">'+(STL[j.status]||j.status)+'</span> <button class="sm" data-a></button></span>'+((j.status==="running"||j.status==="queued")?'<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><i style="width:'+pct+'%"></i></div><div class="stat">'+pct.toFixed(1)+' % · '+fmtB(j.downloaded)+' / '+fmtB(j.total)+' · '+(j.speed?fmtB(j.speed)+"/s":"–")+' · Rest '+fmtEta(j.eta)+'</div>':"")+(j.error?'<div class="stat err"></div>':"");
+d.querySelector(".u").textContent=(j.file||j.url).split("/").pop().slice(0,90);d.querySelector(".u").title=j.file||j.url;if(j.error)d.querySelector(".err").textContent=j.error.slice(0,160);
+const b=d.querySelector("[data-a]");if(j.status==="running"||j.status==="queued"){b.textContent="Abbrechen";b.onclick=async()=>{await api("/api/nexusall/queue/"+j.id+"/cancel",{});loadQ()}}
+else if(j.status==="failed"||j.status==="cancelled"){b.textContent="Erneut";b.onclick=async()=>{await api("/api/nexusall/queue/"+j.id+"/retry",{});loadQ()}}else{b.textContent="✕";b.title="Aus Liste entfernen (Datei bleibt)";b.onclick=async()=>{await api("/api/nexusall/queue/"+j.id+"/remove",{});loadQ()}}
+if(j.status==="done"&&!doneSeen.has(j.id)){if(window.NX_QINIT)newDone=true;doneSeen.add(j.id)}box.appendChild(d)});window.NX_QINIT=true;if(newDone)loadLib();
+const run=js.some(j=>j.status==="running"||j.status==="queued");clearTimeout(window._qT);window._qT=setTimeout(loadQ,run?1000:4000)}
+addTab(new URLSearchParams(location.search).get("url")||"");loadLib();loadQ();
+
+/* NA08 DOM-Pruefung: ?domcheck=1 -> JSON in #domcheck (Ueberlappung, Overflow, Raster, Kontrast) */
+if(new URLSearchParams(location.search).has("domcheck"))setTimeout(()=>{const R=e=>e.getBoundingClientRect(),vis=e=>{const r=R(e),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.visibility!=="hidden"&&s.display!=="none"};
+const vw=document.documentElement.clientWidth,vh=document.documentElement.clientHeight,desk=vw>980,out={vw,vh,overlap:[],offscreen:[],clipped:[],cards:{n:0,w:[],h:[]},fallback_missing:0,contrast_min:99,low_contrast:[],empty_blocks:[]};
+const nm=e=>(e.id?"#"+e.id:e.tagName.toLowerCase()+"."+[...e.classList].join("."))+":"+(e.textContent||"").trim().slice(0,20);
+const ov=(a,b)=>{const x=R(a),y=R(b);return Math.min(x.right,y.right)-Math.max(x.left,y.left)>1&&Math.min(x.bottom,y.bottom)-Math.max(x.top,y.top)>1};
+const pairs=l=>{l=l.filter(vis);for(let i=0;i<l.length;i++)for(let j=i+1;j<l.length;j++)if(ov(l[i],l[j]))out.overlap.push(nm(l[i])+" | "+nm(l[j]))};
+pairs([$("header"),$(".pane.browser"),...document.querySelectorAll(".right>div")]);pairs([...$("header").children]);pairs([...$(".libhead").children]);pairs([...$("#fx").children]);pairs([...document.querySelectorAll("#lib .card")]);
+document.querySelectorAll("header *,.pane,.player,.player *,.libhead *,#lib .card,h3").forEach(e=>{if(!vis(e))return;const r=R(e);const sc=e.closest("#lib,#q,#tabs");const box=sc&&sc!==e?R(sc):{left:0,right:vw,top:0,bottom:desk?vh:1e9};
+if(r.left<box.left-1||r.right>box.right+1||(!sc&&(r.top<-1||r.bottom>box.bottom+1)))out.offscreen.push(nm(e))});
+document.querySelectorAll("button,label,.sec,.logo,h3,#now").forEach(e=>{if(vis(e)&&e.scrollWidth>e.clientWidth+1&&getComputedStyle(e).textOverflow!=="ellipsis")out.clipped.push(nm(e))});
+const cs=[...document.querySelectorAll("#lib .card")].filter(vis);out.cards.n=cs.length;out.cards.w=[...new Set(cs.map(c=>Math.round(R(c).width)))];out.cards.h=[...new Set(cs.map(c=>Math.round(R(c).height)))];
+document.querySelectorAll("#lib .th").forEach(t=>{if(!t.querySelector("svg.ic"))out.fallback_missing++});
+const L=c=>{const m=c.match(/[\d.]+/g).map(Number);const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(m[0])+.7152*f(m[1])+.0722*f(m[2])};const bgL=L("rgb(234,242,249)");
+document.querySelectorAll(".card .n,.card .m,#now,.hint,label.ck,h3,.sec,.empty,.job .u,.stat,.fx,button,.tab").forEach(e=>{if(!vis(e))return;const l=L(getComputedStyle(e).color);const cr=(Math.max(l,bgL)+.05)/(Math.min(l,bgL)+.05);if(cr<out.contrast_min)out.contrast_min=+cr.toFixed(2);if(cr<4.5)out.low_contrast.push(nm(e)+" "+cr.toFixed(2))});
+[$(".pane.browser"),...document.querySelectorAll(".right>div")].forEach(b=>{if(vis(b)&&!(b.innerText||"").trim()&&!b.querySelector("video,iframe.on"))out.empty_blocks.push(nm(b))});
+["overlap","offscreen","clipped","low_contrast"].forEach(k=>out[k]=[...new Set(out[k])].slice(0,30));
+out.lib_h=Math.round(R($("#lib")).height);out.q_h=Math.round(R($("#q")).height);const pre=document.createElement("pre");pre.id="domcheck";pre.style.display="none";pre.textContent=JSON.stringify(out);document.body.appendChild(pre)},2500);
+</script></body></html>

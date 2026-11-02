@@ -1,0 +1,99 @@
+/* NEXUS I-Robot v8 – Theme-Ebene für /m2 (lädt NACH m2.css, ändert keine Funktion). */
+:root{--ink:#0b1b33;--mut:#4d6385;--acc:#1f86ff;--ice:#4fc3ff;--ice3:#0b5fd0;--tx:0;--ty:0;
+--chrome:linear-gradient(180deg,#fff 0%,#e3e9f1 20%,#a9b6c7 47%,#f6f8fb 52%,#c3cedb 78%,#fff 100%);
+--sh:0 1px 0 #fff inset,0 -1px 0 rgba(140,160,190,.25) inset,0 2px 4px rgba(20,40,80,.08),0 14px 34px rgba(20,45,90,.18),0 30px 60px -20px rgba(20,60,130,.25);
+--glow:0 0 0 1px rgba(79,195,255,.45),0 0 24px rgba(31,134,255,.35)}
+html,body{background:#dfe8f3}
+.nx-bg{position:fixed;inset:-40px;z-index:0;pointer-events:none;transform:translate3d(calc(var(--tx)*-14px),calc(var(--ty)*-14px),0)}
+.nx-bg::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 38% at 50% 18%,#fff 0%,rgba(255,255,255,0) 70%),radial-gradient(50% 30% at 85% 70%,rgba(79,195,255,.28),transparent 70%),radial-gradient(45% 30% at 10% 85%,rgba(31,134,255,.18),transparent 70%),linear-gradient(180deg,#f4f8fc 0%,#dbe6f2 55%,#c7d5e6 100%)}
+.nx-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(31,134,255,.07) 1px,transparent 1px) 0 0/100% 34px,linear-gradient(90deg,rgba(31,134,255,.07) 1px,transparent 1px) 0 0/34px 100%;-webkit-mask:radial-gradient(70% 60% at 50% 40%,#000,transparent);mask:radial-gradient(70% 60% at 50% 40%,#000,transparent)}
+#nxParticles{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#app{position:relative;z-index:2}
+.glass{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.88),rgba(240,246,252,.68));border:0;box-shadow:var(--sh);border-radius:24px;isolation:isolate;backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:var(--chrome);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:3}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;background:radial-gradient(120px 90px at calc(50% + var(--tx)*40%) calc(0% + var(--ty)*30%),rgba(255,255,255,.75),transparent 70%)}
+.top{padding:12px 16px}.clock{font-size:25px;font-weight:800}.date{color:#2c4466;font-weight:500}
+.brand{font-weight:900;letter-spacing:.34em;font-size:18px;background:linear-gradient(180deg,#24364f,#06101f 48%,#0b5fd0 52%,#062a5e);-webkit-background-clip:text;background-clip:text;color:transparent}.brand .logo{-webkit-text-fill-color:#1f86ff;filter:drop-shadow(0 0 4px rgba(31,134,255,.7))}
+.wx{font-weight:700;color:#2c4466}
+/* Hero: NEXUS (Original-/m2-Gesicht) über NASA-Erde */
+.hero{height:600px;border-radius:32px;background:linear-gradient(160deg,rgba(255,255,255,.88),rgba(232,240,250,.6));box-shadow:var(--sh);align-items:flex-start}
+.hero::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:var(--chrome);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;z-index:9;pointer-events:none}
+#globe{display:none}
+.face{position:absolute;left:50%;bottom:170px;height:420px;max-width:none;width:auto;aspect-ratio:336/735;transform:translate3d(calc(-50% + var(--tx)*8px),calc(var(--ty)*5px),0);z-index:3;border-radius:0;object-fit:cover;object-position:top;
+ -webkit-mask-image:radial-gradient(80% 70% at 50% 38%,#000 60%,transparent 100%);mask-image:radial-gradient(80% 70% at 50% 38%,#000 60%,transparent 100%);
+ filter:contrast(1.06) saturate(1.05) drop-shadow(0 20px 30px rgba(10,40,90,.25)) brightness(calc(1 + var(--lvl,0)*.08));animation:nxBreath 6.5s ease-in-out infinite}
+.nx-scan{position:absolute;left:50%;bottom:170px;width:192px;height:420px;transform:translateX(-50%);z-index:4;pointer-events:none;-webkit-mask:radial-gradient(70% 62% at 50% 40%,#000 55%,transparent 100%);mask:radial-gradient(70% 62% at 50% 40%,#000 55%,transparent 100%);background:repeating-linear-gradient(0deg,rgba(79,195,255,.10) 0 1px,transparent 1px 4px);mix-blend-mode:screen;overflow:hidden}
+.nx-scan::after{content:"";position:absolute;left:0;right:0;height:22%;top:0;background:linear-gradient(180deg,transparent,rgba(120,215,255,.35),transparent);animation:nxScan 4.8s linear infinite}
+.nx-earth,.nx-earth-css{position:absolute;left:50%;bottom:-70px;width:330px;height:330px;transform:translate3d(calc(-50% + var(--tx)*-6px),0,0);z-index:2}
+.nx-earth-css{border-radius:50%;background-size:200% 100%;background-repeat:repeat-x;box-shadow:inset -40px -30px 60px rgba(0,20,60,.55),0 0 40px rgba(79,195,255,.7);animation:nxEarth 60s linear infinite;filter:brightness(1.3) saturate(1.1)}.nx-earth-css.static{animation:none}
+.nx-base{position:absolute;left:50%;bottom:150px;width:360px;height:70px;transform:translateX(-50%);border-radius:50%;z-index:2;background:radial-gradient(closest-side,rgba(160,230,255,.55),rgba(79,195,255,0));pointer-events:none}
+.nx-holo{position:absolute;left:50%;bottom:-110px;width:400px;height:400px;transform:translate(-50%,0) rotateX(76deg);transform-style:preserve-3d;z-index:4;pointer-events:none}
+.nx-holo i{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(79,195,255,.55);box-shadow:0 0 18px rgba(79,195,255,.6),inset 0 0 18px rgba(79,195,255,.35);animation:nxSpin 9s linear infinite}
+.nx-holo i:nth-child(2){inset:-26px;border:1px dashed rgba(31,134,255,.55);animation-duration:16s;animation-direction:reverse}
+.nx-holo i:nth-child(3){inset:30px;border-width:3px;border-color:transparent;border-top-color:rgba(160,230,255,.95);border-left-color:rgba(79,195,255,.6);animation-duration:3.6s}
+.nx-credit{position:absolute;right:14px;bottom:8px;z-index:8;font-size:9.5px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,20,60,.8)}
+.hero-cap{bottom:186px;left:0;right:0;z-index:6;align-items:center}
+.hero-cap b{font-size:30px;font-weight:900;letter-spacing:.34em;background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 2px rgba(10,30,70,.55)) drop-shadow(0 0 12px rgba(79,195,255,.7))}
+.hero-cap span{color:#fff;font-weight:600;text-shadow:0 1px 6px rgba(10,30,70,.7)}
+.dot{display:inline-block;margin-top:4px;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(20,45,90,.18)}
+.dot.ok{color:#0fae72}.dot.bad,.dot.off{color:#b3262d}
+.quick{top:28px;bottom:260px;justify-content:space-between;z-index:7}.quick.left{left:12px}.quick.right{right:12px}
+.quick button{font-weight:600;text-shadow:0 1px 0 #fff;color:var(--ink)}
+.quick i,.appgrid i{width:54px;height:54px;border:0;background:radial-gradient(circle at 35% 25%,#fff,#e6edf5 45%,#b9c6d6);box-shadow:0 1px 0 #fff inset,0 -3px 6px rgba(120,140,170,.35) inset,0 8px 18px rgba(20,45,90,.28),0 0 0 1px rgba(255,255,255,.9),0 0 0 3px rgba(79,195,255,.25)}
+/* Sprachleiste */
+.ask{border-radius:999px;padding:8px 8px 8px 18px}.ask input{font-size:16px;color:var(--ink)}
+.mic,.send{width:48px;height:48px;position:relative;background:radial-gradient(circle at 35% 28%,#b8ecff,#1f86ff 55%,#0b4fb3);box-shadow:var(--glow),0 6px 16px rgba(31,134,255,.45),inset 0 1px 0 rgba(255,255,255,.8)}
+#micBtn::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(79,195,255,.6);animation:nxPing 2.4s ease-out infinite}
+/* Agenten groß */
+.agents{gap:12px}
+.agent{display:block;height:230px;padding:0;overflow:hidden;border-radius:24px;text-align:left}
+.agent img{position:absolute;inset:0;width:100%;height:100%;border-radius:0;object-fit:cover;object-position:50% 15%;z-index:0;background:none;transform:translate3d(calc(var(--tx)*-6px),calc(var(--ty)*-4px),0) scale(1.06)}
+.agent::after{z-index:1!important;background:linear-gradient(180deg,transparent 45%,rgba(10,30,70,.15) 62%,rgba(8,25,60,.78)),repeating-linear-gradient(0deg,rgba(79,195,255,.08) 0 1px,transparent 1px 4px)!important}
+.agent b,.agent small{position:absolute;left:14px;z-index:4;color:#fff}.agent b{bottom:30px;font-size:17px;letter-spacing:.18em;font-weight:900;text-shadow:0 0 12px rgba(79,195,255,.8)}.agent small{bottom:12px;color:rgba(255,255,255,.92);font-size:12px}
+/* Widgets / Listen / Views */
+.widgets{gap:12px;margin-top:12px}.w{min-height:92px;padding:14px}.w b{font-size:14px;font-weight:800}.w span{color:#2c4466;font-weight:500}
+.vhead{padding:10px 14px}.vhead b{font-weight:900;letter-spacing:.14em}
+.back{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 25%,#fff,#dfe7f0);box-shadow:0 4px 10px rgba(20,45,90,.2);font-size:22px}
+.vhead select{padding:6px 10px;border-radius:999px;background:linear-gradient(180deg,#fff,#e5ecf4);box-shadow:0 0 0 1px rgba(170,190,215,.6)}
+.msg.u{background:radial-gradient(circle at 30% 20%,#7fd6ff,#1f86ff 60%,#0b5fd0);box-shadow:0 6px 16px rgba(31,134,255,.35)}
+.msg.a{background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(240,246,252,.75));border:0;box-shadow:var(--sh)}
+.msg.a small{color:#0b5fd0;font-weight:800}
+.list li{background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(240,246,252,.7));border:0;box-shadow:var(--sh);border-radius:18px}
+.grid img{border-radius:14px;box-shadow:0 6px 14px rgba(20,45,90,.2)}
+.pre{color:#0b1b33}
+.appgrid{gap:18px 6px;padding:18px 8px;border-radius:26px;background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(240,246,252,.6));box-shadow:var(--sh)}
+.appgrid>*{font-weight:600}.appgrid i{width:62px;height:62px;border-radius:20px}
+.btn2{background:linear-gradient(160deg,#fff,#e3eaf2);border:0;box-shadow:0 1px 0 #fff inset,0 8px 16px rgba(20,45,90,.2)}
+.btn2.pri{background:radial-gradient(circle at 35% 28%,#b8ecff,#1f86ff 55%,#0b4fb3);box-shadow:var(--glow)}
+.chips button{background:linear-gradient(180deg,#fff,#e5ecf4);border:0;box-shadow:0 0 0 1px rgba(170,190,215,.6),0 4px 10px rgba(20,45,90,.12);font-weight:600}
+.nav{border-radius:28px;padding:9px 6px}.nav button{color:var(--ink);font-weight:600}.nav small{color:#2c4466}
+.nav button.on{color:#1f86ff;text-shadow:0 0 12px rgba(79,195,255,.9)}
+.nav .n{width:64px;height:64px;margin-top:-34px;border:0;background:radial-gradient(circle at 35% 28%,#c2efff,#1f86ff 55%,#0b4fb3);box-shadow:0 0 0 4px #fff,0 0 0 6px rgba(160,180,205,.7),0 0 26px rgba(79,195,255,.8),0 12px 26px rgba(31,134,255,.5)}
+.toast{background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(235,243,252,.92));color:#0b1b33;box-shadow:var(--sh),0 0 0 1px rgba(79,195,255,.5);border-radius:16px;font-weight:600}
+.hint{border-radius:16px}
+/* Agentenwahl im Chat */
+.nx-agentbar{display:flex;gap:8px;margin:10px 0 2px;overflow-x:auto;scrollbar-width:none}
+.nx-agentbar button{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:.12em;background:linear-gradient(180deg,#fff,#e5ecf4);box-shadow:0 0 0 1px rgba(170,190,215,.6),0 4px 10px rgba(20,45,90,.14)}
+.nx-agentbar img{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 18%}
+.nx-agentbar button.on{color:#fff;background:radial-gradient(circle at 30% 20%,#7fd6ff,#1f86ff 60%,#0b5fd0);box-shadow:var(--glow)}
+/* Ladebildschirm + Offline */
+.nx-boot{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(circle,#fff,#dbe6f2);transition:opacity .6s}.nx-boot.done{opacity:0;pointer-events:none}
+.nx-boot img{width:120px;height:120px;border-radius:50%;object-fit:cover;object-position:50% 20%;box-shadow:var(--glow),0 0 0 6px rgba(79,195,255,.2)}
+.nx-boot b{display:block;text-align:center;margin-top:18px;font-weight:900;letter-spacing:.34em;color:#0b1b33}
+.nx-offline{display:none;margin:10px 2px 0;padding:11px 14px;font-size:13px;font-weight:600;border-radius:18px;color:#7a4300;background:linear-gradient(180deg,#fff6e6,#ffe7bf);box-shadow:0 0 0 1px rgba(224,138,0,.4)}
+html.nx-is-offline .nx-offline{display:block}html.nx-is-offline #micBtn,html.nx-is-offline .nav .n{filter:grayscale(.7);opacity:.6}
+@keyframes nxBreath{0%,100%{transform:translate3d(calc(-50% + var(--tx)*8px),calc(var(--ty)*5px),0) scale(1)}50%{transform:translate3d(calc(-50% + var(--tx)*8px),calc(var(--ty)*5px - 2px),0) scale(1.015)}}
+@keyframes nxSpin{to{transform:rotate(360deg)}}@keyframes nxScan{from{transform:translateY(-30%)}to{transform:translateY(480%)}}
+@keyframes nxPing{0%{transform:scale(.9);opacity:.9}100%{transform:scale(1.5);opacity:0}}@keyframes nxEarth{to{background-position:-200% 0}}
+html.nx-lite *,html.nx-lite *::before,html.nx-lite *::after{animation:none!important;transition:none!important}html.nx-lite #nxParticles{display:none}
+html.nx-lite .glass{backdrop-filter:none;-webkit-backdrop-filter:none}
+html.nx-paused *,html.nx-paused *::before,html.nx-paused *::after{animation-play-state:paused!important}
+
+/* 1.7.1 perf: Erde per transform statt background-position, kein filter am Kugel-Container */
+.nx-earth-css{overflow:hidden;background-size:0 0!important;animation:none!important;filter:none!important;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black)}
+.nx-earth-css::before{content:"";position:absolute;top:0;left:0;height:100%;width:400%;background-image:inherit;background-size:50% 100%;background-repeat:repeat-x;animation:nxEarthT 80s linear infinite;will-change:transform}
+.nx-earth-css::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.28),transparent 45%),radial-gradient(circle at 70% 72%,rgba(0,15,45,.55),transparent 62%);box-shadow:inset 0 0 26px rgba(120,210,255,.55)}
+.nx-earth-css.static::before{animation:none}
+@keyframes nxEarthT{to{transform:translate3d(-50%,0,0)}}
+
+#nxParticles{display:none!important}

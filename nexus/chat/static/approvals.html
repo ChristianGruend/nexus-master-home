@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NEXUS Approvals (local)</title>
+<style>
+:root{--bg:#0b1220;--card:#121a2b;--cyan:#3de7ff;--ok:#3dff9a;--bad:#ff5d6c;--txt:#e8f1ff}
+*{box-sizing:border-box}body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+header{padding:16px 20px;border-bottom:1px solid #1e2a44;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:18px;margin:0;color:var(--cyan)}
+.badge{font-size:12px;padding:4px 8px;border-radius:999px;background:#1a2740;border:1px solid #2b3d63}
+main{padding:16px;max-width:960px;margin:0 auto}
+.card{background:var(--card);border:1px solid #223353;border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{background:#18314f;color:var(--txt);border:1px solid #2f4d7a;border-radius:8px;padding:8px 12px;cursor:pointer}
+button.ok{background:#143528;border-color:#1f6b45;color:var(--ok)}
+button.bad{background:#3a1520;border-color:#7a2434;color:var(--bad)}
+code,pre{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.muted{opacity:.7;font-size:12px}
+input{background:#0d1626;border:1px solid #2b3d63;color:var(--txt);border-radius:8px;padding:8px;min-width:280px}
+</style>
+</head>
+<body>
+<header>
+  <h1>NEXUS Approvals</h1>
+  <span class="badge">LOCAL ONLY — not on Funnel</span>
+  <span class="badge" id="level">process_level=?</span>
+  <button onclick="refresh()">Refresh</button>
+</header>
+<main>
+  <div class="card">
+    <div class="row">
+      <label>Bridge Bearer (not logged):</label>
+      <input id="tok" type="password" placeholder="NEXUS_BRIDGE_TOKEN" autocomplete="off"/>
+      <button onclick="saveTok()">Save session</button>
+    </div>
+    <p class="muted">Lokale Freigaben gelten einmalig für die angezeigte Aktion und ihre Parameter. Der vorhandene Bridge-Zugang bleibt nur in dieser Browsersitzung. Eine Freigabe startet den Auftrag noch nicht.</p>
+  </div>
+  <div class="card">
+    <h2 style="font-size:15px;margin-top:0">Pending-Anfrage erstellen</h2>
+    <div class="row">
+      <label>PRIVILEGED Task:</label>
+      <select id="reqTask" onchange="showSelectedTask()" style="background:#0d1626;border:1px solid #2b3d63;color:var(--txt);border-radius:8px;padding:8px;min-width:280px"></select>
+      <strong id="selectedTask" style="color:var(--cyan)"></strong>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label>Parameter (JSON):</label>
+      <input id="reqParams" value="{}" spellcheck="false"/>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label>Grund:</label>
+      <input id="reqReason" maxlength="1000" placeholder="Warum wird die Freigabe benötigt?"/>
+      <button onclick="requestApproval()">Pending anlegen</button>
+    </div>
+    <p class="muted" id="reqStatus">Die Anfrage führt den Task nicht aus und genehmigt ihn nicht.</p>
+  </div>
+  <div id="list"></div>
+</main>
+<script>
+function esc(value){return String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const tokEl = document.getElementById('tok');
+tokEl.value = sessionStorage.getItem('nx_bridge_tok') || '';
+function saveTok(){ sessionStorage.setItem('nx_bridge_tok', tokEl.value.trim()); refresh(); }
+function authHeaders(){
+  const t = (sessionStorage.getItem('nx_bridge_tok')||'').trim();
+  return t ? {Authorization:'Bearer '+t} : {};
+}
+async function api(path, opts={}){
+  const r = await fetch(path, {headers:{'Content-Type':'application/json',...authHeaders(),...(opts.headers||{})}, ...opts});
+  const j = await r.json().catch(()=>({success:false,error:'bad_json',status:r.status}));
+  j._http = r.status; return j;
+}
+async function refresh(){
+  const caps = await api('/api/capabilities');
+  document.getElementById('level').textContent = 'process_level='+(caps.process_level||'?');
+  const sel=document.getElementById('reqTask');
+  const privileged=(caps.tasks||[]).filter(v=>v&&v.permission==='PRIVILEGED').map(v=>v.name).filter(Boolean).sort();
+  const previous=sel.value;
+  sel.innerHTML=privileged.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  if(previous && privileged.includes(previous)) sel.value=previous;
+  else if(privileged.includes('restart_nexus_bridge_exact')) sel.value='restart_nexus_bridge_exact';
+  showSelectedTask();
+  const data = await api('/api/bridge/approvals?limit=50');
+  const box = document.getElementById('list');
+  if(!data.success){ box.innerHTML = `<div class="card">Error ${data._http}: ${esc(data.error||data.message||JSON.stringify(data))}</div>`; return; }
+  const items = (data.approvals||[]).filter(a=>/^AP-[a-f0-9]{16}$/.test(a.approval_id));
+  if(!items.length){ box.innerHTML = '<div class="card muted">Keine Approvals.</div>'; return; }
+  box.innerHTML = items.map(a=>`
+    <div class="card">
+      <div class="row"><strong>${esc(a.approval_id)}</strong><span class="badge">${esc(a.status)}</span><span class="badge">${esc(a.task)}</span></div>
+      <p class="muted">${esc(a.reason||'')}</p>
+      <pre>${esc(JSON.stringify(a.params||{},null,2))}</pre>
+      <div class="row">
+        <button class="ok" ${a.status!=='pending'?'disabled':''} onclick="decide('${esc(a.approval_id)}',true)">Approve</button>
+        <button class="bad" ${a.status!=='pending'?'disabled':''} onclick="decide('${esc(a.approval_id)}',false)">Deny</button>
+        <span class="muted">created ${esc(a.created_at||'')} · expires ${esc(a.expires_at||'')}</span>
+      </div>
+    </div>`).join('');
+}
+function showSelectedTask(){
+  const sel=document.getElementById('reqTask');
+  document.getElementById('selectedTask').textContent=sel.value ? `Ausgewählt: ${sel.value}` : 'Kein Task ausgewählt';
+}
+async function requestApproval(){
+  const status=document.getElementById('reqStatus');
+  const task=document.getElementById('reqTask').value;
+  if(!task){ status.textContent='Keine registrierte PRIVILEGED-Aktion verfügbar.'; return; }
+  let params;
+  try{ params=JSON.parse(document.getElementById('reqParams').value||'{}'); }
+  catch(e){ status.textContent='Parameter sind kein gültiges JSON.'; return; }
+  if(!params || Array.isArray(params) || typeof params!=='object'){ status.textContent='Parameter müssen ein JSON-Objekt sein.'; return; }
+  const reason=document.getElementById('reqReason').value.trim();
+  status.textContent='Pending-Anfrage wird angelegt …';
+  const r=await api('/api/bridge/approvals',{method:'POST',body:JSON.stringify({task,params,reason})});
+  if(r.success && r.approval && r.approval.status==='pending'){
+    status.textContent=`Pending ${r.approval.approval_id} · Ablauf ${r.approval.expires_at||'unbekannt'} · noch NICHT genehmigt.`;
+    await refresh();
+  }else{
+    status.textContent=`Fehler ${r._http}: ${r.error||r.message||'Anfrage nicht angelegt'}`;
+  }
+}
+async function decide(id, ok){
+  const path = `/api/bridge/approvals/${id}/`+(ok?'approve':'deny');
+  const r = await api(path, {method:'POST', body: JSON.stringify({by:'local_ui'})});
+  alert(JSON.stringify(r));
+  refresh();
+}
+refresh();
+setInterval(refresh, 8000);
+</script>
+</body>
+</html>

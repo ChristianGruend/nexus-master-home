@@ -1,0 +1,255 @@
+    # ============================================================
+    # MEDIA CONTROL ROUTER
+    # ============================================================
+    # Grundregel:
+    # Media darf technische, allgemeine oder konversationelle
+    # Sprache niemals aufgrund einzelner Wörter abfangen.
+    #
+    # Beispiele, die KEIN Media sein dürfen:
+    #   "weiter"
+    #   "weiter mit dem Bau"
+    #   "als nächster Schritt"
+    #   "nächster Test"
+    #   "zurück zur Datei"
+    #   "play ist ein englisches Wort"
+    #   "prüfe den nächsten Schritt"
+    #
+    # Media wird nur ausgelöst durch:
+    #   1. einen eindeutig formulierten Media-Kurzbefehl oder
+    #   2. einen Befehl mit eindeutigem Media-Kontext.
+    # ============================================================
+
+    media_text = re.sub(r"\s+", " ", low).strip()
+    media_text = media_text.rstrip(" .!?")
+
+    # Expliziter Medienkontext.
+    #
+    # Absichtlich KEINE allgemeinen Wörter wie:
+    #   titel, datei, video
+    #
+    # "Titel" ist in normaler Sprache viel zu unspezifisch.
+    media_context_re = re.compile(
+        r"\b("
+        r"musik|song|track|lied|audio|"
+        r"player|mediaplayer|wiedergabe|"
+        r"spotify|vlc"
+        r")\b",
+        re.I,
+    )
+
+    has_media_context = bool(media_context_re.search(media_text))
+
+    # ------------------------------------------------------------
+    # PAUSE
+    # ------------------------------------------------------------
+
+    media_pause_exact = {
+        "pause",
+        "pausieren",
+        "pausiere",
+        "musik pause",
+        "musik pausieren",
+        "song pausieren",
+        "track pausieren",
+        "wiedergabe pausieren",
+        "player pausieren",
+    }
+
+    media_pause_context_re = re.compile(
+        r"^(?:bitte\s+)?"
+        r"(?:pausiere|pausieren|pause|stoppe|stopp)\s+"
+        r"(?:die\s+)?"
+        r"(?:musik|den\s+song|den\s+track|das\s+lied|"
+        r"die\s+wiedergabe|den\s+player)$",
+        re.I,
+    )
+
+    if (
+        media_text in media_pause_exact
+        or (
+            has_media_context
+            and media_pause_context_re.fullmatch(media_text)
+        )
+    ):
+        return {
+            "intent": "media",
+            "action": "pause",
+            "early": True,
+            "reply": "Pause.",
+        }
+
+    # ------------------------------------------------------------
+    # PLAY / RESUME
+    # ------------------------------------------------------------
+
+    # "weiter" ALLEIN ist ausdrücklich KEIN Media-Befehl.
+    # "play" ALLEIN ebenfalls nicht, weil es in technischen
+    # Gesprächen häufig vorkommt.
+
+    media_play_exact = {
+        "musik weiter",
+        "musik fortsetzen",
+        "wiedergabe fortsetzen",
+        "wiedergabe weiter",
+        "player fortsetzen",
+        "song weiter",
+        "track weiter",
+    }
+
+    media_play_context_re = re.compile(
+        r"^(?:bitte\s+)?"
+        r"(?:spiele|spiel|starte|setze|fortsetzen|resume)\s+"
+        r"(?:die\s+)?"
+        r"(?:musik|wiedergabe|player|song|track|lied)"
+        r"(?:\s+fort|\s+weiter)?$",
+        re.I,
+    )
+
+    if (
+        media_text in media_play_exact
+        or (
+            has_media_context
+            and media_play_context_re.fullmatch(media_text)
+        )
+    ):
+        return {
+            "intent": "media",
+            "action": "play",
+            "early": True,
+            "reply": "Wiedergabe.",
+        }
+
+    # ------------------------------------------------------------
+    # NEXT
+    # ------------------------------------------------------------
+
+    # Sichere Kurzbefehl-Ausnahmen.
+    # "next", "nächster", "weiter" ALLEIN sind NICHT enthalten.
+
+    media_next_exact = {
+        "skip",
+        "skip song",
+        "skip track",
+        "nächster song",
+        "naechster song",
+        "nächstes lied",
+        "naechstes lied",
+        "nächster track",
+        "naechster track",
+        "nächster titel",
+        "naechster titel",
+        "musik nächster",
+        "musik naechster",
+        "player nächster",
+        "player naechster",
+    }
+
+    media_next_context_re = re.compile(
+        r"^(?:bitte\s+)?"
+        r"(?:spiel(?:e)?|mach|wechsel|spring|skip)"
+        r"(?:\s+zum|\s+auf|\s+den|\s+zum nächsten|\s+zum naechsten)*\s*"
+        r"(?:nächsten|naechsten|nächstes|naechstes|next)?\s*"
+        r"(?:song|track|lied|musiktitel|titel)$",
+        re.I,
+    )
+
+    if (
+        media_text in media_next_exact
+        or (
+            has_media_context
+            and media_next_context_re.fullmatch(media_text)
+        )
+    ):
+        return {
+            "intent": "media",
+            "action": "next",
+            "early": True,
+            "reply": "Nächster Titel.",
+        }
+
+    # ------------------------------------------------------------
+    # PREVIOUS
+    # ------------------------------------------------------------
+
+    # "zurück" ALLEIN ist ausdrücklich KEIN Media.
+
+    media_prev_exact = {
+        "vorheriger song",
+        "vorheriger track",
+        "vorheriges lied",
+        "vorheriger titel",
+        "letzter song",
+        "letzter track",
+        "musik zurück",
+        "musik zurueck",
+        "player zurück",
+        "player zurueck",
+    }
+
+    media_prev_context_re = re.compile(
+        r"^(?:bitte\s+)?"
+        r"(?:spiel(?:e)?|geh|spring|wechsel)"
+        r"(?:\s+zum|\s+auf|\s+den)?\s*"
+        r"(?:vorherigen|vorheriger|vorheriges|letzten|letzter)\s+"
+        r"(?:song|track|lied|musiktitel|titel)$",
+        re.I,
+    )
+
+    if (
+        media_text in media_prev_exact
+        or (
+            has_media_context
+            and media_prev_context_re.fullmatch(media_text)
+        )
+    ):
+        return {
+            "intent": "media",
+            "action": "prev",
+            "early": True,
+            "reply": "Vorheriger Titel.",
+        }
+
+    # ------------------------------------------------------------
+    # STOP
+    # ------------------------------------------------------------
+
+    # "stop" / "stopp" ALLEIN wird NICHT als Media interpretiert.
+    # Das ist wichtig für technische Arbeitsabläufe.
+
+    media_stop_exact = {
+        "musik stoppen",
+        "musik stopp",
+        "musik aus",
+        "wiedergabe stoppen",
+        "player stoppen",
+        "song stoppen",
+        "track stoppen",
+    }
+
+    media_stop_context_re = re.compile(
+        r"^(?:bitte\s+)?"
+        r"(?:stoppe|stopp|beende|beenden)\s+"
+        r"(?:die\s+)?"
+        r"(?:musik|wiedergabe|player|song|track|lied)$",
+        re.I,
+    )
+
+    if (
+        media_text in media_stop_exact
+        or (
+            has_media_context
+            and media_stop_context_re.fullmatch(media_text)
+        )
+    ):
+        return {
+            "intent": "media",
+            "action": "stop",
+            "early": True,
+            "reply": "Musik gestoppt.",
+        }
+
+    # WICHTIG:
+    # Kein generischer Media-Fallback.
+    #
+    # Wenn keine der obigen Regeln eindeutig passt, läuft die
+    # Nachricht durch die nachfolgenden normalen Intent-Regeln.
