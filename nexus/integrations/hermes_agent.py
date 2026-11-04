@@ -169,8 +169,22 @@ def ask(task: str, workdir: str | None = None) -> dict:
             _CURRENT.update(busy=False, busy_since=None, request_id=None)
             _LOCK.release()
         _ms = int((time.time() - _t0) * 1000)
-        _ok = bool(_nl["tool_calls"]) and all(c.get("ok") for c in _nl["tool_calls"]) and _nl["reply"] != "HERMES_TOOL_LOOP_LIMIT"
-        _st = "HERMES_TOOLS_EXECUTED" if _ok else "HERMES_NO_TOOL_CALL"
+        _calls = _nl.get("tool_calls") or []
+        _approval_pending = any(c.get("status") == "APPROVAL_REQUIRED" for c in _calls)
+        _ok = (
+            bool(_calls)
+            and all(c.get("ok") is True for c in _calls)
+            and _nl.get("reply") != "HERMES_TOOL_LOOP_LIMIT"
+            and not _nl.get("final_missing", False)
+        )
+        if _approval_pending:
+            _st = "HERMES_APPROVAL_REQUIRED"
+        elif _ok:
+            _st = "HERMES_TOOLS_EXECUTED"
+        elif _calls:
+            _st = "HERMES_TOOL_EXECUTION_FAILED"
+        else:
+            _st = "HERMES_NO_TOOL_CALL"
         _log({"event": "response_native_tools", "request_id": rid, "ok": _ok, "latency_ms": _ms,
               "tools": [c["tool"] for c in _nl["tool_calls"]], "reply": _nl["reply"][:500]})
         return {**base, "model": _tm, "success": _ok, "error": None if _ok else _st, "reply": _nl["reply"], "latency_ms": _ms,

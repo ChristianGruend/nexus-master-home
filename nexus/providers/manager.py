@@ -10,6 +10,7 @@ from typing import Any
 
 from nexus.common.ollama_client import OllamaClient
 from nexus.common import ai_layer
+from nexus.common.claude_client import default_client
 
 
 @dataclass
@@ -81,6 +82,56 @@ class OpenAIProvider:
             return ProviderResult(False, "", self.name, self.model, str(e), session_id).as_dict()
 
 
+class ClaudeProvider:
+    """Anthropic Claude as a normal NEXUS provider (env-gated).
+
+    This provider is plain chat. Full tool use, approvals and background tasks
+    live in nexus.integrations.claude_agent and are selected by the controller.
+    """
+
+    name = "claude"
+
+    def __init__(self, timeout: float = 120.0) -> None:
+        self.timeout = timeout
+        self.client = default_client()
+
+    def status(self) -> dict[str, Any]:
+        return self.client.status()
+
+    @staticmethod
+    def _messages(message: str, context: list[dict] | None) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
+        for item in context or []:
+            if not isinstance(item, dict) or item.get("role") not in ("user", "assistant"):
+                continue
+            text = item.get("content")
+            if not isinstance(text, str) or not text.strip():
+                continue
+            if out and out[-1]["role"] == item["role"]:
+                out[-1]["content"] += "\n\n" + text
+            else:
+                out.append({"role": item["role"], "content": text})
+        while out and out[0]["role"] != "user":
+            out.pop(0)
+        if out and out[-1]["role"] == "user":
+            out[-1]["content"] += "\n\n" + message
+        else:
+            out.append({"role": "user", "content": message})
+        return out
+
+    def chat(self, message: str, context: list[dict] | None = None, *,
+             session_id: str | None = None, timeout: float | None = None,
+             **_: Any) -> dict[str, Any]:
+        if not self.client.api_key:
+            return ProviderResult(False, "", self.name, self.client.model,
+                                  "claude_not_configured", session_id).as_dict()
+        out = self.client.messages(self._messages(message, context),
+                                   timeout=float(timeout or self.timeout))
+        return ProviderResult(bool(out.get("success")), out.get("text") or "", self.name,
+                              out.get("model") or self.client.model,
+                              out.get("error"), session_id).as_dict()
+
+
 class PhoneLocalProvider:
     """Optional phone-side provider slot (NEXUS PHONE / Termux).
 
@@ -131,10 +182,11 @@ class PhoneLocalProvider:
 LOGICAL_PROVIDERS: dict[str, str] = {
     "PHONE_LOCAL_AI": "phone_local",
     "WOZIPC_LOCAL_AI": "local",
+    "CLAUDE": "claude",
     "CHATGPT_OPTIONAL": "openai",
 }
 
-PROVIDER_FALLBACK_ORDER: tuple[str, ...] = ("phone_local", "local", "openai")
+PROVIDER_FALLBACK_ORDER: tuple[str, ...] = ("phone_local", "local", "claude", "openai")
 
 
 class AIProviderManager:
@@ -146,13 +198,15 @@ class AIProviderManager:
         self.timeout = float(os.environ.get("NEXUS_AI_TIMEOUT") or timeout)
         wozipc = LocalLLMProvider(self.timeout)
         chatgpt = OpenAIProvider(min(self.timeout, 120.0))
+        claude = ClaudeProvider(min(self.timeout, 300.0))
         # One instance per backend; logical aliases share it.
         self.providers = {
             "local": wozipc,
             "openai": chatgpt,
+            "claude": claude,
             "phone_local": PhoneLocalProvider(min(self.timeout, 60.0)),
         }
-        self._instances = {"wozipc_local": wozipc, "chatgpt_optional": chatgpt}
+        self._instances = {"wozipc_local": wozipc, "chatgpt_optional": chatgpt, "claude": claude}
         self._cancelled: set[str] = set()
 
     def resolve_key(self, provider: str | None) -> str:
@@ -270,6 +324,8 @@ class AIProviderManager:
         low = (message or "").lower()
         if any(x in low for x in ("frag lokal", "lokale modell", "lokales modell", "benutze lokal", "benutze das lokale")):
             return "local"
+        if any(x in low for x in ("claude", "anthropic")):
+            return "claude" if self.providers["claude"].status().get("configured") else "local"
         if any(x in low for x in ("chatgpt", "andere ki", "zweiten modell", "zweites modell")):
             return "openai" if self.providers["openai"].status().get("configured") else "local"
         return self.default if self.default in self.providers else "local"

@@ -116,7 +116,7 @@ const DEF={pcBase:'',voiceReply:false,phoneAi:true,phoneAiModel:'qwen2.5:1.5b',s
 let cfg=Object.assign({},DEF,JSON.parse(localStorage.getItem('nxgpt.cfg')||'{}'));
 const saveCfg=()=>localStorage.setItem('nxgpt.cfg',JSON.stringify(cfg));
 /* ---------- Verbindung: Core (PC) -> PC_FALLBACK lokale Handy-KI ---------- */
-const CANDS=[{url:'http://wozipc-nexus:8299',route:'Tailscale'},{url:'http://192.0.2.11:8299',route:'Tailscale'},{url:'http://192.0.2.12:8299',route:'WLAN'}];
+const CANDS=[{url:'http://wozipc-nexus:8299',route:'Tailscale'},{url:'http://192.0.2.10:8299',route:'Tailscale'},{url:'http://192.0.2.13:8299',route:'WLAN'}];
 const CORE={base:null,route:null};
 function tmo(ms){const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal}
 async function probe(u){try{const r=await fetch(u+'/manifest.webmanifest',{signal:tmo(2500),cache:'no-store'});return r.ok}catch(e){return false}}
@@ -256,7 +256,7 @@ async function tool(name){closeDrawer();const B=$('sheetBody');$('sheet').classL
   if(name==='media'){$('sheetT').textContent='Media & Steuerung';
     B.innerHTML=NATIVE?'<div class="row"><button class="pill" data-m="PREVIOUS">⏮</button><button class="pill" data-m="PLAY_PAUSE">⏯</button><button class="pill" data-m="NEXT">⏭</button><button class="pill" data-m="VOL_DOWN">🔉</button><button class="pill" data-m="VOL_UP">🔊</button></div><div class="row"><button class="pill" data-t="1">🔦 Licht an</button><button class="pill" data-t="0">Licht aus</button></div>':'<p class="hint">Steuerung nur in der installierten App.</p>';return}
   if(name==='settings'){$('sheetT').textContent='Einstellungen';
-    B.innerHTML=`<label class="sw">Antworten vorlesen<input type="checkbox" id="sVoice" ${cfg.voiceReply?'checked':''}></label><label class="sw">Handy-KI als PC_FALLBACK<input type="checkbox" id="sPhone" ${cfg.phoneAi?'checked':''}></label><div class="hint" style="text-align:left">Eigene PC-Adresse (leer = automatisch Tailscale → WLAN)</div><input class="f" id="sBase" value="${esc(cfg.pcBase)}" placeholder="http://192.0.2.12:8299"><div class="row"><button class="pill" id="sSave">Speichern</button><button class="pill" id="sClear">Verlauf löschen</button></div>`;
+    B.innerHTML=`<label class="sw">Antworten vorlesen<input type="checkbox" id="sVoice" ${cfg.voiceReply?'checked':''}></label><label class="sw">Handy-KI als PC_FALLBACK<input type="checkbox" id="sPhone" ${cfg.phoneAi?'checked':''}></label><div class="hint" style="text-align:left">Eigene PC-Adresse (leer = automatisch Tailscale → WLAN)</div><input class="f" id="sBase" value="${esc(cfg.pcBase)}" placeholder="http://192.0.2.13:8299"><div class="row"><button class="pill" id="sSave">Speichern</button><button class="pill" id="sClear">Verlauf löschen</button></div>`;
     $('sSave').onclick=()=>{cfg.voiceReply=$('sVoice').checked;cfg.phoneAi=$('sPhone').checked;cfg.pcBase=$('sBase').value.trim();saveCfg();CORE.base=null;connect();toast('Gespeichert')};
     $('sClear').onclick=()=>{if(confirm('Ganzen Chat-Verlauf auf diesem Gerät löschen?')){chats=[];saveChats();newChat()}};return}
 }

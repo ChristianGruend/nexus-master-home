@@ -21,8 +21,12 @@ class HermesToolsSafety(unittest.TestCase):
     def test_blocks_outside_workspace(self):
         with self.assertRaises(PermissionError):
             ht.run_tool("read_file", {"path": r"C:\Windows\win.ini"}, self.wd)
+        # Regel (Eddie 2026-11-04): nur workspace\ und nexus\ lesbar; Projektroot gesperrt
         with self.assertRaises(PermissionError):
-            ht.run_tool("read_file", {"path": "../../../nexus/chat/server.py"}, self.wd)
+            ht.run_tool("list_directory", {"path": str(ht.ROOT)}, self.wd)
+        with self.assertRaises(PermissionError):
+            ht.run_tool("read_file", {"path": str(ht.ROOT / "README.md")}, self.wd)
+        self.assertIn("def ", ht.run_tool("read_file", {"path": "nexus/chat/server.py"}, self.wd))
 
     def test_write_only_in_workdir_and_no_secrets(self):
         with self.assertRaises(PermissionError):

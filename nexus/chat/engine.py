@@ -91,6 +91,19 @@ class NexusEngine:
     def _save_active(self, sid: str) -> None:
         atomic_write_json(ACTIVE_FILE, {"session_id": sid, "updated": self._now()})
 
+
+    @staticmethod
+    def _selfbuild_state() -> str:
+        """Echter Selbstbau-Zustand aus der Autobuild-Engine; UNKNOWN nur bei Fehler."""
+        try:
+            from nexus.autobuild.loop import get_autobuild
+            st = get_autobuild().status()
+            if st.get("cycle_running"):
+                return "RUNNING"
+            return "ACTIVE" if st.get("loop") and not st.get("stop_file") else "STOPPED"
+        except Exception:
+            return "UNKNOWN"
+
     def health(self) -> dict:
         ollama = self.master.llm.ping()
         model = self.master.llm.pick_model() if ollama.get("reachable") else None
@@ -121,7 +134,7 @@ class NexusEngine:
             "ai": ai,
             "modules": modules,
             "python": {"executable": sys.executable, "version": sys.version.split()[0]},
-            "selfbuild": "UNKNOWN",
+            "selfbuild": self._selfbuild_state(),
             "score_kind": "service_availability_only_not_execution_proof",
         }
 

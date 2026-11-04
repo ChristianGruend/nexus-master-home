@@ -1,0 +1,147 @@
+from __future__ import annotations
+
+import asyncio
+import json
+import re
+from pathlib import Path
+from xml.sax.saxutils import escape as xml_escape
+
+from nexus.common.paths import APEX
+
+DEFAULT_VOICES = (
+    "de-DE-AmalaNeural",  # warm German
+)
+DEFAULT_VOICE = DEFAULT_VOICES[0]
+DEFAULT_RATE = "-4%"
+DEFAULT_PITCH = "-2Hz"
+DEFAULT_VOLUME = "+0%"
+TTS_TIMEOUT_SEC = 18
+
+
+def _load_cfg() -> dict:
+    cfg_path = APEX / "voice_config.json"
+    try:
+        if cfg_path.exists():
+            return json.loads(cfg_path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+
+def available() -> bool:
+    try:
+        import edge_tts  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
+def _humanize(text: str) -> str:
+    """Light cleanup so speech sounds less staccato / robotic."""
+    t = (text or "").strip()
+    if not t:
+        return ""
+    # collapse whitespace / newlines
+    t = re.sub(r"\s+", " ", t)
+    # soften common chat markers
+    t = t.replace("**", "").replace("__", "").replace("`", "")
+    # ensure sentence-ending punctuation has a space after (helps break splitting)
+    t = re.sub(r"([.!?…])([A-Za-zÄÖÜäöüßА-Яа-я])", r"\1 \2", t)
+    return t.strip()
+
+
+def _split_sentences(text: str) -> list[str]:
+    parts = re.split(r"(?<=[.!?…])\s+", text)
+    return [p.strip() for p in parts if p and p.strip()]
+
+
+def _build_ssml(text: str, voice: str, rate: str, pitch: str, volume: str) -> str:
+    """SSML with prosody + short break after each sentence for a warmer cadence."""
+    sentences = _split_sentences(text) or [text]
+    chunks: list[str] = []
+    for i, sent in enumerate(sentences):
+        chunks.append(xml_escape(sent))
+        if i < len(sentences) - 1:
+            chunks.append('<break time="180ms"/>')
+    body = " ".join(chunks)
+    return (
+        f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="de-DE">'
+        f'<voice name="{xml_escape(voice)}">'
+        f'<prosody rate="{xml_escape(rate)}" pitch="{xml_escape(pitch)}" volume="{xml_escape(volume)}">'
+        f"{body}"
+        f"</prosody></voice></speak>"
+    )
+
+
+def synthesize(text: str, out_path: Path, voice: str | None = None) -> dict:
+    text = _humanize(text)
+    if not text:
+        return {"success": False, "error": "leer"}
+    try:
+        import edge_tts
+    except Exception:
+        return {
+            "success": False,
+            "stub": True,
+            "error": "edge_tts_missing",
+            "reply": "TTS-Stub: edge-tts nicht installiert.",
+        }
+
+    cfg = _load_cfg()
+    rate = str(cfg.get("tts_rate") or DEFAULT_RATE)
+    pitch = str(cfg.get("tts_pitch") or DEFAULT_PITCH)
+    volume = str(cfg.get("tts_volume") or DEFAULT_VOLUME)
+
+    voices: list[str] = []
+    if voice:
+        voices.append(voice)
+    pref = cfg.get("tts_voice")
+    if pref:
+        voices.append(str(pref))
+    for v in cfg.get("fallback_voices") or []:
+        voices.append(str(v))
+    voices.extend(DEFAULT_VOICES)
+
+    seen = set()
+    ordered = []
+    for v in voices:
+        if v and v not in seen:
+            seen.add(v)
+            ordered.append(v)
+
+    # voicefix-20261006: KEIN SSML mehr. edge-tts >= 5 escaped eigenes SSML -> der Markup-Text
+    # ("speak version 1.0 xmlns ...") wurde mitgesprochen (+~25 s Audio, +~4 s Synthese pro Antwort).
+    # rate/pitch/volume gehen direkt an Communicate; Satzpausen setzt Edge selbst.
+    if not re.fullmatch(r"[+-]\d+%", rate):
+        rate = DEFAULT_RATE
+    if not re.fullmatch(r"[+-]\d+Hz", pitch):
+        pitch = DEFAULT_PITCH
+    if not re.fullmatch(r"[+-]\d+%", volume):
+        volume = DEFAULT_VOLUME
+
+    last_err = None
+    for v in ordered:
+        async def _run_plain(vv=v):
+            communicate = edge_tts.Communicate(
+                text, vv, rate=rate, pitch=pitch, volume=volume
+            )
+            await asyncio.wait_for(communicate.save(str(out_path)), timeout=TTS_TIMEOUT_SEC)
+
+        try:
+            asyncio.run(_run_plain())
+            if out_path.exists() and out_path.stat().st_size > 0:
+                return {
+                    "success": True,
+                    "path": str(out_path),
+                    "bytes": out_path.stat().st_size,
+                    "voice": v,
+                    "rate": rate,
+                    "pitch": pitch,
+                    "volume": volume,
+                    "mode": "plain",
+                }
+            last_err = "empty_mp3"
+        except Exception as e:
+            last_err = e
+            continue
+    return {"success": False, "error": str(last_err or "tts_failed")}

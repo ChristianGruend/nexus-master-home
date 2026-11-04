@@ -28,7 +28,7 @@ _EXEC_VERB = re.compile(
 _EXEC_NOUN = re.compile(r"\b([a-z0-9][a-z0-9._@:/+\-]{0,60})\s+ausf(?:ü|ue)hren\b", re.I)
 _EXEC_SKIP = re.compile(
     r"\b(den|die|das|dem|der|eine|einen|ein|einer|eines|deine|dein|meine|mein|"
-    r"ihre|ihr|seine|sein|es|unsere|diese|dieser|euer|bitte|nun|jetzt|mal|zuerst|"
+    r"ihre|ihr|seine|sein|es|unsere|diese|dieser|euer|bitte|nun|jetzt|mal|alle|alles|sämtliche|saemtliche|jeder|jede|jeden|jedes|mehrere|verschiedene|beliebige|zuerst|"
     r"danach|plan|pläne|plaene|auftrag|aufgabe|vorhaben|arbeit|bericht|test|probe|"
     r"pr(?:ü|ue)fung|skript|script|programm|werkzeug\w*|musik|video|folge|suche|recherche|recherchen|"
     r"analyse|aktion|handlung|bewegung|schritt|via|zu|an|aus)\b",
@@ -640,3 +640,4 @@ def guard_output(result):
     data.setdefault('provenance','legacy_tool_result' if trace else 'model_response_unverified')
     out['data']=data
     return out
+

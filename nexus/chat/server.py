@@ -439,6 +439,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self._bytes(200, (STATIC_DIR / "studio.html").read_bytes(), "text/html; charset=utf-8")
             if path.startswith("/api/studio/"):
                 return self._studio("GET", path, qs, None)
+            if path == "/api/swarm/status" or path.startswith("/api/swarm/runs/"):  # NEXUS Swarm AI (20261104)
+                from nexus.swarm.core import get_master as _gsm
+                if path == "/api/swarm/status":
+                    return self._json(200, _gsm().status())
+                _r = _gsm().get(path.rsplit("/", 1)[-1])
+                return self._json(200 if _r else 404, {"success": bool(_r), "run": _r} if _r else {"success": False, "error": "not_found"})
+            if path in ("/swarm", "/swarm.html"):
+                return self._bytes(200, (STATIC_DIR / "swarm.html").read_bytes(), "text/html; charset=utf-8")
             if path == "/api/autobuild/status":  # Selbstbau-Engine (20261028)
                 from nexus.autobuild.loop import get_autobuild
                 return self._json(200, get_autobuild().status())
@@ -668,6 +676,21 @@ class Handler(BaseHTTPRequestHandler):
             traceback.print_exc()
             self._json(500, {"success": False, "error": str(e)})
 
+    def _agent_guard(self) -> tuple[bool, str]:
+        """Phase 1 (WP1): Agenten-Endpunkte nur Loopback oder explizit tokenisiert."""
+        from nexus.common.agent_guard import allow
+        addr = getattr(self, "client_address", None) or ("127.0.0.1", 0)
+        ip = addr[0]
+        ok, why = allow(ip, getattr(self, "headers", None) or {})
+        if not ok:
+            try:
+                from nexus.terminal.guard import audit
+                audit("agent_endpoint_denied", path=str(getattr(self, "path", ""))[:200],
+                      ip=str(ip), reason=why)
+            except Exception:
+                pass
+        return ok, why
+
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
@@ -727,6 +750,16 @@ class Handler(BaseHTTPRequestHandler):
                     _tg.audit("session_reset", agent=str(b.get("agent") or "Eddie"))
                     return self._json(200, _term.reset_session(str(b.get("agent") or "Eddie")))
                 return self._json(404, {"success": False, "error": "unknown"})
+            if path == "/api/swarm/run":  # NEXUS Swarm AI (20261104), nur lokal
+                if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("X-Forwarded-For"):
+                    return self._json(403, {"success": False, "error": "LOOPBACK_ONLY"})
+                from nexus.swarm.core import get_master as _gsm
+                b = body if isinstance(body, dict) else {}
+                if not str(b.get("task") or "").strip():
+                    return self._json(400, {"success": False, "error": "task required"})
+                # Agent/Rechtestufe kommt aus permissions.json; Body darf nur bekannte Agenten nennen
+                _s = _gsm().submit(str(b["task"]), str(b.get("mode") or "pipeline"), str(b.get("agent") or "NEXUS"))
+                return self._json(202, {"success": True, "run_id": _s["id"], "status": _s["status"], "mode": _s["mode"]})
             if path.startswith("/api/autobuild/"):  # Selbstbau-Engine (20261028), nur lokal
                 if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("X-Forwarded-For"):
                     return self._json(403, {"success": False, "error": "LOOPBACK_ONLY"})
@@ -872,6 +905,9 @@ class Handler(BaseHTTPRequestHandler):
 
             # AETHER — lokaler Agent, festes vorhandenes Ollama-Modell; keine Ersatzantwort.
             if path == "/api/aether/supervisor":  # 2026-11-02 Supervisor-MVP
+                _ag = self._agent_guard()
+                if not _ag[0]:
+                    return self._json(403, {"success": False, "error": _ag[1]})
                 from nexus.integrations.aether_agent import supervise as _aether_sv
                 _sp = bool(body.get("special_order"))
                 if _sp and not (self.client_address[0] in ("127.0.0.1", "::1") and not any(self.headers.get(h) for h in ("X-Forwarded-For", "Tailscale-User-Login", "X-Forwarded-Host", "Forwarded"))):
@@ -879,6 +915,9 @@ class Handler(BaseHTTPRequestHandler):
                 _a = _aether_sv(str(body.get("task") or body.get("message") or ""), body.get("approval_id"), _sp)
                 return self._json(200 if _a.get("success") else 503, self._partner_response(body, _a, "aether"))
             if path == "/api/aether/agent":
+                _ag = self._agent_guard()
+                if not _ag[0]:
+                    return self._json(403, {"success": False, "error": _ag[1]})
                 from nexus.integrations.aether_agent import ask as _aether_ask
                 _a = _aether_ask(str(body.get("message") or body.get("task") or body.get("text") or ""))
                 return self._json(200 if _a.get("success") else 503, self._partner_response(body, _a, "aether"))
@@ -887,8 +926,9 @@ class Handler(BaseHTTPRequestHandler):
             # Auftrag 003: Auftrag an Hermes Agent (lokal, Toolset file, Timeout 180 s)
             # t329u: NEXUS GPT lokal (Ollama, vorhandene Modelle, kein Pull, kein Cloud-Zwang)
             if path == "/api/gpt/tool":  # NEXUS GPT Werkzeug ueber NEXUS-Terminal (Rechtestufen, Erfolgspruefung)
-                if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("X-Forwarded-For"):
-                    return self._json(403, {"success": False, "error": "LOOPBACK_ONLY"})
+                _ag = self._agent_guard()
+                if not _ag[0]:
+                    return self._json(403, {"success": False, "error": _ag[1]})
                 from nexus.integrations import gpt_local_agent as _gla
                 if str(body.get("command") or "").strip():
                     _gt = _gla.run_tool(str(body.get("command")), shell=str(body.get("shell") or "session"))
@@ -896,9 +936,19 @@ class Handler(BaseHTTPRequestHandler):
                     _gt = _gla.tool_ask(str(body.get("task") or body.get("message") or ""))
                 return self._json(200, _gt)
             if path == "/api/gpt/agent":
-                from nexus.integrations.gpt_local_agent import ask as _gpt_ask
-                _g = _gpt_ask(str(body.get("message") or body.get("task") or body.get("text") or ""))
-                return self._json(200 if _g.get("success") else 503, self._partner_response(body, _g, "gpt"))
+                _ag = self._agent_guard()
+                if not _ag[0]:
+                    return self._json(403, {"success": False, "error": _ag[1]})
+                from nexus.integrations.gpt_hermes_bridge import ask_with_hermes
+                _g = ask_with_hermes(
+                    str(body.get("message") or body.get("task") or body.get("text") or "")
+                )
+                _status = (
+                    200 if _g.get("success")
+                    else 409 if _g.get("approval_required")
+                    else 503
+                )
+                return self._json(_status, self._partner_response(body, _g, "gpt"))
             if path == "/api/hermes/all/confirm":  # 003A: nur Nonce pruefen + Anfrage markieren
                 from nexus.integrations import hermes_allmode as _ham
                 if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("X-Forwarded-For") or self.headers.get("Tailscale-User-Login"):
@@ -907,10 +957,16 @@ class Handler(BaseHTTPRequestHandler):
                 _cr = _ham.confirm(body)
                 return self._json(200 if _cr.get("accepted") else 409, _cr)
             if path == "/api/hermes/agent":
+                _ag = self._agent_guard()
+                if not _ag[0]:
+                    return self._json(403, {"success": False, "error": _ag[1]})
                 from nexus.integrations.hermes_agent import ask as _hermes_ask
                 _r = _hermes_ask(str(body.get("task") or body.get("message") or ""))
                 return self._json(200 if _r.get("success") else 503, self._partner_response(body, _r, "hermes"))
             if path == "/api/hermes/brain":
+                _ag = self._agent_guard()
+                if not _ag[0]:
+                    return self._json(403, {"success": False, "error": _ag[1]})
                 from nexus.integrations.hermes_brain import HermesBrain
                 task = body.get("task") or body.get("message") or body.get("text") or ""
                 if not str(task).strip():
@@ -1674,6 +1730,14 @@ def main() -> None:
             print("NEXUS Autobuild loop started", flush=True)
     except Exception as e:
         print(f"Autobuild not started: {type(e).__name__}", flush=True)
+
+    try:
+        # AETHER: tail shell-audit.jsonl, lock shell_readonly after repeated DENIED.
+        from nexus.integrations.aether_supervisor import start_shell_audit_watch
+        if start_shell_audit_watch(5.0):
+            print("Aether shell audit watcher started", flush=True)
+    except Exception as e:
+        print(f"Aether shell audit watcher not started: {type(e).__name__}", flush=True)
 
     try:
         httpd.serve_forever()

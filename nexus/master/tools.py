@@ -44,6 +44,24 @@ KNOWN_TOOLS = {
     "youtube_play",
     "volume",
     "github",
+    "screenshot",
+    "screen_read",
+    "screen_size",
+    "pointer_position",
+    "mouse_move",
+    "mouse_click",
+    "mouse_scroll",
+    "keyboard_type",
+    "keyboard_hotkey",
+    "media_key",
+    "clipboard",
+    "calendar_list",
+    "calendar_add",
+    "calendar_delete",
+    "http_request",
+    "whatsapp_read",
+    "whatsapp_send",
+    "whatsapp_open",
 }
 
 # Build detection: keep New-ShaderProject word-match if user says shader;
@@ -79,6 +97,41 @@ def _normalize_call(obj: dict) -> dict | None:
         name = "youtube_search"
     if name in ("gh", "git", "github_cli"):
         name = "github"
+    if name in ("screen", "screenshot_desktop", "capture_screen", "screencapture"):
+        name = "screenshot"
+    if name in ("read_screen", "screen_vision", "vision_screen", "bildschirm_lesen"):
+        name = "screen_read"
+    if name in ("move_mouse", "maus_bewegen", "mouse"):
+        name = "mouse_move"
+    if name in ("click", "klick", "mouse_click_at", "maus_klick"):
+        name = "mouse_click"
+    if name in ("scroll", "maus_scroll"):
+        name = "mouse_scroll"
+    if name in ("type", "tippe", "type_text", "keyboard", "tastatur"):
+        name = "keyboard_type"
+    if name in ("hotkey", "key_combo", "tastenkombination"):
+        name = "keyboard_hotkey"
+    if name in ("media", "media_control", "playpause", "play_pause", "next_track", "prev_track"):
+        name = "media_key"
+    if name in ("clipboard_get", "clipboard_set", "clipboard_paste", "zwischenablage"):
+        original = name
+        name = "clipboard"
+        if "action" not in args:
+            args["action"] = "set" if original == "clipboard_set" else "get"
+    if name in ("calendar", "termine", "events", "calendar_events"):
+        name = "calendar_list"
+    if name in ("calendar_create", "termin_anlegen", "add_event"):
+        name = "calendar_add"
+    if name in ("calendar_remove", "termin_loeschen", "delete_event"):
+        name = "calendar_delete"
+    if name in ("http", "fetch", "api", "api_request", "http_fetch"):
+        name = "http_request"
+    if name in ("whatsapp", "whatsapp_message", "whatsapp_send_message"):
+        name = "whatsapp_send"
+    if name in ("whatsapp_chat", "whatsapp_open_chat"):
+        name = "whatsapp_open"
+    if name in ("whatsapp_messages", "whatsapp_read_messages"):
+        name = "whatsapp_read"
     if name not in KNOWN_TOOLS:
         return None
     args = obj.get("args") or obj.get("arguments") or obj.get("parameters") or {}
@@ -130,6 +183,41 @@ def _normalize_call(obj: dict) -> dict | None:
         for k in ("app", "application", "program", "exe"):
             if k in args:
                 args["name"] = args[k]
+                break
+    if name == "screenshot" and "path" not in args:
+        for k in ("file", "target", "save"):
+            if k in args:
+                args["path"] = args[k]
+                break
+    if name in ("mouse_move", "mouse_click") and ("x" not in args or "y" not in args):
+        for kx, ky in (("pos_x", "pos_y"), ("left", "top"), ("xpos", "ypos")):
+            if kx in args and ky in args:
+                args["x"], args["y"] = args[kx], args[ky]
+                break
+    if name == "keyboard_type" and "text" not in args:
+        for k in ("content", "value", "string", "message"):
+            if k in args:
+                args["text"] = args[k]
+                break
+    if name == "keyboard_hotkey" and "keys" not in args:
+        for k in ("key", "combo", "shortcut", "hotkey"):
+            if k in args:
+                args["keys"] = args[k]
+                break
+    if name == "http_request" and "url" not in args:
+        for k in ("link", "href", "endpoint", "target"):
+            if k in args:
+                args["url"] = args[k]
+                break
+    if name in ("calendar_add", "calendar_delete") and "title" not in args:
+        for k in ("summary", "name", "event"):
+            if k in args:
+                args["title"] = args[k]
+                break
+    if name == "whatsapp_send" and "number" not in args and "contact" not in args:
+        for k in ("to", "recipient", "phone", "empfaenger"):
+            if k in args:
+                args["contact" if k in ("to", "recipient", "empfaenger") else "number"] = args[k]
                 break
     return {"name": name, "args": args}
 
@@ -237,8 +325,8 @@ def _timeout_from_args(args: dict, *, build_hint: bool = False) -> int:
     return _clamp_timeout(raw, default=default)
 
 
-def run_one(call: dict, master: Any) -> dict:
-    """Einen Tool-Call wirklich ausführen."""
+def run_one(call: dict, master: Any, agent: str = "NEXUS") -> dict:
+    """Einen Tool-Call wirklich ausfǬhren."""
     name = (call.get("name") or "").lower()
     args = call.get("args") or {}
     try:
@@ -257,7 +345,8 @@ def run_one(call: dict, master: Any) -> dict:
                 build_mode = True
             timeout = _timeout_from_args(args, build_hint=build_mode)
             return master.shell.run(
-                cmd, shell=sh, timeout=timeout, cwd=cwd, build_mode=build_mode
+                cmd, shell=sh, timeout=timeout, cwd=cwd, build_mode=build_mode,
+                agent=agent, approval_id=args.get("approval_id"),
             )
 
         if name == "run_script":
@@ -265,7 +354,8 @@ def run_one(call: dict, master: Any) -> dict:
             script_args = args.get("args") or args.get("arguments") or args.get("params")
             cwd = args.get("cwd")
             timeout = _timeout_from_args(args, build_hint=True)
-            return master.shell.run_script(path, args=script_args, timeout=timeout, cwd=cwd)
+            return master.shell.run_script(path, args=script_args, timeout=timeout, cwd=cwd,
+                                           agent=agent, approval_id=args.get("approval_id"))
 
         if name == "python_exec":
             return master.code.run(args.get("code") or "")
@@ -343,11 +433,123 @@ def run_one(call: dict, master: Any) -> dict:
 
         if name == "github":
             from nexus.integrations import github_tool
-            return github_tool.run(str(args.get("command") or args.get("cmd") or ""), agent="NEXUS",
+            return github_tool.run(str(args.get("command") or args.get("cmd") or ""), agent=agent,
                                    cwd=args.get("cwd"), approval_id=args.get("approval_id"))
 
         if name == "volume":
             return osact.volume(str(args.get("action") or "up"), args.get("steps") or 4)
+
+        if name == "screen_read":
+            from nexus.computer import desktop
+            from pathlib import Path as _Path
+            shot = desktop.screenshot()
+            if not shot.get("success"):
+                return shot
+            llm = getattr(master, "llm", None)
+            if llm is None or not hasattr(llm, "vision"):
+                return {"success": False, "error": "vision_unavailable",
+                        "screenshot": shot.get("path"), "action": "screen_read"}
+            try:
+                image = _Path(str(shot.get("path"))).read_bytes()
+                out = llm.vision(str(args.get("prompt") or
+                                     "Beschreibe den Bildschirm auf Deutsch. Nenne sichtbare Fenster, Texte und Fehler."),
+                                 image)
+                out["screenshot"] = shot.get("path")
+                out["action"] = "screen_read"
+                return out
+            except Exception as exc:
+                return {"success": False, "error": "screen_read_failed",
+                        "message": type(exc).__name__, "screenshot": shot.get("path"),
+                        "action": "screen_read", "verified": False}
+
+        if name in ("screenshot", "screen_size", "pointer_position", "mouse_move",
+                    "mouse_click", "mouse_scroll", "keyboard_type", "keyboard_hotkey",
+                    "media_key", "clipboard"):
+            from nexus.computer import desktop
+            if name == "screenshot":
+                region = args.get("region")
+                if isinstance(region, (list, tuple)) and len(region) == 4:
+                    region = tuple(int(v) for v in region)
+                else:
+                    region = None
+                return desktop.screenshot(args.get("path"), region=region)
+            if name == "screen_size":
+                return desktop.screen_size()
+            if name == "pointer_position":
+                return desktop.pointer_position()
+            if name == "mouse_move":
+                return desktop.mouse_move(args.get("x"), args.get("y"),
+                                          args.get("duration") or 0.2,
+                                          approval_id=args.get("approval_id"))
+            if name == "mouse_click":
+                return desktop.mouse_click(args.get("x"), args.get("y"),
+                                           args.get("button") or "left",
+                                           args.get("clicks") or 1,
+                                           args.get("interval") or 0.1,
+                                           approval_id=args.get("approval_id"))
+            if name == "mouse_scroll":
+                return desktop.mouse_scroll(args.get("amount") or args.get("steps") or 0,
+                                            args.get("x"), args.get("y"),
+                                            approval_id=args.get("approval_id"))
+            if name == "keyboard_type":
+                return desktop.keyboard_type(args.get("text") or "",
+                                             args.get("interval") or 0.02,
+                                             approval_id=args.get("approval_id"))
+            if name == "keyboard_hotkey":
+                return desktop.keyboard_hotkey(args.get("keys") or [],
+                                               approval_id=args.get("approval_id"))
+            if name == "media_key":
+                return desktop.media_key(args.get("action") or "playpause",
+                                         approval_id=args.get("approval_id"))
+            if name == "clipboard":
+                return desktop.clipboard(args.get("action") or "get", args.get("text"))
+
+        if name in ("calendar_list", "calendar_add", "calendar_delete"):
+            from nexus import phone_api
+            if name == "calendar_list":
+                qs: dict[str, list[str]] = {}
+                if args.get("from"):
+                    qs["from"] = [str(args["from"])]
+                if args.get("to"):
+                    qs["to"] = [str(args["to"])]
+                status, payload = phone_api.calendar_get(qs)
+                return {"success": status == 200 and payload.get("success", False),
+                        "status_code": status, **payload}
+            if name == "calendar_add":
+                status, payload = phone_api.calendar_post({
+                    "title": args.get("title") or args.get("summary") or "",
+                    "start": args.get("start") or "",
+                    "end": args.get("end"),
+                    "note": args.get("note") or args.get("description"),
+                    "id": args.get("id"),
+                })
+                return {"success": status == 200 and payload.get("success", False),
+                        "status_code": status, **payload}
+            status, payload = phone_api.handle_post("/api/calendar/delete", {
+                "id": args.get("id") or args.get("event_id") or "",
+            }) or (500, {"success": False, "error": "calendar_delete_unavailable"})
+            return {"success": status == 200 and payload.get("success", False),
+                    "status_code": status, **payload}
+
+        if name == "http_request":
+            from nexus.computer import http_tool
+            return http_tool.request(
+                args.get("method") or "GET", args.get("url") or "",
+                headers=args.get("headers") if isinstance(args.get("headers"), dict) else None,
+                body=args.get("body"), json_body=args.get("json"),
+                timeout=args.get("timeout") or 30,
+                approval_id=args.get("approval_id"),
+            )
+
+        if name in ("whatsapp_read", "whatsapp_send", "whatsapp_open"):
+            from nexus.computer import whatsapp_desktop as wa
+            if name == "whatsapp_read":
+                return wa.read_visible(limit=args.get("limit") or 60)
+            if name == "whatsapp_open":
+                return wa.open_chat(args.get("number"), args.get("text"),
+                                    args.get("contact"), args.get("recipient") or "")
+            return wa.send(args.get("number"), args.get("text"), args.get("contact"),
+                           args.get("recipient") or "", approval_id=args.get("approval_id"))
 
         return {"success": False, "error": f"unbekanntes Tool: {name}"}
     except Exception as e:
@@ -375,12 +577,12 @@ def _has_unbalanced_powershell_quotes(command: str) -> bool:
     return single or double
 
 
-def run_tools(calls: list[dict], master: Any) -> list[dict]:
-    """Alle Calls der Reihe nach ausführen. Liefert [{name, args, result}, ...]."""
+def run_tools(calls: list[dict], master: Any, agent: str = "NEXUS") -> list[dict]:
+    """Alle Calls der Reihe nach ausfǬhren. Liefert [{name, args, result}, ...]."""
     out = []
     for call in calls or []:
         name = call.get("name", "")
         args = call.get("args") or {}
-        result = run_one(call, master)
+        result = run_one(call, master, agent=agent)
         out.append({"name": name, "args": args, "result": result})
     return out

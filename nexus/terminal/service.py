@@ -27,8 +27,8 @@ LOG_FILE = TERM_DIR / "terminal.jsonl"
 MAX_BYTES = 5 * 1024 * 1024
 DEFAULT_TIMEOUT = 120
 MAX_TIMEOUT = 900
-AGENTS = ("NEXUS-GPT", "NEXUS", "Hermes", "Autobuild", "Eddie")
-SESSION_AGENTS = ("NEXUS", "Hermes", "NEXUS-GPT", "Eddie")
+AGENTS = ("NEXUS-GPT", "NEXUS", "Claude", "Hermes", "Autobuild", "Eddie")
+SESSION_AGENTS = ("NEXUS", "Claude", "Hermes", "NEXUS-GPT", "Eddie")
 _LOCK = threading.Lock()
 _RUNS: dict[str, subprocess.Popen] = {}
 _CANCELLED: set = set()
@@ -69,26 +69,35 @@ def mask(text) -> str:
 _TERM_CFG_REF = re.compile(r"(?i)ui_secret|nx_term_ui|permissions\.json|approvals\.json|audit\.jsonl")
 
 
+def _under_root(path: Path) -> bool:
+    try:
+        root = ROOT.resolve()
+        p = path.resolve()
+        return p == root or p.is_relative_to(root)
+    except Exception:
+        return False
+
+
 def check_command(command: str, cwd: str | os.PathLike | None = None) -> tuple[bool, str]:
     if _TERM_CFG_REF.search(str(command or "")):
         return False, "TERMINAL_KONFIG_GESPERRT (Geheimnis/Rechte/Freigaben/Audit nur durch Eddie)"
-    """(ok, grund). Sperren: C:-Pfade/Arbeitsordner ausserhalb G:, destruktive Befehle."""
+    """(ok, grund). Sperren: Arbeitsordner ausserhalb ROOT, destruktive Befehle."""
     cmd = str(command or "")
     if not cmd.strip():
         return False, "LEER"
+    from nexus.integrations import github_tool  # 20261102
+    gh_block, gh_why = github_tool.hard_block(cmd)
+    if gh_block:
+        return False, gh_why
     if cwd is not None:
         try:
             p = Path(cwd).resolve()
         except Exception:
             return False, "CWD_UNGUELTIG"
-        if not str(p).lower().startswith("g:"):
-            return False, "CWD_NICHT_G (nur G: erlaubt)"
-    if _C_PATH.search(cmd):
+        if not _under_root(p):
+            return False, "CWD_NICHT_PROJEKT (nur NEXUS_ROOT erlaubt)"
+    if os.name == "nt" and _C_PATH.search(cmd):
         return False, "C_DRIVE_BLOCKED (C: bleibt tabu)"
-    from nexus.integrations import github_tool  # 20261102
-    gh_block, gh_why = github_tool.hard_block(cmd)
-    if gh_block:
-        return False, gh_why
     for rx, why in _DESTRUCTIVE:
         if rx.search(cmd):
             return False, "DESTRUKTIV_BLOCKIERT: " + why
@@ -364,7 +373,7 @@ class PwshSession:
                     "ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $__nxok=$false; '[ERR] ' + $_.ToString() } else { $_ | Out-String -Stream -Width 220 } } } "
                     "catch { $__nxok=$false; '[ERR] ' + $_.ToString() }; "
                     "$__nxrc = if ($LASTEXITCODE) { $LASTEXITCODE } elseif ($__nxok) { 0 } else { 1 }; "
-                    "if (-not ((Get-Location).Path -like 'G:*')) { Set-Location -LiteralPath '" + str(ROOT).replace("'", "''") + "'; '[NEXUS] Arbeitsordner ausserhalb G: -> zurueck auf Projekt' }; "
+                    "if (-not ((Get-Location).Path -like '" + str(ROOT).replace("'", "''") + "*')) { Set-Location -LiteralPath '" + str(ROOT).replace("'", "''") + "'; '[NEXUS] Arbeitsordner ausserhalb Projektroot -> zurueck auf Projekt' }; "
                     "'" + mark + ":' + $__nxrc + ':' + (Get-Location).Path + '>>'\n")
             self.proc.stdin.write(line)
             self.proc.stdin.flush()

@@ -33,7 +33,7 @@ servers:
     description: Lokal WoZiPC Origin (in-process Bridge)
   - url: "http://127.0.0.1:8300"
     description: Lokal Allowlist Gateway (wenn gestartet)
-  - url: "http://192.0.2.12:8299"
+  - url: "http://192.0.2.13:8299"
     description: LAN WoZiPC
 
 security:

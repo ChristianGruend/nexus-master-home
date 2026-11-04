@@ -1,0 +1,44 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><title>NEXUS Swarm AI</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/css/nexus4d.css?v=uiwork61">
+<style>
+:root{--bg:#1b1830;--txt:#f1eefc;--dim:#c3bddc;--c:#00e5ff;--v:#8a5cff;--m:#ff3ea5;--l:#a8ff60;--a:#ffb347;--r:#ff6b78}
+html,body{margin:0;min-height:100%;color:var(--txt);font-family:'Inter','Segoe UI',system-ui,sans-serif;
+background:radial-gradient(1200px 700px at 80% -10%,#5a3a6e 0%,transparent 60%),radial-gradient(900px 600px at 0% 110%,#7a4a3a 0%,transparent 55%),linear-gradient(170deg,#262046,#1b1830 60%,#231a2c);background-attachment:fixed}
+main{max-width:1500px;margin:0 auto;padding:24px 32px;perspective:1400px}
+h1{margin:0 0 4px;font-size:26px;background:linear-gradient(90deg,var(--c),var(--v),var(--m),var(--a));-webkit-background-clip:text;color:transparent;animation:hue 8s linear infinite}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+p.sub{margin:0 0 18px;color:var(--dim)}
+#graph{display:flex;flex-wrap:wrap;gap:10px 0;align-items:center;margin:18px 0 22px;transform-style:preserve-3d}
+.node{position:relative;padding:12px 16px;min-width:108px;text-align:center;border-bottom:2px solid rgba(255,255,255,.18);transition:transform .35s,border-color .35s,color .35s;color:var(--dim)}
+.node b{display:block;color:var(--txt);font-size:15px}.node small{font-size:12px}
+.node:hover{transform:translateZ(40px) scale(1.04)}
+.arrow{color:var(--dim);padding:0 6px;font-size:18px}
+.node.ok{border-color:var(--l)}.node.timeout{border-color:var(--a)}.node.blocked,.node.error{border-color:var(--r)}
+.node.active{border-color:var(--c);transform:translateZ(60px) scale(1.08);text-shadow:0 0 14px var(--c);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{border-color:var(--m)}}
+form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+input,select,button{font:inherit;color:var(--txt);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:10px 12px}
+input{flex:1;min-width:260px}button{cursor:pointer;border-color:var(--c)}
+#out{white-space:pre-wrap;line-height:1.5;border-top:1px solid rgba(255,255,255,.14);padding-top:14px;max-width:110ch}
+#meta{color:var(--dim);font-size:14px;margin:6px 0}
+.agents{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--dim);font-size:14px}.agents b{color:var(--txt)}
+</style></head><body class="nx-4d"><main>
+<h1>NEXUS Swarm AI</h1><p class="sub">Swarm Master koordiniert, Agenten pruefen sich gegenseitig, beste Loesung per Abstimmung.</p>
+<div class="agents" id="agents"></div>
+<div id="graph"></div>
+<form id="f"><input id="task" value="Liste die Dateien in workspace\reports und fasse zusammen" aria-label="Aufgabe">
+<select id="mode" aria-label="Modus"><option value="pipeline">Pipeline</option><option value="vote">Abstimmung (3 Builder)</option></select>
+<button>Swarm starten</button></form>
+<div id="meta"></div><div id="out"></div>
+</main><script>
+const N=["security","scout","planner","builder","debugger","verifier","learning"],L={security:"Security",scout:"Scout",planner:"Planner",builder:"Builder",debugger:"Debugger",verifier:"Verifier",learning:"Learning"};
+const g=document.getElementById("graph");
+g.innerHTML=N.map((n,i)=>(i?'<span class="arrow">→</span>':'')+`<div class="node" id="n-${n}"><b>${L[n]}</b><small>wartet</small></div>`).join("");
+fetch("/api/swarm/status").then(r=>r.json()).then(s=>{document.getElementById("agents").innerHTML=Object.entries(s.agents).map(([k,v])=>`<span><b>${k}</b> ${v.role}</span>`).join("");if(s.recent&&s.recent[0])poll(s.recent[0].id,true)});
+function paint(r){N.forEach(n=>{const e=document.getElementById("n-"+n);const t=(r.trace||[]).filter(x=>x.node==n).pop();e.className="node"+(t?" "+t.status:"")+(r.active==n?" active":"");e.querySelector("small").textContent=t?(t.status+(t.sec!=null?" · "+t.sec+"s":"")):"wartet"});
+document.getElementById("meta").textContent=`Run ${r.id} · ${r.mode} · Status ${r.status}`+(r.vote_reason?` · ${r.vote_reason}`:"");
+document.getElementById("out").textContent=r.answer||(r.plan?"Plan:\n"+r.plan:"")}
+function poll(id,once){fetch("/api/swarm/runs/"+id).then(r=>r.json()).then(j=>{if(!j.run)return;paint(j.run);if(!once&&!/PASS|PARTIAL|FAIL|BLOCKED/.test(j.run.status))setTimeout(()=>poll(id),1500)})}
+document.getElementById("f").onsubmit=e=>{e.preventDefault();fetch("/api/swarm/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task:task.value,mode:mode.value})}).then(r=>r.json()).then(j=>j.run_id&&poll(j.run_id))};
+</script></body></html>

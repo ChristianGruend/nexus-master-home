@@ -13,8 +13,8 @@
 <link rel="stylesheet" href="/static/css/phase2_room.css?v=dedupe20261102"/>
 <link rel="stylesheet" href="/static/css/master_redesign.css?v=dedupe20261102"/>
 <link rel="stylesheet" href="/static/css/master_reference.css?v=dedupe20261102"/>
-<link rel="stylesheet" href="/static/css/no_avatar.css?v=uiwork60"/>
-<link rel="stylesheet" href="/static/css/nexus4d.css?v=uiwork60"/><link rel="stylesheet" href="/static/css/nexus4d_dark.css?v=uiwork60"/>
+<link rel="stylesheet" href="/static/css/no_avatar.css?v=uiwork61"/>
+<link rel="stylesheet" href="/static/css/nexus4d.css?v=uiwork61"/><link rel="stylesheet" href="/static/css/nexus4d_dark.css?v=uiwork61"/>
 </head>
     <body id="nxBody" class="nx-app nx-4d">
 <!-- 20261102 NEXUS 4D: Hell/Dunkel-Schalter entfernt, dunkel ist Standard (Backup: G:\meine-ki\backups\ui_4d_redesign_20261102) -->
@@ -63,6 +63,7 @@
         <button type="button" data-view="videos">Videos</button>
         <button type="button" data-view="galerie">Galerie</button>
         <button type="button" onclick="window.open('/studio','_blank')">Studio</button>
+        <button type="button" onclick="window.open('/swarm','_blank')">Swarm</button>
         <button type="button" data-view="maps">Maps</button>
         <button type="button" data-view="streams">Streams</button>
         <button type="button" data-view="downloads">Downloads</button>
@@ -678,18 +679,18 @@ function start(){go()}if(document.readyState==="complete")setTimeout(start,0);el
   <details><summary>Letzte Werkzeugbelege</summary><div id="masterReceipts"></div></details>
 </dialog>
 <script src="/static/js/master_home.js?v=dedupe20261102"></script>
-<script src="/static/js/phase2_room.js?v=uiwork60"></script>
-<script src="/static/js/chat_pipeline.js?v=uiwork60"></script>
+<script src="/static/js/phase2_room.js?v=uiwork61"></script>
+<script src="/static/js/chat_pipeline.js?v=uiwork61"></script>
 <script src="/static/js/nx_md.js?v=dedupe20261102"></script>
-<script src="/static/js/app.js?v=uiwork60"></script>
+<script src="/static/js/app.js?v=uiwork61"></script>
 <script src="/static/js/nexus_music.js?v=dedupe20261102"></script>
 <script src="/static/js/bridge_status_tiles.js?v=dedupe20261102"></script>
 <script src="/static/js/hermes_status_step5.js?v=dedupe20261102"></script>
 <script src="/static/js/hermes_allmode.js?v=dedupe20261102"></script>
 <script src="/static/js/hermes_tasks_step6.js?v=dedupe20261102"></script>
-<script src="/static/js/master_glass.js?v=uiwork60"></script>
-<script src="/static/js/nexus4d.js?v=uiwork60"></script>
-<script id="nxGlassRetry">/* 20261102 Nexus-UI: falls master_glass.js nicht geladen hat (Netzwackler), einmal nachladen */(function(){function chk(){if(window.__nxGlassRetried||document.getElementById("nxReferenceScene")||window.NEXUS_GLASS)return;window.__nxGlassRetried=1;var s=document.createElement("script");s.src="/static/js/master_glass.js?v=uiwork60&retry="+Date.now();document.body.appendChild(s);if(document.body)document.body.dataset.glassRetry="1"}setTimeout(chk,2500);window.addEventListener("load",function(){setTimeout(chk,300)})})();</script>
+<script src="/static/js/master_glass.js?v=uiwork61"></script>
+<script src="/static/js/nexus4d.js?v=uiwork61"></script>
+<script id="nxGlassRetry">/* 20261102 Nexus-UI: falls master_glass.js nicht geladen hat (Netzwackler), einmal nachladen */(function(){function chk(){if(window.__nxGlassRetried||document.getElementById("nxReferenceScene")||window.NEXUS_GLASS)return;window.__nxGlassRetried=1;var s=document.createElement("script");s.src="/static/js/master_glass.js?v=uiwork61&retry="+Date.now();document.body.appendChild(s);if(document.body)document.body.dataset.glassRetry="1"}setTimeout(chk,2500);window.addEventListener("load",function(){setTimeout(chk,300)})})();</script>
 <style id="nxLiveHubCss">
 #btnLiveHub{margin-right:10px;padding:4px 12px;border-radius:999px;border:1px solid rgba(137,207,240,.7);background:rgba(255,255,255,.85);color:#0b3d5c;font-weight:700;cursor:pointer}
 #btnLiveHub[aria-expanded="true"]{background:#89cff0;color:#04263a}

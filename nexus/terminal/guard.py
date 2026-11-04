@@ -26,8 +26,9 @@ from nexus.common.paths import ROOT
 
 LEVELS = ("READ_ONLY", "SAFE_WRITE", "PRIVILEGED")
 _RANK = {k: i for i, k in enumerate(LEVELS)}
-DEFAULT_AGENT_LEVELS = {"NEXUS": "SAFE_WRITE", "Hermes": "SAFE_WRITE", "NEXUS-GPT": "SAFE_WRITE",
-                        "Autobuild": "SAFE_WRITE", "Eddie": "PRIVILEGED"}
+DEFAULT_AGENT_LEVELS = {"NEXUS": "SAFE_WRITE", "Claude": "SAFE_WRITE", "Hermes": "SAFE_WRITE",
+                        "NEXUS-GPT": "SAFE_WRITE", "Autobuild": "SAFE_WRITE", "Eddie": "PRIVILEGED",
+                        "AETHER": "SAFE_WRITE"}
 APPROVAL_TTL_SEC = 15 * 60
 _LOCK = threading.Lock()
 
@@ -203,11 +204,15 @@ def _request_approval(agent: str, command: str, reason: str, mask) -> str:
     return aid
 
 
+def _expires(v: dict) -> float:
+    return float(v.get("expires") or (v.get("created", 0) + APPROVAL_TTL_SEC))
+
+
 def pending_approvals() -> list[dict]:
     d = _load_approvals()
     now = time.time()
-    return [{"approval_id": k, **{x: v.get(x) for x in ("agent", "cmd", "reason", "state", "ts")}}
-            for k, v in d.items() if v.get("state") == "pending" and now - v.get("created", 0) < APPROVAL_TTL_SEC]
+    return [{"approval_id": k, **{x: v.get(x) for x in ("agent", "cmd", "reason", "kind", "state", "ts")}}
+            for k, v in d.items() if v.get("state") == "pending" and now < _expires(v)]
 
 
 def decide(approval_id: str, approve: bool, by: str = "Eddie-UI") -> dict:
@@ -216,7 +221,7 @@ def decide(approval_id: str, approve: bool, by: str = "Eddie-UI") -> dict:
         v = d.get(approval_id)
         if not v or v.get("state") != "pending":
             return {"success": False, "error": "APPROVAL_UNKNOWN_OR_DONE"}
-        if time.time() - v["created"] > APPROVAL_TTL_SEC:
+        if time.time() > _expires(v):
             v["state"] = "expired"
             _save_approvals(d)
             return {"success": False, "error": "APPROVAL_EXPIRED"}
@@ -250,6 +255,61 @@ def consume(approval_id: str | None, agent: str, command: str) -> bool:
         v["state"] = "used"
         v["used"] = time.time()
         _save_approvals(d)
+    return True
+
+
+# --- Phase 1 (WP2): Freigaben fuer Nicht-Shell-Werkzeuge (Aether) -------------
+def _action_hash(agent: str, action: str, params: dict) -> str:
+    raw = json.dumps({"agent": agent, "action": action, "params": params},
+                     sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
+
+
+def request_action_approval(agent: str, action: str, params: dict, reason: str = "",
+                            ttl_s: int | None = None, description: str | None = None) -> str:
+    """Erzeugt NUR eine wartende Anfrage. Freigabe ausschliesslich ueber die bestehende UI (decide)."""
+    from nexus.terminal.service import mask
+    ttl = float(ttl_s if ttl_s is not None else APPROVAL_TTL_SEC)
+    h = _action_hash(agent, action, params)
+    with _LOCK:
+        d = _load_approvals()
+        for k, v in d.items():
+            if (v.get("kind") == "action" and v.get("agent") == agent and v.get("action") == action
+                    and v.get("hash") == h and v.get("state") in ("pending", "approved")
+                    and time.time() < float(v.get("expires") or (v.get("created", 0) + ttl))):
+                return k
+        aid = "apr_" + uuid.uuid4().hex[:12]
+        desc = description or f"{action} {json.dumps(params, ensure_ascii=False, default=str)[:400]}"
+        d[aid] = {"kind": "action", "agent": agent, "action": action, "hash": h,
+                  "params": params, "cmd": mask(desc)[:2000], "reason": reason,
+                  "state": "pending", "created": time.time(), "expires": time.time() + ttl,
+                  "ts": datetime.now().isoformat(timespec="seconds")}
+        _save_approvals(d)
+    audit("action_approval_requested", agent=agent, tool_action=action,
+          approval_id=aid, reason=reason)
+    return aid
+
+
+def consume_action_approval(approval_id: str | None, agent: str, action: str, params: dict) -> bool:
+    if not approval_id:
+        return False
+    with _LOCK:
+        d = _load_approvals()
+        v = d.get(str(approval_id))
+        if not v or v.get("kind") != "action":
+            return False
+        if v.get("agent") != agent or v.get("action") != action:
+            return False
+        if v.get("state") != "approved":
+            return False
+        if v.get("hash") != _action_hash(agent, action, params):
+            return False
+        if time.time() > float(v.get("expires") or 0):
+            return False
+        v["state"] = "used"
+        v["used"] = time.time()
+        _save_approvals(d)
+    audit("action_approval_consumed", agent=agent, tool_action=action, approval_id=approval_id)
     return True
 
 

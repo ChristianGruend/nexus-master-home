@@ -292,7 +292,7 @@ class LocalExecutionReceiptTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
 
     def test_unsupported_endpoint_names_exact_contract_gap_without_execution(self):
-        for endpoint in ("192.168.1.15:11434", "http://127.0.0.1:11435", "http://localhost:22434",
+        for endpoint in ("192.0.2.10:11434", "http://127.0.0.1:11435", "http://localhost:22434",
                          "https://example.invalid:11434"):
             with self.subTest(endpoint=endpoint):
                 out = evidence.route_work(self.master, "Prüfe Qwen3 unter " + endpoint + " auf dem PC.", [], self.session)

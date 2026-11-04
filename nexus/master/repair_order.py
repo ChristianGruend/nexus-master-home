@@ -138,11 +138,9 @@ def run(master, text: str, session: dict | None = None) -> dict:
     if err:
         return _refuse(err, raw)
     rel = target.relative_to(ROOT).as_posix()
-    # Projektinterne Kernbereiche bleiben dem NEXUS-Umbaupfad vorbehalten.
-    if not rel.startswith("workspace/"):
-        return _refuse("OUTSIDE_PROJECT", raw) | {"reply": f"Reparatur abgelehnt: '{raw}' liegt nicht unter "
-                                                    "workspace/ (Kerncode nur ueber den NEXUS-Umbaupfad). "
-                                                    "Es wurde nichts geschrieben."}
+    allowed = rel.startswith("workspace/") or rel.startswith("nexus/integrations/")
+    if not allowed:
+        return _refuse("OUTSIDE_PROJECT", raw)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     original = target.read_bytes()
     hash_before = hashlib.sha256(original).hexdigest()

@@ -18,13 +18,66 @@ WS = ROOT / "workspace"
 LOG = WS / "hermes_service" / "tool_calls.log"
 OLLAMA = "http://127.0.0.1:11434"
 MAX_TURNS = 6
-GITHUB_OWNER_HERMES_SEARCH_LIMIT = 5
 MAX_READ = 20000
 MAX_WRITE = 200_000
 SECRET = re.compile(r"(\.env$|secret|token|credential|passw|\.key$|\.pem$|id_rsa)", re.I)
-TEXT_CALL = re.compile(r"\b(read_file|write_file|list_directory|list_files|search_files|patch)\s*\(", re.I)
+TEXT_CALL = re.compile(r"\b(read_file|write_file|list_directory|list_files|search_files|patch|shell_readonly|project_write_request|project_write_file)\s*\(", re.I)
+
+SHELL_READONLY = {
+    "type": "function",
+    "function": {
+        "name": "shell_readonly",
+        "description": "Nur lesen. Keine Schreib-, Loesch-, Netzwerk-Aktionen, keine absoluten Pfade, kein .., kein ~.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "cmd": {"type": "string", "enum": ["ls", "cat", "grep", "find", "wc", "head", "tail",
+                                                   "stat", "du", "df", "pwd", "date", "uname", "echo"]},
+                "args": {"type": "array", "items": {"type": "string"}, "default": []},
+                "cwd": {"type": "string", "default": "."},
+                "timeout": {"type": "integer", "minimum": 1, "maximum": 60, "default": 20},
+            },
+            "required": ["cmd"],
+            "additionalProperties": False,
+        },
+    },
+}
 
 TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "project_write_request",
+            "description": "Beantragt eine explizite Freigabe zum Schreiben einer NEXUS-Projektdatei. Danach muss project_write_file mit approval_id aufgerufen werden.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "content": {"type": "string"},
+                    "reason": {"type": "string"}
+                },
+                "required": ["path", "content", "reason"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "project_write_file",
+            "description": "Schreibt eine NEXUS-Projektdatei nach erfolgreicher Freigabe. Benötigt approval_id aus project_write_request.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "content": {"type": "string"},
+                    "approval_id": {"type": "string"}
+                },
+                "required": ["path", "content", "approval_id"]
+            }
+        }
+    },
+
+    SHELL_READONLY,
     {"type": "function", "function": {"name": "read_file", "description": "Textdatei lesen",
      "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}},
     {"type": "function", "function": {"name": "list_directory", "description": "Verzeichnisinhalt auflisten",
@@ -38,7 +91,7 @@ TOOLS = [
 ]
 
 
-WANTS = re.compile(r"\b(read_file|write_file|list_directory|search_files|github|gh|repo|issue|pull request)\b", re.I)
+WANTS = re.compile(r"\b(read_file|write_file|list_directory|search_files|github|gh|repo|issue|pull request|project_write_request|project_write_file|shell_readonly|cat|lies|lese|datei)\b", re.I)
 
 
 def wants_tools(task: str) -> bool:
@@ -56,19 +109,50 @@ def _log(e: dict) -> None:
 
 
 def safe_path(p: str, wd: Path, write: bool = False) -> Path:
-    q = Path(p or ".")
-    q = (q if q.is_absolute() else wd / q).resolve()
-    base = wd.resolve() if write else WS.resolve()
-    try:
-        q.relative_to(base)
-    except ValueError:
-        raise PermissionError(f"PATH_NOT_AUTHORIZED: {q} ausserhalb {base}")
+    raw = str(p or ".").strip()
+    q_input = Path(raw)
+
+    if q_input.is_absolute():
+        q = q_input.resolve()
+    else:
+        normalized = raw.replace("\\\\", "/").lstrip("./")
+        if normalized == "nexus" or normalized.startswith("nexus/"):
+            q = (ROOT / normalized).resolve()
+        else:
+            q = (wd / q_input).resolve()
+
     if SECRET.search(q.name):
         raise PermissionError(f"SECRET_FILE_BLOCKED: {q.name}")
+
+    if write:
+        base = wd.resolve()
+        try:
+            q.relative_to(base)
+        except ValueError:
+            raise PermissionError(
+                f"PATH_NOT_AUTHORIZED_WRITE: {q} ausserhalb {base}"
+            )
+    else:
+        allowed = (WS.resolve(), (ROOT / "nexus").resolve())
+        if not any(q == base or base in q.parents for base in allowed):
+            raise PermissionError(
+                f"PATH_NOT_AUTHORIZED_READ: {q} ausserhalb erlaubter Lesebereiche"
+            )
+
     return q
 
 
 def run_tool(name: str, args: dict, wd: Path) -> str:
+    if name == "shell_readonly":
+        from nexus.terminal import shell_worker
+        r = shell_worker.run(args.get("cmd"), args.get("args"), args.get("cwd", "."),
+                             args.get("timeout", 20), agent="Hermes")
+        if r.get("ok"):
+            out = str(r.get("stdout") or "")
+            if r.get("truncated"):
+                out += "\n[WORKER_OUTPUT_TRUNCATED]"
+            return out
+        return str(r.get("error") or r.get("stderr") or "SHELL_READONLY_ERROR")
     if name == "read_file":
         p = safe_path(args.get("path", ""), wd)
         return p.read_text(encoding="utf-8-sig", errors="replace")[:MAX_READ]
@@ -78,7 +162,7 @@ def run_tool(name: str, args: dict, wd: Path) -> str:
     if name == "search_files":
         p = safe_path(args.get("path", "."), wd)
         pat = args.get("pattern", "*")
-        hits = [str(x.relative_to(WS)) for x in p.rglob("*") if x.is_file() and fnmatch.fnmatch(x.name, pat)][:100]
+        hits = [str(x.relative_to(ROOT)) for x in p.rglob("*") if x.is_file() and fnmatch.fnmatch(x.name, pat)][:100]
         return "\n".join(hits) or "(keine Treffer)"
     if name == "write_file":
         p = safe_path(args.get("path", ""), wd, write=True)
@@ -91,6 +175,105 @@ def run_tool(name: str, args: dict, wd: Path) -> str:
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(c, encoding="utf-8")
         return f"geschrieben: {p} ({len(c)} Zeichen)"
+
+    if name in ("project_write_request", "project_write_file"):
+        import hashlib
+        import os
+        from nexus.terminal import guard
+
+        raw = str(args.get("path", "")).strip().replace(chr(92), "/")
+
+        if not raw or raw.startswith("/") or ":" in raw:
+            raise PermissionError("PROJECT_PATH_INVALID: relativer Projektpfad erforderlich")
+
+        target = (ROOT / raw).resolve()
+        project_root = (ROOT / "nexus").resolve()
+
+        if target != project_root and project_root not in target.parents:
+            raise PermissionError("PROJECT_PATH_DENIED: nur nexus/ ist erlaubt")
+
+        if SECRET.search(target.name):
+            raise PermissionError("SECRET_FILE_BLOCKED")
+
+        content = args.get("content")
+        if not isinstance(content, str):
+            raise ValueError("PROJECT_CONTENT_INVALID")
+
+        encoded = content.encode("utf-8")
+        if len(encoded) > MAX_WRITE:
+            raise ValueError("WRITE_TOO_LARGE")
+
+        params = {
+            "path": str(target),
+            "content": content
+        }
+
+        if name == "project_write_request":
+            reason = str(args.get("reason", "")).strip()
+            if not reason:
+                raise ValueError("APPROVAL_REASON_REQUIRED")
+
+            approval_id = guard.request_action(
+                agent="Hermes",
+                action="project_write_file",
+                params=params,
+                reason=reason,
+                description=f"NEXUS-Projektdatei ändern: {target.relative_to(ROOT)}"
+            )
+
+            return json.dumps({
+                "status": "APPROVAL_REQUIRED",
+                "approval_id": approval_id,
+                "path": str(target),
+                "content_sha256": hashlib.sha256(encoded).hexdigest(),
+                "message": "Freigabe erforderlich. Erst danach project_write_file aufrufen."
+            }, ensure_ascii=False)
+
+        approval_id = str(args.get("approval_id", "")).strip()
+        if not approval_id:
+            raise PermissionError("APPROVAL_ID_REQUIRED")
+
+        approved = guard.consume_action(
+            approval_id=approval_id,
+            agent="Hermes",
+            action="project_write_file",
+            params=params
+        )
+
+        if not approved:
+            raise PermissionError("PROJECT_WRITE_NOT_APPROVED")
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        backup = None
+        if target.exists():
+            backup = target.with_name(
+                target.name + ".backup_" + time.strftime("%Y%m%d_%H%M%S")
+            )
+            import shutil
+            shutil.copy2(target, backup)
+
+        temporary = target.with_name(target.name + ".hermes_tmp")
+        try:
+            temporary.write_bytes(encoded)
+            os.replace(str(temporary), str(target))
+        finally:
+            if temporary.exists():
+                temporary.unlink()
+
+        written = target.read_bytes()
+        if written != encoded:
+            raise IOError("PROJECT_WRITE_VERIFY_FAILED")
+
+        return json.dumps({
+            "status": "SUCCESS",
+            "path": str(target),
+            "bytes": len(encoded),
+            "verified": True,
+            "backup": str(backup) if backup else None,
+            "sha256": hashlib.sha256(written).hexdigest()
+        }, ensure_ascii=False)
+
     if name == "github":
         from nexus.integrations import github_tool
         r = github_tool.run(str(args.get("command", "")), agent="Hermes", cwd=args.get("cwd"), approval_id=args.get("approval_id"))
@@ -127,6 +310,22 @@ def _chat(model: str, messages: list, timeout: int) -> dict:
         return json.loads(r.read().decode())["message"]
 
 
+def _tool_summary_reply(calls: list, reason: str) -> str:
+    """2026-11-04: Ehrliche Kurzantwort mit echtem Werkzeugergebnis, wenn der Modellabschluss fehlt."""
+    lines = [f"Das Modell hat keine Abschlussantwort geliefert ({reason}). Echte Werkzeugergebnisse:"]
+    for c in calls[-5:]:
+        arg = c.get("args", {}).get("path") or c.get("args", {}).get("cmd") or ""
+        prev = str(c.get("result_preview", "")).strip()
+        if c.get("ok"):
+            lines.append(f"- {c['tool']}({arg}) OK:\n{prev}")
+        else:
+            hint = ""
+            if "PATH_NOT_AUTHORIZED_READ" in prev:
+                hint = " Hinweis: lesbar sind nur workspace\\ und nexus\\."
+            lines.append(f"- {c['tool']}({arg}) FEHLER: {prev}{hint}")
+    return "\n".join(lines)
+
+
 def native_loop(task: str, wd: Path, model: str, rid: str, timeout: int = 170) -> dict:
     t0 = time.time()
     sys = ("Du bist Hermes, der Werkzeug-Agent von NEXUS. Arbeitsverzeichnis: " + str(wd) +
@@ -134,7 +333,9 @@ def native_loop(task: str, wd: Path, model: str, rid: str, timeout: int = 170) -
            " GITHUB: Du hast echten Zugriff ueber das Werkzeug 'github' (gh ist eingeloggt, alle Repos von Eddie und alle oeffentlichen Repos lesbar)."
            " Ist ein Repo nur per Name bekannt: 1) gh search repos NAME --limit 5  2) gh repo view OWNER/REPO (liefert README)"
            "  3) bei Bedarf gh repo clone OWNER/REPO G:\\meine-ki\\nexus-ai\\workspace\\sandbox\\repos\\REPO."
-           " Frag NIE nach einer URL, wenn du sie selbst suchen kannst. Fasse README-Inhalte nur aus echter Werkzeug-Ausgabe zusammen.")
+           " Frag NIE nach einer URL, wenn du sie selbst suchen kannst. Fasse README-Inhalte nur aus echter Werkzeug-Ausgabe zusammen."
+           " Fuer Dateilesezugriffe read_file verwenden. Projektquellen liegen unter nexus/ und sind lesbar. shell_readonly nur fuer erlaubte relative Sandbox-Befehle verwenden. Schreibzugriffe ausschliesslich ueber autorisierte Schreibwerkzeuge."
+           " Bei DENIED nicht umgehen, sondern dem Nutzer melden.")
     msgs = [{"role": "system", "content": sys}, {"role": "user", "content": task}]
     calls = []
     for turn in range(MAX_TURNS):
@@ -146,8 +347,7 @@ def native_loop(task: str, wd: Path, model: str, rid: str, timeout: int = 170) -
         except Exception as e:
             if not calls:
                 raise
-            done = ", ".join(f"{c['tool']}={'ok' if c['ok'] else 'fehler'}" for c in calls)
-            return {"reply": f"Werkzeuge ausgefuehrt ({done}); Abschlussantwort des Modells fehlt ({type(e).__name__}).",
+            return {"reply": _tool_summary_reply(calls, type(e).__name__),
                     "tool_calls": calls, "turns": turn, "final_missing": True}
         tcs = msg.get("tool_calls") or []
         msgs.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": tcs})
@@ -158,12 +358,89 @@ def native_loop(task: str, wd: Path, model: str, rid: str, timeout: int = 170) -
             if isinstance(args, str):
                 try: args = json.loads(args)
                 except Exception: args = {}
+            tool_status = "SUCCESS"
             try:
-                res, ok = run_tool(name, args, wd), True
+                res = run_tool(name, args, wd)
+                ok = True
+
+                if name in ("project_write_request", "project_write_file", "github"):
+                    try:
+                        payload = json.loads(res)
+                    except Exception:
+                        payload = {}
+
+                    if name == "project_write_request":
+                        if payload.get("status") == "APPROVAL_REQUIRED":
+                            ok = False
+                            tool_status = "APPROVAL_REQUIRED"
+                        else:
+                            ok = False
+                            tool_status = "INVALID_APPROVAL_RESPONSE"
+
+                    elif name == "project_write_file":
+                        ok = (
+                            payload.get("status") == "SUCCESS"
+                            and payload.get("verified") is True
+                        )
+                        tool_status = "SUCCESS" if ok else "WRITE_NOT_VERIFIED"
+
+                    elif name == "github":
+                        if payload.get("status") == "APPROVAL_REQUIRED":
+                            ok = False
+                            tool_status = "APPROVAL_REQUIRED"
+                        elif payload.get("success") is not True:
+                            ok = False
+                            tool_status = "GITHUB_ACTION_FAILED"
+
+                elif name == "shell_readonly":
+                    if str(res).startswith("SHELL_READONLY_ERROR"):
+                        ok = False
+                        tool_status = "SHELL_READONLY_FAILED"
+
             except Exception as e:
-                res, ok = f"{type(e).__name__}: {e}", False
-            rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "request_id": rid, "tool": name, "args": {k: (str(v)[:200]) for k, v in args.items()},
-                   "ok": ok, "result_preview": res[:300]}
+                res = f"{type(e).__name__}: {e}"
+                ok = False
+                tool_status = "TOOL_EXCEPTION"
+
+            rec = {
+                "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "request_id": rid,
+                "tool": name,
+                "args": {k: str(v)[:200] for k, v in args.items()},
+                "ok": ok,
+                "status": tool_status,
+                "result_preview": str(res)[:300]
+            }
             _log(rec); calls.append(rec)
             msgs.append({"role": "tool", "tool_name": name, "content": res})
+    if calls:
+        return {"reply": _tool_summary_reply(calls, "Zeit-/Schrittlimit"), "tool_calls": calls,
+                "turns": MAX_TURNS, "final_missing": True}
     return {"reply": "HERMES_TOOL_LOOP_LIMIT", "tool_calls": calls, "turns": MAX_TURNS}
+
+# NEXUS_EXTENDED_TOOL_INTENT_20261103
+# Erweiterte Erkennung von konkreten Arbeitsauftraegen.
+import re as _nexus_intent_re
+WANTS = _nexus_intent_re.compile(
+    r"\\b(read_file|write_file|list_directory|search_files|github|gh|repo|"
+    r"issue|pull request|project_write_request|project_write_file|"
+    r"shell_readonly|cat|lies|lese|erstelle|erstellen|erzeuge|erzeugen|"
+    r"schreibe|schreiben|bearbeite|bearbeiten|implementiere|implementieren|"
+    r"programmiere|programmieren|aendere|ändere|entwickle|entwickeln|"
+    r"teste|testen|pruefe|prüfe|repariere|reparieren|"
+    r"datei|dateien)\\b|\\w*datei\\w*",
+    _nexus_intent_re.IGNORECASE
+)
+
+
+# NEXUS_REGEX_FIX_20261103
+WANTS = _nexus_intent_re.compile(
+    r"\b(read_file|write_file|list_directory|search_files|github|gh|repo|"
+    r"issue|pull request|project_write_request|project_write_file|"
+    r"shell_readonly|cat|lies|lese|erstelle|erstellen|erzeuge|erzeugen|"
+    r"schreibe|schreiben|bearbeite|bearbeiten|implementiere|implementieren|"
+    r"programmiere|programmieren|aendere|ändere|entwickle|entwickeln|"
+    r"teste|testen|pruefe|prüfe|repariere|reparieren|"
+    r"datei|dateien)\b|\w*datei\w*",
+    _nexus_intent_re.IGNORECASE
+)

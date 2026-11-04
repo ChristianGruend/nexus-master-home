@@ -7,6 +7,7 @@ PolicyGuard prueft unter dem Modell: Tool erlaubt, Tiefe, Netzwerk, Destruktiv->
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -15,8 +16,11 @@ import uuid
 import threading
 import urllib.request
 from dataclasses import dataclass, field, asdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
+
+from nexus.safety.budget import Budget, BudgetExceeded
 
 ROOT = Path(__file__).resolve().parents[2]
 WORK = ROOT / "workspace" / "aether_supervisor"
@@ -36,8 +40,30 @@ MAX_TOOLS_PER_WORKER = 8
 ALLOW_FREE_SPECS = False          # MVP Schritt 3 (freie Specs) bewusst AUS
 _LOCK = threading.Lock()
 
+
+def swarm_enabled() -> bool:
+    """Phase 1: Budget, Blackboard, strenge Belegpruefung. Default AUS (Rollback)."""
+    return os.environ.get("NEXUS_SWARM", "0").strip() != "0"
+
+
+def gateway_enabled() -> bool:
+    """Phase 1 WP5: Worker rufen Werkzeuge nur noch ueber das Gateway auf."""
+    return os.environ.get("NEXUS_TOOL_GATEWAY", "1").strip() != "0"
+
 _SECRET_RE = re.compile(r"(?i)(api[_-]?key|token|secret|passw(or)?d|bearer|authorization)\s*[:=]\s*\S+|sk-[A-Za-z0-9]{12,}|gh[pousr]_[A-Za-z0-9]{20,}")
 _SECRET_FILE_RE = re.compile(r"(?i)(\.env$|secret|token|credential|passw|\.pem$|\.key$|id_rsa|cookies?)")
+SECRETS_DIR = ROOT / "workspace" / "secrets"
+
+
+def _is_secret_path(p: Any) -> bool:
+    """Wahr fuer Secret-Namen UND alles unter workspace/secrets (fail-closed)."""
+    try:
+        q = Path(str(p))
+        q = q.resolve() if q.is_absolute() else (ROOT / q).resolve()
+        sec = SECRETS_DIR.resolve()
+        return q == sec or sec in q.parents or bool(_SECRET_FILE_RE.search(q.name))
+    except Exception:
+        return bool(_SECRET_FILE_RE.search(Path(str(p)).name))
 
 
 def redact(text: Any) -> str:
@@ -60,7 +86,7 @@ def _safe_path(p: str, base: Path = ROOT) -> Path:
     q = (base / p).resolve() if not os.path.isabs(p) else Path(p).resolve()
     if not str(q).lower().startswith(str(base.resolve()).lower()):
         raise PermissionError("PATH_OUTSIDE_ROOT")
-    if _SECRET_FILE_RE.search(q.name):
+    if _is_secret_path(q):
         raise PermissionError("SECRET_FILE_DENIED")
     return q
 
@@ -87,7 +113,7 @@ def t_search_files(query: str, path: str = "docs", limit: int = 10) -> dict:
             break
         if any(s in fp.parts for s in ("__pycache__", ".git", "node_modules", "backups")) or not fp.is_file():
             continue
-        if fp.suffix.lower() not in (".md", ".txt", ".py", ".json", ".ps1", ".js", ".html", ".yaml", ".yml") or _SECRET_FILE_RE.search(fp.name):
+        if fp.suffix.lower() not in (".md", ".txt", ".py", ".json", ".ps1", ".js", ".html", ".yaml", ".yml") or _is_secret_path(fp):
             continue
         if q in fp.name.lower():
             hits.append(str(fp.relative_to(ROOT))); continue
@@ -183,25 +209,68 @@ def task_targets(task: str) -> dict:
             "delete": bool(re.search(r"(?i)\bl(oe|ö)sch", t))}
 
 
-def verify_result(task: str) -> dict:
-    """Deterministisch: geforderte Datei am geforderten Ort (Sandbox) vorhanden + Inhalt."""
+def file_sha256(path: str | Path) -> str | None:
+    try:
+        p = Path(path)
+        if not p.is_file() or p.stat().st_size > 5_000_000:
+            return None
+        h = hashlib.sha256()
+        with p.open("rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except OSError:
+        return None
+
+
+def verify_result(task: str, run_id: str | None = None) -> dict:
+    """Deterministisch: geforderte Datei am geforderten Ort (Sandbox) vorhanden + Inhalt.
+
+    Mit run_id (Phase 1 WP4/WP6) zusaetzlich: Blackboard-Records, Hashes, Ownership.
+    """
     tg = task_targets(task)
     if not (tg["sandbox"] and tg["files"]):
-        return {"checked": False, "ok": True, "reason": "keine pruefbare Pfadvorgabe"}
-    for name in tg["files"]:
-        try:
-            p = _sandbox_path(name)
-        except PermissionError as e:
-            return {"checked": True, "ok": False, "reason": f"{name}: {e}"}
-        if tg["delete"]:
-            if p.exists():
-                return {"checked": True, "ok": False, "reason": f"{p} existiert noch"}
-            continue
-        if not p.is_file():
-            return {"checked": True, "ok": False, "reason": f"{p} fehlt - Datei muss mit sandbox_write in workspace/sandbox liegen"}
-        if tg["content"] is not None and p.read_text(encoding="utf-8", errors="replace").strip() != tg["content"]:
-            return {"checked": True, "ok": False, "reason": f"{p}: Inhalt passt nicht"}
-    return {"checked": True, "ok": True, "reason": "Datei(en) am geforderten Ort geprueft", "files": tg["files"]}
+        result: dict = {"checked": False, "ok": True, "reason": "keine pruefbare Pfadvorgabe"}
+    else:
+        result = {"checked": True, "ok": True, "reason": "Datei(en) am geforderten Ort geprueft", "files": tg["files"]}
+        for name in tg["files"]:
+            try:
+                p = _sandbox_path(name)
+            except PermissionError as e:
+                return {"checked": True, "ok": False, "reason": f"{name}: {e}"}
+            if tg["delete"]:
+                if p.exists():
+                    return {"checked": True, "ok": False, "reason": f"{p} existiert noch"}
+                continue
+            if not p.is_file():
+                return {"checked": True, "ok": False, "reason": f"{p} fehlt - Datei muss mit sandbox_write in workspace/sandbox liegen"}
+            if tg["content"] is not None and p.read_text(encoding="utf-8", errors="replace").strip() != tg["content"]:
+                return {"checked": True, "ok": False, "reason": f"{p}: Inhalt passt nicht"}
+    if run_id and swarm_enabled():
+        merged = blackboard_merge(run_id)
+        bad: list[str] = []
+        for rec in merged.get("records") or []:
+            if rec.get("status") not in ("PASS", "DELETED"):
+                continue
+            target = rec.get("path")
+            if not target:
+                bad.append(f"{rec.get('worker')}: Pfad fehlt im Beleg")
+                continue
+            if rec.get("status") == "PASS":
+                p = Path(str(target))
+                if not p.is_file():
+                    bad.append(f"{target}: Datei fehlt")
+                elif rec.get("sha256") and file_sha256(p) != rec.get("sha256"):
+                    bad.append(f"{target}: Hash passt nicht")
+            elif rec.get("status") == "DELETED" and Path(str(target)).exists():
+                bad.append(f"{target}: existiert trotz Loeschbeleg")
+        if merged.get("conflicts"):
+            bad.append("Ownership-Konflikt: " + ", ".join(merged["conflicts"]))
+        if bad:
+            result.update(ok=False, reason="Belegkette: " + "; ".join(bad[:5]), merge=merged)
+        else:
+            result["merge"] = merged
+    return result
 
 
 # --- 2026-11-02 fix3: Web (vorhandene NEXUS-Research, DuckDuckGo ohne Key) + Terminal (bestehendes shell_run-Gate) ---
@@ -298,37 +367,26 @@ TOOLS: dict[str, ToolDef] = {
 NETWORK_AGENTS = {"researcher"}
 
 
-# ---------------- Approvals (Human-in-the-Loop) ----------------
-def _load_approvals() -> dict:
-    try:
-        return json.loads(APPROVALS.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-
-
-def grant_approval(tool: str, args: dict, ttl_s: int = 900) -> str:
-    """Nur vom lokalen Menschen (Endpoint prueft localhost). Einmal verwendbar."""
-    aid = "AP-" + uuid.uuid4().hex[:12]
-    with _LOCK:
-        data = _load_approvals()
-        data[aid] = {"tool": tool, "args": args, "expires": time.time() + ttl_s, "used": False}
-        WORK.mkdir(parents=True, exist_ok=True)
-        APPROVALS.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    log("approval_granted", approval_id=aid, tool=tool, args=args)
+# ---------------- Approvals (Human-in-the-Loop, eine Quelle) ----------------
+def request_approval(tool: str, args: dict, ttl_s: int = 900) -> str:
+    """Erzeugt nur eine WARTENDE Anfrage. Freigabe ausschliesslich Eddie im Terminal-UI."""
+    from nexus.terminal import guard as _tg
+    aid = _tg.request_action_approval("AETHER", tool, args, reason=f"AETHER {tool}", ttl_s=ttl_s)
+    log("approval_requested", approval_id=aid, tool=tool, args=args)
     return aid
 
 
+def grant_approval(tool: str, args: dict, ttl_s: int = 900) -> str:
+    """Kompatibilitaetsname. Erzeugt NUR eine wartende Anfrage (kein Auto-Approve)."""
+    return request_approval(tool, args, ttl_s)
+
+
 def _consume_approval(aid: str | None, tool: str, args: dict) -> bool:
-    if not aid:
-        return False
-    with _LOCK:
-        data = _load_approvals()
-        a = data.get(aid)
-        if not a or a.get("used") or a.get("expires", 0) < time.time() or a.get("tool") != tool or a.get("args") != args:
-            return False
-        a["used"] = True
-        APPROVALS.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    return True
+    from nexus.terminal import guard as _tg
+    ok = _tg.consume_action_approval(aid, "AETHER", tool, args)
+    if ok:
+        log("approval_consumed", approval_id=aid, tool=tool, args=args)
+    return ok
 
 
 # ---------------- PolicyGuard ----------------
@@ -355,6 +413,193 @@ class PolicyGuard:
             raise PolicyDenied("NETWORK_DENIED")
         if (td.destructive or td.level == "PRIVILEGED") and not _consume_approval(approval_id, tool, args):
             raise PolicyDenied("APPROVAL_REQUIRED")
+
+
+# ---------------- Blackboard / deterministischer Merge (WP4) ----------------
+_TARGET_TOOLS = {"write_note": "out", "delete_temp": "out", "sandbox_write": "sandbox",
+                 "sandbox_delete": "sandbox", "project_write": "root"}
+_BB_LOCK = threading.Lock()
+
+
+def _runs_dir() -> Path:
+    return WORK / "runs"
+
+
+def _run_dir(run_id: str) -> Path:
+    if not re.fullmatch(r"[A-Za-z0-9_\-]{1,80}", str(run_id or "")):
+        raise ValueError("BAD_RUN_ID")
+    return _runs_dir() / str(run_id)
+
+
+def _target_key(tool: str, target: Any) -> str:
+    t = str(target or "").replace("\\", "/").strip()
+    if not t:
+        return ""
+    base = _TARGET_TOOLS.get(tool, "")
+    if base == "sandbox":
+        try:
+            return "sandbox:" + str(_sandbox_path(t).relative_to(SANDBOX.resolve())).replace("\\", "/").lower()
+        except Exception:
+            return "sandbox:" + os.path.normpath(t).replace("\\", "/").lower()
+    if base == "out":
+        return "out:" + os.path.normpath(t).replace("\\", "/").lower()
+    try:
+        p = Path(t)
+        p = p.resolve() if p.is_absolute() else (ROOT / p).resolve()
+        return "root:" + str(p).replace("\\", "/").lower()
+    except Exception:
+        return "root:" + t.lower()
+
+
+def _load_ownership(run_id: str) -> dict:
+    try:
+        data = json.loads((_run_dir(run_id) / "ownership.json").read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def blackboard_reserve(run_id: str, tool: str, target: Any, worker: str) -> dict:
+    """Reserviert ein Ziel deterministisch fuer genau einen Worker (kein Ueberschreiben)."""
+    key = _target_key(tool, target)
+    if not key:
+        return {"ok": True, "key": ""}
+    with _BB_LOCK:
+        d = _load_ownership(run_id)
+        owner = d.get(key)
+        if owner and owner != worker:
+            return {"ok": False, "key": key, "owner": owner}
+        d[key] = worker
+        rd = _run_dir(run_id)
+        rd.mkdir(parents=True, exist_ok=True)
+        tmp = rd / "ownership.tmp"
+        tmp.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.replace(rd / "ownership.json")
+    return {"ok": True, "key": key, "owner": worker}
+
+
+def blackboard_record(run_id: str, worker: str, role: str, tool: str, target: Any, status: str,
+                      path: str | None = None, error: str = "") -> dict | None:
+    """Append-only Beleg. Secret-Ziele werden nie geschrieben."""
+    text = str(target or "")
+    p = Path(path) if path else None
+    if _is_secret_path(text) or (p and _is_secret_path(p)):
+        log("blackboard_skipped_secret", run_id=run_id, worker=worker, target=text[:200])
+        return None
+    rec = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "run_id": run_id, "worker": worker,
+        "role": role, "tool": tool, "target": redact(text)[:500],
+        "target_key": _target_key(tool, target), "status": str(status)[:40],
+        "path": str(p) if p else None,
+        "sha256": file_sha256(p) if (p and status == "PASS") else None,
+        "bytes": (p.stat().st_size if (p and p.is_file()) else None),
+        "error": redact(error)[:500],
+    }
+    try:
+        rd = _run_dir(run_id)
+        rd.mkdir(parents=True, exist_ok=True)
+        with _BB_LOCK, (rd / "results.jsonl").open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, ensure_ascii=False, default=str) + "\n")
+            fh.flush()
+    except Exception as e:
+        log("blackboard_error", run_id=run_id, error=f"{type(e).__name__}: {e}")
+        return None
+    log("blackboard_record", run_id=run_id, worker=worker, tool=tool,
+        target=rec["target"], status=rec["status"], sha256=rec["sha256"])
+    return rec
+
+
+def blackboard_merge(run_id: str) -> dict:
+    """LLM-freier Merge: sortiert, zaehlt, findet Ownership-Konflikte."""
+    try:
+        lines = (_run_dir(run_id) / "results.jsonl").read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return {"run_id": run_id, "counts": {}, "conflicts": [], "records": []}
+    records: list[dict] = []
+    for line in lines:
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(rec, dict):
+            records.append(rec)
+    counts: dict[str, int] = {}
+    by_key: dict[str, set] = {}
+    for rec in records:
+        counts[str(rec.get("status"))] = counts.get(str(rec.get("status")), 0) + 1
+        key = str(rec.get("target_key") or "")
+        if key:
+            by_key.setdefault(key, set()).add(str(rec.get("worker") or ""))
+    conflicts = sorted(k for k, owners in by_key.items() if len(owners) > 1)
+    records.sort(key=lambda r: (str(r.get("role")), str(r.get("worker")), str(r.get("target_key")), str(r.get("ts"))))
+    if conflicts:
+        log("merge_conflict", run_id=run_id, conflicts=conflicts[:10])
+    return {"run_id": run_id, "counts": counts, "conflicts": conflicts, "records": records}
+
+
+def _safety_precheck(agent: str, tool: str, args: dict) -> None:
+    """Rechte kommen vom ausfuehrenden Agenten AETHER, nie vom Worker-Namen."""
+    from nexus.safety import gate
+    if not gate.enabled():
+        return
+    action = {"write_note": "write_file", "sandbox_write": "write_file", "project_write": "write_file",
+              "sandbox_delete": "delete_file", "delete_temp": "delete_file"}.get(tool)
+    if not action:
+        return
+    from nexus.terminal.guard import agent_level
+    try:
+        granted = gate.to_level(agent_level("AETHER"))
+        v = gate.check("AETHER", action, {"path": args.get("path") or args.get("name") or ""}, granted=granted)
+    except Exception as e:
+        raise PolicyDenied("SAFETY_ERROR") from e
+    if not v.allowed:
+        raise PolicyDenied("SAFETY_DENIED:" + str(v.reason))
+
+
+class ToolGateway:
+    """Einziger Weg vom Worker zum Werkzeug (WP5). Setzt Safety + Budget + Ownership durch."""
+
+    def __init__(self, budget: Budget | None = None, tools: dict[str, ToolDef] | None = None):
+        self.budget = budget
+        self.tools = tools if tools is not None else TOOLS
+
+    def invoke(self, agent: str, role: str, tool: str, args: dict, run_id: str | None = None) -> dict:
+        td = self.tools.get(tool)
+        if td is None:
+            raise PolicyDenied("UNKNOWN_TOOL")
+        if self.budget:
+            self.budget.consume_tool()
+        if not (swarm_enabled() and gateway_enabled()):
+            return td.fn(**args)  # Rollback: NEXUS_SWARM=0 oder NEXUS_TOOL_GATEWAY=0
+        try:
+            _safety_precheck(agent, tool, args)
+        except PolicyDenied as e:
+            log("gateway_denied", run_id=run_id, agent=agent, tool=tool, reason=str(e))
+            raise
+        key = ""
+        target = args.get("path") or args.get("name")
+        if target and _is_secret_path(target):
+            log("gateway_denied", run_id=run_id, agent=agent, tool=tool, target=str(target)[:200], reason="SECRET_TARGET")
+            raise PolicyDenied("SECRET_TARGET")
+        target = target if tool in _TARGET_TOOLS else None
+        if run_id and target:
+            res = blackboard_reserve(run_id, tool, target, agent)
+            if not res.get("ok"):
+                log("merge_conflict", run_id=run_id, agent=agent, tool=tool,
+                    target=str(target)[:200], owner=res.get("owner"))
+                raise PolicyDenied("OWNERSHIP_CONFLICT")
+            key = str(res.get("key") or "")
+        try:
+            out = td.fn(**args)
+        except Exception as e:
+            if run_id and key:
+                blackboard_record(run_id, agent, role, tool, target, "ERROR", error=f"{type(e).__name__}: {e}")
+            raise
+        if run_id and key:
+            status = "DELETED" if tool in ("sandbox_delete", "delete_temp") else "PASS"
+            written = out.get("written") or out.get("deleted")
+            blackboard_record(run_id, agent, role, tool, target, status, path=written)
+        return out
 
 
 # ---------------- AgentSpec / Templates / Factory ----------------
@@ -457,6 +702,8 @@ class OllamaJSON:
                                      headers={"Content-Type": "application/json"}, method="POST")
         with urllib.request.urlopen(req, timeout=self.timeout) as r:
             data = json.loads(r.read().decode("utf-8"))
+        self.last_usage = {"prompt": int(data.get("prompt_eval_count") or 0),
+                           "completion": int(data.get("eval_count") or 0)}
         return json.loads((data.get("message") or {}).get("content") or "{}")
 
 
@@ -466,13 +713,27 @@ WORKER_SCHEMA = {"type": "object", "properties": {
 REVIEW_SCHEMA = {"type": "object", "properties": {"ok": {"type": "boolean"}, "reason": {"type": "string"}}, "required": ["ok", "reason"]}
 
 
+def _usage_tokens(llm: Any) -> int:
+    usage = getattr(llm, "last_usage", None) or {}
+    try:
+        return int(usage.get("prompt") or 0) + int(usage.get("completion") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 class WorkerAgent:
     def __init__(self, spec: AgentSpec, llm: OllamaJSON, tools: dict[str, ToolDef], depth: int, guard: PolicyGuard):
         self.spec, self.llm, self.tools, self.depth, self.guard = spec, llm, tools, depth, guard
 
-    def run(self, task: str, approval_id: str | None = None, deadline: float | None = None, special: bool = False) -> str:
+    def run(self, task: str, approval_id: str | None = None, deadline: float | None = None, special: bool = False,
+            run_id: str | None = None, budget: Budget | None = None) -> str:
+        gateway = ToolGateway(budget, self.tools)
         if not self.tools:  # z. B. reviewer
+            if budget:
+                budget.consume_model()
             r = self.llm.json(self.spec.system_prompt, task, REVIEW_SCHEMA if self.spec.name == "reviewer" else WORKER_SCHEMA)
+            if budget:
+                budget.add_tokens(_usage_tokens(self.llm))
             log("worker_result", agent=self.spec.name, result=r)
             return json.dumps(r, ensure_ascii=False)
         sbx = task_targets(task)["sandbox"]
@@ -487,7 +748,12 @@ class WorkerAgent:
         for step in range(self.spec.max_steps):
             if deadline and time.time() > deadline:
                 return "TIMEOUT"
+            if budget:
+                budget.check_wall()
+                budget.consume_model()
             d = self.llm.json(system, transcript, WORKER_SCHEMA)
+            if budget:
+                budget.add_tokens(_usage_tokens(self.llm))
             tool, args = str(d.get("tool") or "done"), d.get("args") if isinstance(d.get("args"), dict) else {}
             if tool == "done":
                 log("worker_result", agent=self.spec.name, step=step, answer=d.get("answer", ""))
@@ -498,12 +764,14 @@ class WorkerAgent:
                 self.guard.check(self.spec, tool, args, self.depth, approval_id, special)
                 if tool == "shell_run" and approval_id and "approval_id" not in args:
                     args = dict(args, approval_id=approval_id)
-                res = self.tools[tool].fn(**args)
+                res = gateway.invoke(self.spec.name, self.spec.role, tool, args, run_id)
                 out = json.dumps(res, ensure_ascii=False)[:3000]
                 log("tool_call", agent=self.spec.name, tool=tool, args=args, ok=True, result=out[:1500])
             except PolicyDenied as e:
                 out = f"POLICY_DENIED: {e}"
                 log("tool_call", agent=self.spec.name, tool=tool, args=args, ok=False, denied=str(e))
+            except BudgetExceeded:
+                raise
             except Exception as e:  # Toolfehler offen zurueckgeben
                 out = f"TOOL_ERROR: {type(e).__name__}: {e}"
                 log("tool_call", agent=self.spec.name, tool=tool, args=args, ok=False, error=out)
@@ -535,22 +803,35 @@ def _carry(sub: str, task: str) -> str:
 
 
 def run_supervisor(task: str, llm: OllamaJSON | None = None, factory: AgentFactory | None = None,
-                   max_steps: int = SUPERVISOR_MAX_STEPS, approval_id: str | None = None, timeout_s: int = RUN_TIMEOUT, special: bool = False) -> dict:
+                   max_steps: int = SUPERVISOR_MAX_STEPS, approval_id: str | None = None, timeout_s: int = RUN_TIMEOUT,
+                   special: bool = False, budget: Budget | None = None) -> dict:
     llm = llm or OllamaJSON()
     factory = factory or AgentFactory(llm)
     run_id = "SV-" + uuid.uuid4().hex[:10]
     t0 = time.time(); deadline = t0 + timeout_s
+    if budget is None and swarm_enabled():
+        budget = Budget(wall_clock_s=float(timeout_s), max_agents=min(MAX_AGENTS, 4))
     ctx = "Aufgabe von Eddie: " + str(task).strip()
     trace: list[dict] = []
     retried = False
-    log("run_start", run_id=run_id, task=task, special_order=special)
+    log("run_start", run_id=run_id, task=task, special_order=special,
+        swarm=swarm_enabled(), budget=budget.snapshot() if budget else None)
     if special:
         ctx += "\n[SPEZIALAUFTRAG von Eddie: erweiterter Spielraum, project_write erlaubt. Harte Grenzen bleiben: C: tabu, Eddie nie schaden, Backup, keine Secrets, kein Bypass.]"
     for step in range(max_steps):
         if time.time() > deadline:
             break
         try:
+            if budget:
+                budget.check_wall()
+                budget.consume_model()
             d = llm.json(SUPERVISOR_PROMPT, ctx, SUPERVISOR_SCHEMA)
+            if budget:
+                budget.add_tokens(_usage_tokens(llm))
+        except BudgetExceeded as e:
+            log("budget_denied", run_id=run_id, step=step, reason=str(e), budget=budget.snapshot())
+            return {"success": False, "run_id": run_id, "error": "BUDGET_EXCEEDED",
+                    "reason": str(e), "budget": budget.snapshot(), "trace": trace}
         except Exception as e:
             log("run_end", run_id=run_id, status="FAIL", error=type(e).__name__)
             return {"success": False, "run_id": run_id, "error": "SUPERVISOR_LLM_ERROR", "error_type": type(e).__name__, "trace": trace}
@@ -560,41 +841,53 @@ def run_supervisor(task: str, llm: OllamaJSON | None = None, factory: AgentFacto
         try:
             if act == "spawn":
                 spec_raw = d.get("spec") if isinstance(d.get("spec"), dict) else {"template": next((x for x in (d.get("template"), d.get("agent")) if x in TEMPLATES and x != "reviewer"), "")}
+                if budget and not (isinstance(spec_raw, dict) and spec_raw.get("name") in factory.agents):
+                    budget.consume_agent()
                 w = factory.spawn(spec_raw, depth=1)
-                r = w.run(_carry(str(d.get("task") or task), task), approval_id, deadline, special)
+                r = w.run(_carry(str(d.get("task") or task), task), approval_id, deadline, special,
+                          run_id=run_id, budget=budget)
                 entry.update(agent=w.spec.name, result=r[:1500]); ctx += f"\n\n[{w.spec.name}]\n{r}"
             elif act == "call":
                 name = str(d.get("agent") or d.get("template") or "")
                 if name not in factory.agents:
                     raise FactoryError("AGENT_NOT_SPAWNED")
-                r = factory.agents[name].run(_carry(str(d.get("task") or task), task), approval_id, deadline, special)
+                r = factory.agents[name].run(_carry(str(d.get("task") or task), task), approval_id, deadline, special,
+                                             run_id=run_id, budget=budget)
                 entry.update(agent=name, result=r[:1500]); ctx += f"\n\n[{name}]\n{r}"
             elif act == "self":
                 entry.update(note=str(d.get("answer"))[:500]); ctx += f"\n\n[notiz]\n{d.get('answer')}"
             elif act == "final":
                 answer = str(d.get("answer") or "")
-                vr = verify_result(task)
+                vr = verify_result(task, run_id=run_id)
+                merged = vr.get("merge") or (blackboard_merge(run_id) if swarm_enabled() else None)
                 log("verify", run_id=run_id, result=vr)
                 if not vr["ok"]:
                     rr = {"ok": False, "reason": "DETERMINISTISCH FAIL: " + vr["reason"], "deterministic": vr}
                 else:
                     rv = factory.spawn("reviewer", depth=1)
-                    rr = json.loads(rv.run(f"Aufgabe: {task}\n\nBelege/Kontext:\n{ctx[-5000:]}\n\nAntwort:\n{answer}", deadline=deadline))
+                    rr = json.loads(rv.run(f"Aufgabe: {task}\n\nBelege/Kontext:\n{ctx[-5000:]}\n\nAntwort:\n{answer}",
+                                           deadline=deadline, run_id=run_id, budget=budget))
                     rr["deterministic"] = vr
                 entry.update(answer=answer, review=rr); trace.append(entry)
                 if rr.get("ok") or retried:
                     status = "PASS" if rr.get("ok") else ("FAIL" if not vr["ok"] else "PARTIAL")
+                    base = {"run_id": run_id, "answer": answer, "review": rr, "review_status": status,
+                            "retried": retried, "trace": trace, "agents": list(factory.agents),
+                            "merge": merged, "budget": budget.snapshot() if budget else None}
                     if status == "FAIL":
                         log("run_end", run_id=run_id, status="FAIL", answer=answer, review=rr)
-                        return {"success": False, "run_id": run_id, "error": "VERIFY_FAILED", "answer": answer, "review": rr, "review_status": "FAIL", "retried": True, "trace": trace, "agents": list(factory.agents)}
+                        return {"success": False, "error": "VERIFY_FAILED", **base}
                     log("run_end", run_id=run_id, status=status, answer=answer, review=rr, secs=round(time.time() - t0, 1))
-                    return {"success": True, "run_id": run_id, "answer": answer, "review": rr, "review_status": status,
-                            "retried": retried, "trace": trace, "agents": list(factory.agents), "secs": round(time.time() - t0, 1)}
+                    return {"success": True, **base, "secs": round(time.time() - t0, 1)}
                 retried = True
                 ctx += f"\n\n[reviewer: abgelehnt]\n{rr.get('reason')}\nVerbessere die Antwort (ein Versuch)."
                 continue
             else:
                 raise FactoryError("UNKNOWN_ACTION")
+        except BudgetExceeded as e:
+            log("budget_denied", run_id=run_id, step=step, reason=str(e), budget=budget.snapshot() if budget else None)
+            return {"success": False, "run_id": run_id, "error": "BUDGET_EXCEEDED", "reason": str(e),
+                    "budget": budget.snapshot() if budget else None, "trace": trace}
         except (FactoryError, PolicyDenied) as e:
             entry.update(error=str(e)); ctx += f"\n\n[system]\nABGELEHNT: {e}"
             log("rejected", run_id=run_id, step=step, error=str(e))
@@ -603,4 +896,155 @@ def run_supervisor(task: str, llm: OllamaJSON | None = None, factory: AgentFacto
             log("error", run_id=run_id, step=step, error=f"{type(e).__name__}: {e}")
         trace.append(entry)
     log("run_end", run_id=run_id, status="MAX_STEPS")
-    return {"success": False, "run_id": run_id, "error": "MAX_STEPS_OR_TIMEOUT", "trace": trace, "agents": list(factory.agents)}
+    return {"success": False, "run_id": run_id, "error": "MAX_STEPS_OR_TIMEOUT", "trace": trace,
+            "agents": list(factory.agents), "budget": budget.snapshot() if budget else None}
+
+
+# ---------------- AETHER shell-audit guard (worker.ps1, 2026-11-03) ----------------
+SHELL_DENY_WINDOW = 60
+SHELL_DENY_LIMIT = 5
+SHELL_LOCK_SECONDS = 60
+SHELL_GUARD_STATE = WORK / "shell_guard.json"
+_GUARD_LOCK = threading.Lock()
+_SHELL_WATCH: dict[str, Any] = {"thread": None, "stop": False}
+
+
+def shell_audit_path() -> Path:
+    raw = (os.environ.get("WORKER_AUDIT") or "").strip()
+    return Path(raw).expanduser() if raw else Path.home() / "logs" / "shell-audit.jsonl"
+
+
+def tail_shell_audit(limit: int = 200) -> list[dict]:
+    """Tail the worker audit log without locking it. Broken lines are ignored."""
+    path = shell_audit_path()
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            lines = fh.readlines()[-max(1, min(int(limit), 2000)):]
+    except (OSError, ValueError):
+        return []
+    out: list[dict] = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(rec, dict):
+            out.append(rec)
+    return out
+
+
+def _ts_epoch(value: Any) -> float | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def shell_denials(now: float | None = None, window: int = SHELL_DENY_WINDOW) -> list[dict]:
+    current = time.time() if now is None else float(now)
+    hits: list[dict] = []
+    for rec in tail_shell_audit(400):
+        if not str(rec.get("error") or "").startswith("DENIED"):
+            continue
+        ts = _ts_epoch(rec.get("timestamp"))
+        if ts is None:
+            continue
+        age = current - ts
+        if 0 <= age <= window:
+            hits.append(rec)
+    return hits
+
+
+def _load_shell_guard() -> dict:
+    try:
+        data = json.loads(SHELL_GUARD_STATE.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_shell_guard(data: dict) -> None:
+    try:
+        SHELL_GUARD_STATE.parent.mkdir(parents=True, exist_ok=True)
+        SHELL_GUARD_STATE.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def reset_shell_guard() -> None:
+    try:
+        SHELL_GUARD_STATE.unlink()
+    except FileNotFoundError:
+        pass
+    except OSError:
+        pass
+
+
+def check_shell_guard(agent: str = "Hermes", emit_live: bool = True, now: float | None = None) -> dict:
+    """AETHER: >=5 DENIED in 60 s -> warn in Live-Hub and lock shell_readonly temporarily."""
+    current = time.time() if now is None else float(now)
+    with _GUARD_LOCK:
+        state = _load_shell_guard()
+        until = float(state.get("locked_until") or 0)
+        if until > current:
+            return {"blocked": True, "reason": state.get("reason") or "lockout",
+                    "count": state.get("count"), "locked_until": until,
+                    "retry_after": round(until - current, 1)}
+        denials = shell_denials(now=current)
+        if len(denials) >= SHELL_DENY_LIMIT:
+            reason = f"{len(denials)} DENIED in {SHELL_DENY_WINDOW}s"
+            locked_until = current + SHELL_LOCK_SECONDS
+            _save_shell_guard({"locked_until": locked_until, "reason": reason,
+                               "count": len(denials), "ts": datetime.now().isoformat(timespec="seconds")})
+            log("shell_guard_lock", agent=agent, count=len(denials), reason=reason, locked_until=locked_until)
+            if emit_live:
+                try:
+                    from nexus.common.live_events import emit
+                    emit("Aether", "security", "shell_readonly voruebergehend gesperrt: " + reason,
+                         target="shell_readonly", ok=False,
+                         data={"agent": agent, "count": len(denials), "window_s": SHELL_DENY_WINDOW,
+                               "locked_until": locked_until})
+                except Exception:
+                    pass
+            return {"blocked": True, "reason": reason, "count": len(denials),
+                    "locked_until": locked_until, "retry_after": SHELL_LOCK_SECONDS}
+        if state:
+            _save_shell_guard({})
+        return {"blocked": False, "count": len(denials), "limit": SHELL_DENY_LIMIT,
+                "window_s": SHELL_DENY_WINDOW}
+
+
+def shell_guard_status() -> dict:
+    with _GUARD_LOCK:
+        state = _load_shell_guard()
+        denials = shell_denials()
+    return {"locked": float(state.get("locked_until") or 0) > time.time(),
+            "locked_until": state.get("locked_until"), "reason": state.get("reason"),
+            "denied_last_60s": len(denials), "limit": SHELL_DENY_LIMIT}
+
+
+def start_shell_audit_watch(interval: float = 5.0) -> bool:
+    """Start AETHER's background tail of shell-audit.jsonl (idempotent)."""
+    with _GUARD_LOCK:
+        thread = _SHELL_WATCH.get("thread")
+        if thread is not None and thread.is_alive():
+            return False
+        _SHELL_WATCH["stop"] = False
+
+        def _loop() -> None:
+            while not _SHELL_WATCH["stop"]:
+                try:
+                    check_shell_guard(agent="Aether", emit_live=True)
+                except Exception:
+                    pass
+                time.sleep(max(1.0, float(interval)))
+
+        _SHELL_WATCH["thread"] = threading.Thread(target=_loop, name="aether-shell-audit", daemon=True)
+        _SHELL_WATCH["thread"].start()
+        return True

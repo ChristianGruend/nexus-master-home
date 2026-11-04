@@ -184,6 +184,18 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
                         404, {"success": False, "error": "CHAT_SESSION_NOT_FOUND"})
         self.handler_scope["traceback"].print_exc.assert_not_called()
 
+    def test_agent_routes_reject_non_loopback_before_provider(self):
+        self.handler.client_address = ("192.0.2.11", 1234)
+        self.handler.headers = {}
+        self.handler.path = "/api/aether/agent"
+        for path in ("/api/aether/agent", "/api/aether/supervisor", "/api/hermes/agent",
+                     "/api/hermes/brain", "/api/gpt/agent", "/api/gpt/tool"):
+            with self.subTest(path=path):
+                self.handler._json.reset_mock()
+                self.handler._do_post_dispatch(path, {"message": "Hallo"})
+                self.handler._json.assert_called_once_with(
+                    403, {"success": False, "error": "LOOPBACK_OR_TOKEN_REQUIRED"})
+
     def test_direct_aether_failure_remains_separate_and_failed(self):
         result = {"partner": "aether", "provider": "ollama", "model": "qwen35-4b-64k:latest",
                   "success": False, "reply": "", "error": "AETHER_UNAVAILABLE"}

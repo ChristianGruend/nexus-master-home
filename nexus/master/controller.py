@@ -1,4 +1,6 @@
 from __future__ import annotations
+import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Iterator
@@ -4858,6 +4860,89 @@ class MasterController:
         except Exception:
             pass
 
+    def _claude(self):
+        agent = getattr(self, "_claude_agent", None)
+        if agent is None:
+            from nexus.integrations.claude_agent import ClaudeAgent
+            agent = ClaudeAgent(self)
+            self._claude_agent = agent
+        return agent
+
+    def _claude_dispatch(self, message: str, session_messages: list | None = None) -> dict | None:
+        """Explicit Claude entry point. Returns None when Claude is not addressed."""
+        text = (message or "").strip()
+        low = text.lower()
+        explicit = (
+            low in ("claude", "/claude")
+            or low.startswith(("/claude ", "claude ", "claude:", "claude,", "@claude", "frag claude",
+                               "lass claude", "claude bitte"))
+        )
+        env_default = os.environ.get("NEXUS_CLAUDE_DEFAULT", "").strip().lower() in ("1", "true", "yes", "on")
+        if not explicit and not env_default:
+            return None
+        rest = text
+        if explicit:
+            for prefix in ("/claude", "@claude", "frag claude", "lass claude", "claude bitte", "claude"):
+                if rest.lower().startswith(prefix):
+                    rest = rest[len(prefix):].strip(" :,-")
+                    break
+        low_rest = rest.lower()
+        agent = self._claude()
+        if low_rest in ("", "status", "info", "state"):
+            out = agent.status()
+            out["reply"] = ("Claude: " + ("konfiguriert" if out.get("configured") else
+                            "nicht konfiguriert (ANTHROPIC_API_KEY fehlt)") +
+                            ", Modell " + str(out.get("model")) + ", "
+                            + str(out.get("task_count")) + " Tasks.")
+            out["intent"] = "claude_status"
+            return out
+        if low_rest in ("capabilities", "fähigkeiten", "faehigkeiten", "tools", "can"):
+            out = agent.capabilities()
+            out["reply"] = "Claude nutzt die NEXUS-Werkzeuge: " + ", ".join(out.get("tools") or [])
+            out["intent"] = "claude_capabilities"
+            return out
+        if low_rest in ("tasks", "aufgaben", "list"):
+            items = agent.tasks(20)
+            if not items:
+                reply = "Keine Claude-Tasks."
+            else:
+                reply = "\n".join("- " + str(x.get("id")) + " [" + str(x.get("status")) + "] "
+                                  + str(x.get("message") or "")[:120] for x in items)
+            return {"success": True, "reply": reply, "intent": "claude_tasks",
+                    "tasks": items, "data": {"provider": "claude", "tasks": items}}
+        if low_rest.startswith(("cancel ", "abbrechen ")):
+            task_id = rest.split(None, 1)[1].strip()
+            out = agent.cancel(task_id)
+            out["reply"] = ("Claude-Task " + task_id + ": " + str(out.get("status")))
+            out["intent"] = "claude_cancel"
+            return out
+        if low_rest.startswith(("get ", "show ")):
+            task_id = rest.split(None, 1)[1].strip()
+            out = agent.get(task_id)
+            out["reply"] = json.dumps(out.get("task") or out, ensure_ascii=False)[:4000]
+            out["intent"] = "claude_get"
+            return out
+        if low_rest.startswith(("resume ", "fortsetzen ")):
+            parts = rest.split()
+            task_id = parts[1] if len(parts) > 1 else ""
+            approval_id = parts[2] if len(parts) > 2 else None
+            out = agent.resume(task_id, approval_id)
+            out.setdefault("intent", "claude_resume")
+            return out
+        if low_rest.startswith(("background ", "hintergrund ")):
+            task = rest.split(None, 1)[1].strip()
+            out = agent.run(task, session_messages, background=True)
+            out.setdefault("intent", "claude_background")
+            return out
+        if not agent.client.api_key:
+            return {"success": False, "error": "claude_not_configured",
+                    "reply": "ANTHROPIC_API_KEY ist nicht gesetzt. Claude kann nicht gestartet werden.",
+                    "intent": "claude", "data": {"provider": "claude"}}
+        self._act("start", text="Claude: " + rest.replace("\n", " ")[:80], intent="claude")
+        out = agent.run(rest, session_messages)
+        out.setdefault("intent", "claude")
+        return out
+
     def handle(self, message: str, session_messages: list | None = None) -> dict:
         session_messages = session_messages or []
 
@@ -5034,6 +5119,9 @@ class MasterController:
             ctx = self.build_context(session_messages)
             out = self.ai.chat(message, ctx, provider=provider, session_id=None, round_no=1, fallback=True)
             return {"success": bool(out.get("success")), "reply": out.get("reply") or f"Provider-Fehler: {out.get('error')}", "intent": "ai_provider", "plan": [], "model": out.get("model"), "error": out.get("error"), "data": out}
+        _claude_out = self._claude_dispatch(message, session_messages)
+        if _claude_out is not None:
+            return _claude_out
         decision = decide(message)
         # Explizite Build-/Repair-/Datei-/PowerShell-Auftraege haben Vorrang vor
         # Diagnose/Status-Heuristiken. Ein konkreter Arbeitsauftrag darf nie durch
@@ -5277,6 +5365,10 @@ class MasterController:
             provider = self.ai.route_natural(message)
             out = self.ai.chat(message, self.build_context(session_messages), provider=provider, round_no=1, fallback=True)
             yield {"type": "done", "reply": out.get("reply") or f"Provider-Fehler: {out.get('error')}", "intent": "ai_provider", "plan": [], "model": out.get("model"), "success": bool(out.get("success")), "error": out.get("error"), "data": out}
+            return
+        _claude_out = self._claude_dispatch(message, session_messages)
+        if _claude_out is not None:
+            yield {"type": "done", **_claude_out}
             return
         decision = decide(message)
         # Explizite Build-/Repair-/Datei-/PowerShell-Auftraege haben Vorrang vor

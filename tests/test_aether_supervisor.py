@@ -56,7 +56,10 @@ def test_policy_blocks_destructive_without_approval(tmp_path, monkeypatch):
         g.check(spec, "delete_temp", {"name": "x.txt"}, 1, None)
     with pytest.raises(S.PolicyDenied, match="APPROVAL_REQUIRED"):
         g.check(spec, "delete_temp", {"name": "x.txt"}, 1, "AP-fake")
-    aid = S.grant_approval("delete_temp", {"name": "x.txt"})
+    aid = S.request_approval("delete_temp", {"name": "x.txt"})
+    from nexus.terminal import guard as TG
+    assert TG.pending_approvals()  # wartet auf Eddie
+    assert TG.decide(aid, True)["success"]
     g.check(spec, "delete_temp", {"name": "x.txt"}, 1, aid)
     with pytest.raises(S.PolicyDenied, match="APPROVAL_REQUIRED"):  # einmalig
         g.check(spec, "delete_temp", {"name": "x.txt"}, 1, aid)

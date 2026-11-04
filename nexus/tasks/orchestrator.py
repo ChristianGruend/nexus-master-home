@@ -116,7 +116,14 @@ class Orchestrator:
         except ValueError:
             return f"FILE_PATH_OUTSIDE_PROJECT: {raw}"
         if step.action == "patch_file" and not target.is_file():
-            return f"REPAIR_FILE_NOT_FOUND: patch target does not exist: {raw}"
+            # A missing patch target may only become a create operation
+            # when the caller explicitly provides complete file content.
+            content = step.params.get("content")
+            if isinstance(content, str) and content.strip():
+                step.action = "create_file"
+                step.params["path"] = str(target)
+            else:
+                return f"REPAIR_FILE_NOT_FOUND: patch target does not exist: {raw}; complete content required to create it"
         if step.action == "create_file" and target.exists():
             return f"CREATE_FILE_ALREADY_EXISTS: create target already exists: {raw}"
         return None

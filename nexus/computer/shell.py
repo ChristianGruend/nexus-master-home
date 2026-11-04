@@ -6,6 +6,7 @@ import platform
 import re
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 from nexus.common.config import Config
@@ -125,6 +126,8 @@ class ShellExecutor:
         cwd: str | Path | None = None,
         *,
         build_mode: bool = False,
+        agent: str = "NEXUS",
+        approval_id: str | None = None,
     ) -> dict:
         """NEXUS-Chat-Werkzeug: laeuft ueber das NEXUS-Terminal (agent=NEXUS).
 
@@ -143,7 +146,8 @@ class ShellExecutor:
             sh = (shell or "auto").lower()
             tshell = "cmd" if sh == "cmd" else ("python" if sh == "python" else "session")
             to = _clamp_timeout(timeout, Config.SHELL_TIMEOUT_BUILD if build_mode and hasattr(Config, "SHELL_TIMEOUT_BUILD") else None)
-            r = _term.execute(command, agent="NEXUS", shell=tshell, cwd=str(work), timeout=to, wait=True,
+            r = _term.execute(command, agent=agent, shell=tshell, cwd=str(work), timeout=to, wait=True,
+                              approval_id=approval_id,
                               force_approval=_tg.chat_shell_mode() == "approval")
         except Exception as exc:
             return {**base, "error": "terminal_unavailable", "stderr": f"{type(exc).__name__}: {exc}"}
@@ -168,6 +172,9 @@ class ShellExecutor:
         args: list | str | None = None,
         timeout: int | None = None,
         cwd: str | Path | None = None,
+        *,
+        agent: str = "NEXUS",
+        approval_id: str | None = None,
     ) -> dict:
         p = self._resolve_script(script)
         if p is None:
@@ -178,10 +185,20 @@ class ShellExecutor:
                 args = shlex.split(args)
             except ValueError:
                 args = args.split()
-        q = " ".join("'" + str(a).replace("'", "''") + "'" for a in (args or []))
-        lit = "'" + str(p).replace("'", "''") + "'"
-        cmd = ("python " + lit if p.suffix.lower() == ".py" else "& " + lit) + (" " + q if q else "")
-        r = self.run(cmd, shell="powershell", timeout=timeout, cwd=cwd, build_mode=True)
+        if IS_WINDOWS:
+            q = " ".join("'" + str(a).replace("'", "''") + "'" for a in (args or []))
+            lit = "'" + str(p).replace("'", "''") + "'"
+            exe = "'" + str(sys.executable).replace("'", "''") + "'"
+            cmd = (exe + " " + lit if p.suffix.lower() == ".py" else "& " + lit) + (" " + q if q else "")
+            shell = "powershell"
+        else:
+            q = " ".join(shlex.quote(str(a)) for a in (args or []))
+            lit = shlex.quote(str(p))
+            cmd = (shlex.quote(sys.executable) + " " + lit if p.suffix.lower() == ".py"
+                   else "bash " + lit) + (" " + q if q else "")
+            shell = "bash"
+        r = self.run(cmd, shell=shell, timeout=timeout, cwd=cwd, build_mode=True,
+                     agent=agent, approval_id=approval_id)
         r["script"] = str(p)
         return r
 

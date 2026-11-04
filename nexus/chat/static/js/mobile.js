@@ -851,7 +851,7 @@ function setupOffline() {
   // ——— Fallback: MediaRecorder chunks → POST /api/voice/stt ———
 
   function httpsMobileUrl() {
-    var host = (location && location.hostname) ? location.hostname : "192.0.2.12";
+    var host = (location && location.hostname) ? location.hostname : "192.0.2.13";
     return "https://" + host + ":8443/m";
   }
 
