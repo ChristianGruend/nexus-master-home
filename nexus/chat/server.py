@@ -158,6 +158,14 @@ def _preview_list() -> dict:
     return {"success": True, "previews": out}
 
 
+def _is_within(root: Path, candidate: Path) -> bool:
+    """True, wenn candidate (aufgelöst) gleich root oder darunter liegt. Folgt Symlinks."""
+    try:
+        return candidate.resolve().is_relative_to(root.resolve())
+    except (OSError, ValueError):
+        return False
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "NexusAI/1.0"
 
@@ -1576,7 +1584,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _serve_static(self, rel: str) -> None:
         fp = (STATIC_DIR / rel).resolve()
-        if not str(fp).startswith(str(STATIC_DIR.resolve())) or not fp.is_file():
+        if not _is_within(STATIC_DIR, fp) or not fp.is_file():
             return self._json(404, {"success": False, "error": "not found"})
         ctype = mimetypes.guess_type(str(fp))[0] or "application/octet-stream"
         if fp.suffix == ".css":
@@ -1605,7 +1613,7 @@ class Handler(BaseHTTPRequestHandler):
     def _serve_file(self, root: Path, rel: str) -> None:
         root = root.resolve()
         fp = (root / rel).resolve()
-        if not str(fp).startswith(str(root)) or not fp.is_file():
+        if not _is_within(root, fp) or not fp.is_file():
             return self._json(404, {"success": False, "error": "not found"})
         ctype = mimetypes.guess_type(str(fp))[0] or "application/octet-stream"
         self._bytes(200, fp.read_bytes(), ctype)
