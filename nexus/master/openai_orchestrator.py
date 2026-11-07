@@ -104,7 +104,6 @@ def _bridge_token() -> str:
             if fp.is_file():
                 t = fp.read_text(encoding="utf-8").strip()
                 if t:
-                    os.environ["NEXUS_BRIDGE_TOKEN"] = t
                     return t
         except Exception:
             pass

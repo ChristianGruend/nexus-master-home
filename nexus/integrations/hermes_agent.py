@@ -201,7 +201,8 @@ def ask(task: str, workdir: str | None = None) -> dict:
         _les = ""
     from nexus.common.leitbild import LEITBILD as _LB
     qfile.write_text("LEITBILD (deine Grundhaltung): " + _LB + "\n\n" + ((_les + "\n\n") if _les else "") + task, encoding="utf-8")
-    env = {k: v for k, v in os.environ.items() if k not in CLOUD_KEYS}
+    from nexus.common.proc_env import scrub
+    env = {k: v for k, v in scrub().items() if k not in CLOUD_KEYS}
     env["PYTHONIOENCODING"] = "utf-8"
     cmd = [exe, "chat", "--query-file", str(qfile), "-Q", "--provider", PROVIDER, "-m", MODEL, "-t", TOOLSETS,
            "--in", str(wd), "--max-turns", "8", "--run-budget", str(TIMEOUT - 10)]

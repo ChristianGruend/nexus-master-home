@@ -18,7 +18,10 @@ class ChatGPTBridgeClient:
         assistant_token: str | None = None,
     ) -> None:
         self.bridge_base = bridge_base.rstrip("/")
-        self.token = token or os.environ.get("NEXUS_BRIDGE_TOKEN") or ""
+        if not token:
+            from nexus.bridge.auth import get_bridge_token
+            token = get_bridge_token()
+        self.token = token
         self.assistant_token = assistant_token or os.environ.get("NEXUS_ASSISTANT_TOKEN") or ""
 
     def _req(self, method: str, path: str, body: dict | None = None, token: str | None = None) -> dict[str, Any]:

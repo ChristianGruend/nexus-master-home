@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 from nexus.common.paths import ROOT
+from nexus.common.proc_env import scrub
 
 TERM_DIR = ROOT / "workspace" / "terminal"
 LOG_FILE = TERM_DIR / "terminal.jsonl"
@@ -199,7 +200,7 @@ def run(command: str, *, agent: str = "NEXUS", cwd=None, shell: str = "pwsh",
         t0 = time.time()
         out_buf: list[str] = []
         err_buf: list[str] = []
-        env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1")
+        env = scrub(PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1")
         flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0
         try:
             p = subprocess.Popen(list(argv) if argv else _argv(command, shell), cwd=str(work), stdin=subprocess.DEVNULL,
@@ -325,7 +326,7 @@ class PwshSession:
         if not exe:
             raise RuntimeError("PWSH7_FEHLT")
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
-        env = dict(os.environ, PYTHONIOENCODING="utf-8", NEXUS_TERMINAL_AGENT=self.agent)
+        env = scrub(PYTHONIOENCODING="utf-8", NEXUS_TERMINAL_AGENT=self.agent)
         self.proc = subprocess.Popen([exe, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "-"],
                                      cwd=str(ROOT), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",

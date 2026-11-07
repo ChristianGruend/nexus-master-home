@@ -62,7 +62,7 @@ def ensure_bridge_token() -> tuple[str, Path | None, bool]:
     """
     Load NEXUS_BRIDGE_TOKEN from env or file; if missing, generate once to workspace/bridge/.token.
     Returns (token, path_used_or_written, generated_now).
-    Also sets os.environ[NEXUS_BRIDGE_TOKEN] for the process.
+    Does NOT write the token into os.environ (child processes must not inherit it).
     """
     env = (os.environ.get(ENV_NAME) or "").strip()
     if env:
@@ -75,7 +75,6 @@ def ensure_bridge_token() -> tuple[str, Path | None, bool]:
     for fp in TOKEN_REL_CANDIDATES:
         tok = _read_token_file(fp)
         if tok:
-            os.environ[ENV_NAME] = tok
             return tok, fp, False
 
     # Generate once
@@ -84,7 +83,6 @@ def ensure_bridge_token() -> tuple[str, Path | None, bool]:
     tok = secrets.token_hex(32)
     fp.write_text(tok, encoding="utf-8", newline="\n")
     _chmod_private(fp)
-    os.environ[ENV_NAME] = tok
     return tok, fp, True
 
 
