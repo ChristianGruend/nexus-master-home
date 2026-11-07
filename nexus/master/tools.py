@@ -77,6 +77,7 @@ def _normalize_call(obj: dict) -> dict | None:
     if not isinstance(obj, dict):
         return None
     name = (obj.get("name") or obj.get("tool") or "").strip().lower()
+    clipboard_alias = None
     if name == "ps":
         name = "powershell"
     if name in ("script", "run-script", "exec_script"):
@@ -114,10 +115,8 @@ def _normalize_call(obj: dict) -> dict | None:
     if name in ("media", "media_control", "playpause", "play_pause", "next_track", "prev_track"):
         name = "media_key"
     if name in ("clipboard_get", "clipboard_set", "clipboard_paste", "zwischenablage"):
-        original = name
+        clipboard_alias = name
         name = "clipboard"
-        if "action" not in args:
-            args["action"] = "set" if original == "clipboard_set" else "get"
     if name in ("calendar", "termine", "events", "calendar_events"):
         name = "calendar_list"
     if name in ("calendar_create", "termin_anlegen", "add_event"):
@@ -137,6 +136,8 @@ def _normalize_call(obj: dict) -> dict | None:
     args = obj.get("args") or obj.get("arguments") or obj.get("parameters") or {}
     if not isinstance(args, dict):
         args = {}
+    if name == "clipboard" and clipboard_alias and "action" not in args:
+        args["action"] = "set" if clipboard_alias == "clipboard_set" else "get"
     # Flatten common aliases
     if name in ("powershell", "shell") and "command" not in args:
         for k in ("cmd", "code", "script"):
