@@ -56,6 +56,7 @@ python -m pytest -q
 ## Sicherheitshinweise
 
 - Standard ist `127.0.0.1` (nur dieser Rechner). Für Handy-Zugriff (`/m`) über LAN/Tailscale explizit `NEXUS_HOST=0.0.0.0 ./start_nexus.sh` bzw. `.\start_nexus.ps1 -HostAddr 0.0.0.0` setzen — nur in vertrauenswürdigen Netzen, da viele API-Routen noch keine Anmeldung haben.
+- **Zugang:** Alle Daten-Routen (`/api/*`, Medien, Downloads, Previews) brauchen Loopback, ein Session-Cookie oder `Authorization: Bearer <API-Token>`. Fernzugriff im Browser (z. B. Handy über Tailscale): einmal `http://<host>:8299/login` öffnen und den Token eingeben. Token anzeigen: `python -m nexus.common.api_auth`.
 - POST-Requests von fremden Webseiten werden abgelehnt (CSRF-Schutz über `Origin`/`Sec-Fetch-Site`). Weitere Browser-Origins nur explizit über `NEXUS_CORS_ORIGINS` (kommagetrennt) freigeben.
 - Zocker-Modus: Skriptpfad über `NEXUS_ZOCKER_SCRIPT`, Standard ist `zocker_bombe.ps1` im Ordner über dem Repo.
 - Geheimnisse wie Tokens, App-Passwörter und Geräteadressen gehören ausschließlich in `.env`. Diese Datei wird nicht committet.

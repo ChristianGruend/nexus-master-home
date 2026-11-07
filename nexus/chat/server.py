@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:
 from nexus.chat.engine import IDENTITY_FIELDS, NexusEngine, response_identity
 from nexus.chat.shared_room import SharedRoom
 from nexus.master.activity import get_activity_log
+from nexus.common import api_auth
 from nexus.common.config import Config
 from nexus.common.paths import STATIC_DIR, MEDIA_DIR, DOWNLOADS_DIR, SCREENS_DIR, ensure_dirs
 
@@ -406,6 +407,46 @@ class Handler(BaseHTTPRequestHandler):
         self._write_response_data(f"data: {line}\n\n".encode("utf-8"))
         self._flush_response_data()
 
+    def _access_denied(self, path: str) -> bool:
+        """Stufe 1.2: zentrale Zugangsprüfung (deny by default). Sendet bei Ablehnung selbst die Antwort."""
+        ok, why = api_auth.check(path, self.client_address[0], self.headers)
+        if ok:
+            return False
+        code = 403 if why == "CROSS_SITE" else 401
+        self._json(code, {"success": False, "error": why, "login": "/login"})
+        return True
+
+    def _login(self, qs: dict) -> None:
+        """Browser-Login für Fernzugriff: /login?token=<API-Token>[&next=/m] setzt das Session-Cookie."""
+        import hmac as _hmac
+        token = (qs.get("token") or [""])[0].strip()
+        nxt = (qs.get("next") or ["/"])[0]
+        if not nxt.startswith("/") or nxt.startswith("//") or "\\" in nxt:
+            nxt = "/"
+        if token and _hmac.compare_digest(token.encode(), api_auth.api_token().encode()):
+            secure = (self.headers.get("X-Forwarded-Proto") or "").lower() == "https"
+            self.send_response(303)
+            self.send_header("Location", nxt)
+            self.send_header("Set-Cookie", api_auth.session_cookie(secure=secure))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        html = ("<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
+                "<title>NEXUS Login</title><body style='font-family:sans-serif;max-width:28em;margin:3em auto'>"
+                "<h1>NEXUS Login</h1>" + ("<p style='color:#c00'>Token ungültig.</p>" if token else "")
+                + "<form method=get action=/login><input type=hidden name=next value='/'>"
+                "<input name=token type=password placeholder='API-Token' style='width:100%' autofocus> "
+                "<button>Anmelden</button></form>"
+                "<p>Token anzeigen: <code>python -m nexus.common.api_auth</code></p></body>")
+        self.send_response(401 if token else 200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        data = html.encode("utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self._write_response_data(data)
+
     def do_OPTIONS(self) -> None:
         self.send_response(204)
         self._cors()
@@ -416,12 +457,16 @@ class Handler(BaseHTTPRequestHandler):
         path = parsed.path
         if not _host_allowed(self.headers.get("Host", ""), _ALLOWED_HOSTS):
             return self._json(421, {"success": False, "error": "HOST_NOT_ALLOWED"})
+        if self._access_denied(path):
+            return
         try:  # NEXUS OS live link evidence (memory only): last request per client IP
             from nexus import nexus_os as _nos
             _nos.note_client(self.client_address[0], path)
         except Exception:
             pass
         qs = parse_qs(parsed.query)
+        if path == "/login":
+            return self._login(qs)
         try:  # 005D NEXUS OS link (device heartbeat / sync), network-restricted
             from nexus import nexus_os_link as _nol
             _r = _nol.handle("GET", path, self.client_address[0], self.headers, qs=qs)
@@ -771,6 +816,8 @@ class Handler(BaseHTTPRequestHandler):
         path = parsed.path
         if not _host_allowed(self.headers.get("Host", ""), _ALLOWED_HOSTS):
             return self._json(421, {"success": False, "error": "HOST_NOT_ALLOWED"})
+        if self._access_denied(path):
+            return
         if self._cross_site_blocked():
             try:
                 from nexus.terminal.guard import audit
