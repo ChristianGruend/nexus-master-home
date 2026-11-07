@@ -2,7 +2,7 @@ import shutil, tempfile, unittest
 from pathlib import Path
 from PIL import Image
 
-TMPB = Path(r"G:\meine-ki\nexus-ai\workspace\tmp")
+TMPB = Path(__file__).resolve().parent.parent / "workspace" / "tmp"
 
 
 def tmpdir(tc):
