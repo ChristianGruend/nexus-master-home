@@ -58,7 +58,7 @@ class HttpClientDisconnectTests(unittest.TestCase):
                       "traceback": self.traceback, "ENGINE": self.engine,
                       "bridge_api": None, "automation_api": None,
                       "multimodal_api": None,
-                      "_ALLOWED_HOSTS": frozenset(), "_MAX_BODY_BYTES": 64 * 1024 * 1024,
+                      "_ALLOWED_HOSTS": frozenset(), "_MAX_BODY_BYTES": 64 * 1024 * 1024, "_UI_CSP": "default-src 'self'",
                       "api_auth": SimpleNamespace(check=lambda path, ip, headers: (True, "TEST"))}
         exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), "exec"), self.scope)
         nexus = ModuleType("nexus")

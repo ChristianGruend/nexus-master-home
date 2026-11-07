@@ -27,6 +27,15 @@ PORT = Config.PORT
 _CORS_ORIGINS = frozenset(o.strip() for o in os.environ.get("NEXUS_CORS_ORIGINS", "").split(",") if o.strip())
 _MAX_BODY_BYTES = int(os.environ.get("NEXUS_MAX_BODY_BYTES") or 64 * 1024 * 1024)
 _ALLOWED_HOSTS = frozenset(h.strip().lower() for h in os.environ.get("NEXUS_ALLOWED_HOSTS", "").split(",") if h.strip())
+# Stufe 1.5b: CSP für alle UI-Seiten. 'unsafe-inline' bei Skripten bleibt nötig, solange index.html & Co.
+# Inline-<script>-Blöcke und onclick-Attribute haben (Abbau in Stufe 5); blockiert aber fremde Skripte,
+# eval, Plugins, fremde Einbettung und Formular-/Base-Umleitung.
+_UI_CSP = ("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+           "img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self' data:; "
+           "connect-src 'self' https://nominatim.openstreetmap.org; "
+           "frame-src 'self' https://www.openstreetmap.org https://www.youtube.com https://www.youtube-nocookie.com; "
+           "worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; "
+           "form-action 'self'; frame-ancestors 'self'")
 ENGINE = NexusEngine()
 SHARED_ROOM = SharedRoom()
 
@@ -332,6 +341,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
         self._cors()
         self.end_headers()
         self._write_response_data(data)
@@ -342,6 +353,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         if content_type.startswith("text/html"):  # 20261028: kein veraltetes Master Home (alte JS-Version) aus Browser-Cache
             self.send_header("Cache-Control", "no-cache")
+            self.send_header("Content-Security-Policy", _UI_CSP)
+        if not content_type.startswith(("text/html", "image/", "video/", "audio/")):
+            self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
         _ck = getattr(self, "_nx_set_cookie", None)
         if _ck:
             self.send_header("Set-Cookie", _ck)

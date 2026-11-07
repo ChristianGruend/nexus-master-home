@@ -32,7 +32,8 @@ def handler_cls(tmp_path, monkeypatch):
              "parse_qs": parse_qs, "urlparse": urlparse, "traceback": SimpleNamespace(print_exc=Mock()),
              "ENGINE": SimpleNamespace(health=Mock(return_value={"success": True})),
              "bridge_api": None, "automation_api": None, "multimodal_api": None,
-             "_ALLOWED_HOSTS": frozenset(), "_MAX_BODY_BYTES": 1 << 20, "api_auth": api_auth}
+             "_ALLOWED_HOSTS": frozenset(), "_MAX_BODY_BYTES": 1 << 20, "api_auth": api_auth,
+             "_UI_CSP": "default-src 'self'"}
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), "exec"), scope)
     nexus = ModuleType("nexus")
     nexus.nexus_os = SimpleNamespace(note_client=Mock())
@@ -107,3 +108,9 @@ def test_login_rejects_open_redirect(handler_cls):
 def test_login_wrong_token(handler_cls):
     code, hdrs, _ = _req(handler_cls, "/login?token=falsch")
     assert code == 401 and "set-cookie" not in hdrs
+
+
+def test_json_responses_have_security_headers(handler_cls):
+    _, hdrs, _ = _req(handler_cls, "/api/does-not-exist", ip="127.0.0.1")
+    assert hdrs.get("referrer-policy") == "no-referrer"
+    assert hdrs.get("x-content-type-options") == "nosniff"
