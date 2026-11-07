@@ -84,16 +84,19 @@ Browser / Handy ──Token──► nexus-core        (Docker, Linux-Image, auf
 - **Host-Agent** ist die Plattform-Schicht als eigener Prozess: einziger Ort mit `os.name`/`sys.platform`-Weichen, Backends `windows.py` / `posix.py`. Fehlt er (z. B. reiner Server), läuft Core mit reduzierten Fähigkeiten weiter.
 - Voraussetzung Windows: Docker Desktop mit WSL2 (oder Podman). Workspace als **benanntes Volume**, nicht als NTFS-Bind-Mount (Performance, Dateirechte).
 
-## Stufe 2 – Container & Ausführung einsperren (4–5 Tage)
+## Stufe 2 – Container & Ausführung einsperren (4–5 Tage) · Branch `sanierung/stufe-2`
+
+**Blocker lokal:** Auf `gusCachyBuero` ist weder Docker noch Podman installiert – Entscheidung offen (Docker-Engine vs. rootless Podman). Bis dahin baut und prüft die CI das Image.
 
 | # | Schritt | Modell | Fertig wenn |
 |---|---|---|---|
 | 2.1 | **Eine Policy-Engine** statt drei: Tool-Registry mit Schema + Stufe (READ / SAFE_WRITE / EXEC / DANGER) und **Ziel** (`runner` / `host`), Konfig außerhalb des beschreibbaren Workspace | O plant, S baut | `bridge/permissions`, `terminal/guard`, swarm-Level delegieren dorthin |
-| 2.2 | **Core-Image + `compose.yaml`:** `python:3.11-slim`, Non-root-User, `NEXUS_HOME=/data` (Volume), Port nur `127.0.0.1:8299`, Ollama über `host.docker.internal` (Linux: `extra_hosts: host-gateway`), Healthcheck, `restart: unless-stopped` | L → S prüft | `docker compose up -d` startet Core auf Linux; Windows-Lauf in CI |
+| 2.2 | 🟡 `07dbb6a` Image + Compose (Linux, host-Netz) + CI-Smoke-Test; Windows-Bridge-Modus offen – **Core-Image + `compose.yaml`:** `python:3.11-slim`, Non-root-User, `NEXUS_HOME=/data` (Volume), Port nur `127.0.0.1:8299`, Ollama über `host.docker.internal` (Linux: `extra_hosts: host-gateway`), Healthcheck, `restart: unless-stopped` | L → S prüft | `docker compose up -d` startet Core auf Linux; Windows-Lauf in CI |
+| 2.2a | ✅ `8b8d363` – **Übergang:** Terminal-Guard kennt POSIX-Systembefehle und Secret-Pfade (vorher SAFE_WRITE) | L | Tests `test_terminal_guard_posix.py` |
 | 2.3 | **Runner-Container** mit kleiner Exec-API (Token, nur internes Netz, ohne Internet); Terminal und `code_sandbox` führen dort aus statt per `sh -c` auf dem Host. Runner jederzeit per `compose restart` zurücksetzbar | O plant, S baut | Test: Befehl im Runner sieht weder Host-Dateisystem noch Netz noch Secrets |
 | 2.4 | **Autobuild im Runner:** Git-Worktree auf dem Volume, Pfad-Allowlist (`nexus/` minus `safety/`, Policy, `autobuild/`), Tests im Runner, Ergebnis als Branch – **Merge nur durch dich** | O plant, S baut | Autobuild kann Guard-Dateien nachweislich nicht ändern |
-| 2.5 | Secrets nur im Core (Compose-Secrets / `env_file`), Runner bekommt keine; Bridge-Token nicht mehr in `os.environ`; Kindprozesse mit Env-Allowlist | L → S prüft | Test: Runner-Prozess sieht keinen Token |
-| 2.6 | `downloads/`: SSRF-Schutz (private Netze sperren), Streaming, Größenlimit – oder in `nexusall` aufgehen lassen | L | Test gegen 127.0.0.1/192.168.x |
+| 2.5 | ✅ `5284727` – Secrets nur im Core (Compose-Secrets / `env_file`), Runner bekommt keine; Bridge-Token nicht mehr in `os.environ`; Kindprozesse mit Env-Allowlist | L → S prüft | Test: Runner-Prozess sieht keinen Token |
+| 2.6 | ✅ `0901a4f`, `08c09a4` (auch HTTP-Tool des Agenten und Aether-Fetch) – `downloads/`: SSRF-Schutz (private Netze sperren), Streaming, Größenlimit – oder in `nexusall` aufgehen lassen | L | Test gegen 127.0.0.1/192.168.x |
 
 ## Stufe 3 – Host-Agent Windows + Linux (5–6 Tage)
 
