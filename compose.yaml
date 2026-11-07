@@ -9,10 +9,16 @@ services:
     env_file:
       - path: .env
         required: false
+    init: true
     environment:
       NEXUS_HOST: "127.0.0.1"
+      NEXUS_RUNNER_SOCKET: /run/nexus-runner/runner.sock
     volumes:
       - nexus-workspace:/app/workspace
+      - runner-sock:/run/nexus-runner
+      - runner-work:/app/workspace/runner
+    depends_on:
+      - runner
     read_only: true
     tmpfs:
       - /tmp
@@ -22,5 +28,33 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
 
+  # Runner (Stufe 2.3): fuehrt Befehle des Agenten aus. Bewusst OHNE Netz (network_mode: none), ohne env_file
+  # und ohne Workspace-Volume: er sieht weder Secrets noch Kerndaten, nur /work. Core spricht ihn ueber den
+  # Unix-Socket im Volume runner-sock an. Zuruecksetzen: `docker compose restart runner`
+  # (Prozesse weg; /work bleibt, zum Leeren `docker compose down` und Volume runner-work entfernen).
+  runner:
+    image: nexus-master-home:local
+    command: ["python", "-m", "nexus.runner.server", "--socket", "/run/nexus-runner/runner.sock", "--work", "/work"]
+    network_mode: none
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 2g
+    cpus: 2
+    volumes:
+      - runner-sock:/run/nexus-runner
+      - runner-work:/work
+    healthcheck:
+      disable: true  # das Image-Healthcheck fragt Port 8299 ab, den es im Runner nicht gibt
+    restart: unless-stopped
+
 volumes:
   nexus-workspace: {}
+  runner-sock: {}
+  runner-work: {}

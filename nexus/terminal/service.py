@@ -22,6 +22,7 @@ from pathlib import Path
 
 from nexus.common.paths import ROOT
 from nexus.common.proc_env import scrub
+from nexus.runner import client as runner_client
 
 TERM_DIR = ROOT / "workspace" / "terminal"
 LOG_FILE = TERM_DIR / "terminal.jsonl"
@@ -34,6 +35,7 @@ _LOCK = threading.Lock()
 _RUNS: dict[str, subprocess.Popen] = {}
 _CANCELLED: set = set()
 _ACTIVE: dict[str, dict] = {}  # run_id -> {agent, cmd, ts, shell}
+_RUNNER_ABORT: dict = {}  # run_id -> Funktion, die die Runner-Verbindung kappt (fuer cancel)
 
 _SECRET = re.compile(r"(?i)(token|password|passwort|passwd|pwd|secret|bearer|api[_-]?key|authorization)([\"'\s:=]+)([^\s\"',}]{4,})")
 _SECRET2 = re.compile(r"\b(sk-[A-Za-z0-9_\-]{12,}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|gh[usr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[abp]-[A-Za-z0-9\-]{10,}|AIza[0-9A-Za-z_\-]{20,}|tskey-[A-Za-z0-9\-]{10,})")
@@ -178,6 +180,15 @@ def _argv(command: str, shell: str) -> list[str]:
             "[Console]::OutputEncoding=[Text.Encoding]::UTF8; " + command]
 
 
+def _runner_mode() -> bool:
+    """Runner-Modus (Stufe 2.3): POSIX und NEXUS_RUNNER_SOCKET gesetzt.
+
+    Fail-closed: Ist ein Runner konfiguriert, aber nicht erreichbar, endet der Lauf mit ERROR –
+    kein stiller Rueckfall auf lokale Ausfuehrung (im Container waere das der Core mit seinen Secrets).
+    """
+    return os.name != "nt" and runner_client.socket_path() is not None
+
+
 def run(command: str, *, agent: str = "NEXUS", cwd=None, shell: str = "pwsh",
         timeout: int | None = None, wait: bool = True, allow_empty: bool = False, argv: list | None = None) -> dict:
     """Fuehrt einen Befehl aus und streamt ihn ins Terminal. wait=False -> laeuft im Hintergrund."""
@@ -189,14 +200,70 @@ def run(command: str, *, agent: str = "NEXUS", cwd=None, shell: str = "pwsh",
     if not ok:
         _write({"run": run_id, "agent": ag, "type": "blocked", "cmd": command, "cwd": str(work), "reason": why, "shell": shell})
         return {"success": False, "status": "BLOCKED", "error": why, "run": run_id}
-    if not work.is_dir():
+    use_runner = _runner_mode()  # Guard (check_command) bleibt in Core, ausgefuehrt wird im Runner
+    if not use_runner and not work.is_dir():
         _write({"run": run_id, "agent": ag, "type": "blocked", "cmd": command, "cwd": str(work), "reason": "CWD_FEHLT"})
         return {"success": False, "status": "BLOCKED", "error": "CWD_FEHLT", "run": run_id}
     _write({"run": run_id, "agent": ag, "type": "start", "cmd": command, "cwd": str(work), "shell": shell, "timeout": to})
     _ACTIVE[run_id] = {"run": run_id, "agent": ag, "cmd": mask(command)[:300], "shell": shell, "ts": datetime.now().isoformat(timespec="seconds")}
     res: dict = {"run": run_id}
 
+    def _go_runner():
+        t0 = time.time()
+        out_buf: list[str] = []
+        err_buf: list[str] = []
+        rcwd = runner_client.to_runner_cwd(work)
+        if rcwd is None:
+            rcwd = ""
+            _write({"run": run_id, "agent": ag, "type": "err",
+                    "text": f"Hinweis: Runner-Modus, Arbeitsverzeichnis /work statt {work}"})
+        if argv:
+            rargv = list(argv)
+        elif (shell or "").lower() in ("python", "py"):
+            rargv = ["python3", "-B", "-c", command]
+        else:
+            rargv = None  # command -> sh -c (pwsh/cmd gibt es im Runner nicht)
+        rc = None
+        timed_out = False
+        err_msg = None
+        try:
+            for ev in runner_client.exec_stream(command=None if rargv else command, argv=rargv, cwd=rcwd, timeout=to,
+                                                on_abort=lambda fn: _RUNNER_ABORT.__setitem__(run_id, fn)):
+                t = ev.get("t")
+                if t == "start":
+                    res["pid"] = ev.get("pid")
+                elif t in ("out", "err"):
+                    txt = str(ev.get("text", ""))
+                    (out_buf if t == "out" else err_buf).append(txt + "\n")  # Runner liefert Zeilen ohne Umbruch
+                    for ln in txt.splitlines() or [""]:
+                        _write({"run": run_id, "agent": ag, "type": t, "text": ln})
+                elif t == "end":
+                    rc = ev.get("rc")
+                    timed_out = bool(ev.get("timeout"))
+                    err_msg = ev.get("error")
+        except Exception as e:  # RunnerError, OSError, HTTPException ...
+            if run_id not in _CANCELLED:
+                _RUNNER_ABORT.pop(run_id, None)
+                _write({"run": run_id, "agent": ag, "type": "end", "rc": None, "sec": 0, "ok": False, "text": f"Startfehler: {e}"})
+                res.update(success=False, status="ERROR", error=str(e), runner=True)
+                _finish(res, ag, command, allow_empty)
+                return
+        _RUNNER_ABORT.pop(run_id, None)
+        sec = round(time.time() - t0, 2)
+        cancelled = run_id in _CANCELLED
+        _write({"run": run_id, "agent": ag, "type": "end", "rc": rc, "sec": sec, "ok": rc == 0 and not timed_out,
+                **({"text": f"TIMEOUT nach {to}s, Prozess beendet"} if timed_out else {})})
+        res.update(success=rc == 0 and not timed_out and not cancelled,
+                   status="CANCELLED" if cancelled else ("TIMEOUT" if timed_out else ("OK" if rc == 0 else "FAILED")),
+                   returncode=rc, stdout=mask("".join(out_buf))[-20000:], stderr=mask("".join(err_buf))[-8000:],
+                   sec=sec, runner=True)
+        if err_msg:
+            res["error"] = str(err_msg)
+        _finish(res, ag, command, allow_empty)
+
     def _go():
+        if use_runner:
+            return _go_runner()
         t0 = time.time()
         out_buf: list[str] = []
         err_buf: list[str] = []
@@ -442,10 +509,11 @@ def run_session(command: str, *, agent: str = "NEXUS", cwd=None, timeout: int | 
     if not ok:
         _write({"run": run_id, "agent": ag, "type": "blocked", "cmd": command, "cwd": str(work or "Sitzung"), "reason": why, "shell": "pwsh7-session"})
         return {"success": False, "status": "BLOCKED", "error": why, "run": run_id}
-    if work is not None and not work.is_dir():
+    if work is not None and not work.is_dir() and not _runner_mode():
         _write({"run": run_id, "agent": ag, "type": "blocked", "cmd": command, "cwd": str(work), "reason": "CWD_FEHLT"})
         return {"success": False, "status": "BLOCKED", "error": "CWD_FEHLT", "run": run_id}
-    if not pwsh_path():
+    # Runner-Modus: keine Host-Shell oeffnen, alles ueber run() -> Runner (sh -c)
+    if _runner_mode() or not pwsh_path():
         return run(command, agent=ag, cwd=cwd, shell="powershell", timeout=to, wait=wait, allow_empty=allow_empty)
     _write({"run": run_id, "agent": ag, "type": "start", "cmd": command, "cwd": str(work or "Sitzung"), "shell": "pwsh7-session", "timeout": to})
     _ACTIVE[run_id] = {"run": run_id, "agent": ag, "cmd": mask(command)[:300], "shell": "pwsh7-session", "ts": datetime.now().isoformat(timespec="seconds")}
@@ -513,7 +581,10 @@ def cancel(run_id: str, by: str = "Eddie") -> dict:
         return {"success": False, "error": "RUN_NICHT_AKTIV", "run": rid}
     _CANCELLED.add(rid)
     try:
-        if p is not None:
+        rabort = _RUNNER_ABORT.get(rid)
+        if rabort is not None:
+            rabort()  # Runner-Modus: Verbindung kappen -> Runner killt die Prozessgruppe
+        elif p is not None:
             if os.name == "nt":
                 subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True, timeout=15)
             else:

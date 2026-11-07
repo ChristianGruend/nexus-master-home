@@ -86,14 +86,14 @@ Browser / Handy ──Token──► nexus-core        (Docker, Linux-Image, auf
 
 ## Stufe 2 – Container & Ausführung einsperren (4–5 Tage) · Branch `sanierung/stufe-2`
 
-**Blocker lokal:** Auf `gusCachyBuero` ist weder Docker noch Podman installiert – Entscheidung offen (Docker-Engine vs. rootless Podman). Bis dahin baut und prüft die CI das Image.
+**Lokal:** rootless Podman 6.1 + podman-compose auf `gusCachyBuero` (seit 2026-11-07). Image baut und startet wie in der CI (`podman compose build`; Podman ignoriert `HEALTHCHECK` im OCI-Format → `BUILDAH_FORMAT=docker`).
 
 | # | Schritt | Modell | Fertig wenn |
 |---|---|---|---|
 | 2.1 | **Eine Policy-Engine** statt drei: Tool-Registry mit Schema + Stufe (READ / SAFE_WRITE / EXEC / DANGER) und **Ziel** (`runner` / `host`), Konfig außerhalb des beschreibbaren Workspace | O plant, S baut | `bridge/permissions`, `terminal/guard`, swarm-Level delegieren dorthin |
 | 2.2 | ✅ `07dbb6a`, `724efea` Image + Compose (Linux, host-Netz), CI-Smoke-Test grün (Start nach 2 s, non-root, read-only); Windows-Bridge-Modus offen – **Core-Image + `compose.yaml`:** `python:3.11-slim`, Non-root-User, `NEXUS_HOME=/data` (Volume), Port nur `127.0.0.1:8299`, Ollama über `host.docker.internal` (Linux: `extra_hosts: host-gateway`), Healthcheck, `restart: unless-stopped` | L → S prüft | `docker compose up -d` startet Core auf Linux; Windows-Lauf in CI |
 | 2.2a | ✅ `8b8d363` – **Übergang:** Terminal-Guard kennt POSIX-Systembefehle und Secret-Pfade (vorher SAFE_WRITE) | L | Tests `test_terminal_guard_posix.py` |
-| 2.3 | **Runner-Container** mit kleiner Exec-API (Token, nur internes Netz, ohne Internet); Terminal und `code_sandbox` führen dort aus statt per `sh -c` auf dem Host. Runner jederzeit per `compose restart` zurücksetzbar | O plant, S baut | Test: Befehl im Runner sieht weder Host-Dateisystem noch Netz noch Secrets |
+| 2.3 | ✅ Runner ohne Netz (`network_mode: none`), Exec-API über Unix-Socket im Volume `runner-sock`, NDJSON-Streaming, Abbruch kappt die Verbindung → Prozessgruppe weg; Terminal fail-closed im Runner-Modus (`NEXUS_RUNNER_SOCKET`); lokal mit Podman + CI geprüft. `code_sandbox` folgt mit 2.4 – **Runner-Container** mit kleiner Exec-API (Token, nur internes Netz, ohne Internet); Terminal und `code_sandbox` führen dort aus statt per `sh -c` auf dem Host. Runner jederzeit per `compose restart` zurücksetzbar | O plant, S baut | Test: Befehl im Runner sieht weder Host-Dateisystem noch Netz noch Secrets |
 | 2.4 | **Autobuild im Runner:** Git-Worktree auf dem Volume, Pfad-Allowlist (`nexus/` minus `safety/`, Policy, `autobuild/`), Tests im Runner, Ergebnis als Branch – **Merge nur durch dich** | O plant, S baut | Autobuild kann Guard-Dateien nachweislich nicht ändern |
 | 2.5 | ✅ `5284727` – Secrets nur im Core (Compose-Secrets / `env_file`), Runner bekommt keine; Bridge-Token nicht mehr in `os.environ`; Kindprozesse mit Env-Allowlist | L → S prüft | Test: Runner-Prozess sieht keinen Token |
 | 2.6 | ✅ `0901a4f`, `08c09a4` (auch HTTP-Tool des Agenten und Aether-Fetch) – `downloads/`: SSRF-Schutz (private Netze sperren), Streaming, Größenlimit – oder in `nexusall` aufgehen lassen | L | Test gegen 127.0.0.1/192.168.x |

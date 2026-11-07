@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg ca-certificates && \
+    apt-get install -y --no-install-recommends ffmpeg ca-certificates git && \
     rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -u 1000 nexus
@@ -20,7 +20,10 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-extra.txt
 
 COPY --chown=nexus:nexus . .
 
-RUN mkdir -p /app/workspace && chown nexus:nexus /app/workspace
+# Mountpunkte der benannten Volumes vorab anlegen und nexus geben (Volume uebernimmt die Rechte beim ersten Mount):
+# Runner-Socket, Runner-Arbeitsverzeichnis (Runner: /work, Core: /app/workspace/runner)
+RUN mkdir -p /app/workspace /app/workspace/runner /run/nexus-runner /work && \
+    chown nexus:nexus /app/workspace /app/workspace/runner /run/nexus-runner /work
 
 USER nexus
 

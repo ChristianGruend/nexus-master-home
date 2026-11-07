@@ -58,6 +58,45 @@ jobs:
           test "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' "$cid")" = true
           docker compose exec -T nexus sh -c 'touch /app/x 2>/dev/null && exit 1 || exit 0'
           docker compose exec -T nexus sh -c 'test -w /app/workspace'
+      - name: Runner-Prüfung (Stufe 2.3)
+        run: |
+          set -e
+          trap 'echo "::group::Runner-Logs"; docker compose logs runner; echo "::endgroup::"' ERR
+          rid=$(docker compose ps -q runner)
+          test -n "$rid"
+          test "$(docker inspect -f '{{.State.Running}}' "$rid")" = true
+          test "$(docker inspect -f '{{.HostConfig.NetworkMode}}' "$rid")" = none
+          docker compose exec -T nexus test -S /run/nexus-runner/runner.sock
+          docker compose exec -T nexus python - <<'PY'
+          from nexus.runner.client import available, exec_stream
+
+          def run(cmd):
+              out, rc = [], None
+              for ev in exec_stream(command=cmd, timeout=30):
+                  if ev["t"] in ("out", "err"):
+                      out.append(ev["text"])
+                  elif ev["t"] == "end":
+                      rc = ev["rc"]
+              return rc, "".join(out)
+
+          assert available(ttl=0), "Runner nicht erreichbar"
+          rc, out = run("env")
+          assert rc == 0 and "TOKEN" not in out and "SECRET" not in out, "Secrets im Runner-Env"
+          rc, _ = run("python3 -c \"import socket; socket.create_connection(('1.1.1.1',53),3)\"")
+          assert rc != 0, "Runner hat Netz"
+          rc, _ = run("ls /app/workspace/secrets")
+          assert rc != 0, "Secrets im Runner sichtbar"
+          rc, _ = run("touch /work/x")
+          assert rc == 0, "/work nicht beschreibbar"
+          rc, _ = run("touch /app/x")
+          assert rc != 0, "Runner-Root beschreibbar"
+
+          from nexus.terminal import service
+          r = service.run("echo runner-ok", wait=True)
+          assert r.get("runner") is True, r
+          assert r["stdout"].strip() == "runner-ok", r
+          print("runner ok")
+          PY
       - name: Logs
         if: always()
         run: docker compose logs --tail=200
