@@ -233,11 +233,12 @@
 
 
   function escapeHtml(s) {
-    return String(s || "")
+    return String(s ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   /** Minimal markdown-lite: **bold**, `code`, preserve newlines via pre-wrap */
@@ -1298,7 +1299,7 @@
             const cls = pct == null ? "" : (pct >= 95 ? "crit" : pct >= 90 ? "warn" : "");
             const w = pct == null ? 0 : Math.min(100, Math.max(0, pct));
             return `<div class="perf-disk-row">
-              <span title="${d.mount || ""}">${(d.mount || "?").slice(0, 10)}</span>
+              <span title="${escapeHtml(d.mount || "")}">${escapeHtml((d.mount || "?").slice(0, 10))}</span>
               <div class="perf-disk-bar ${cls}"><i style="width:${w}%"></i></div>
               <span>${pct != null ? Math.round(pct) + "%" : "UNKNOWN"}</span>
             </div>`;
@@ -1322,11 +1323,11 @@
         const top = ((m.processes || {}).top_cpu) || [];
         if (!top.length) {
           const note = (m.processes || {}).note || "Keine Prozessdaten";
-          tbody.innerHTML = `<tr><td colspan="4">${note}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="4">${escapeHtml(note)}</td></tr>`;
         } else {
           tbody.innerHTML = top.map(p =>
-            `<tr><td>${(p.name || "?").slice(0, 22)}</td><td>${p.pid ?? ""}</td>` +
-            `<td>${p.cpu_percent ?? "—"}%</td><td>${p.memory_percent ?? "—"}%</td></tr>`
+            `<tr><td>${escapeHtml((p.name || "?").slice(0, 22))}</td><td>${escapeHtml(p.pid ?? "")}</td>` +
+            `<td>${escapeHtml(p.cpu_percent ?? "—")}%</td><td>${escapeHtml(p.memory_percent ?? "—")}%</td></tr>`
           ).join("");
         }
       }
@@ -1336,9 +1337,9 @@
       if (ollEl) {
         const o = m.ollama || {};
         if (o.reachable) {
-          ollEl.innerHTML = `<span class="ok">● online</span> · ${o.preferred || "?"} · ${(o.models || []).length} Modelle`;
+          ollEl.innerHTML = `<span class="ok">● online</span> · ${escapeHtml(o.preferred || "?")} · ${(o.models || []).length} Modelle`;
         } else {
-          ollEl.innerHTML = `<span class="bad">● offline</span> · ${o.error || o.url || ""}`;
+          ollEl.innerHTML = `<span class="bad">● offline</span> · ${escapeHtml(o.error || o.url || "")}`;
         }
       }
 
@@ -1349,7 +1350,7 @@
         const listen = nx.listening === true ? '<span class="ok">Port OK</span>' :
           (nx.listening === false ? '<span class="bad">Port zu</span>' : "Port ?");
         const up = nx.uptime_s != null ? Math.round(nx.uptime_s) + " s" : "UNKNOWN";
-        nxEl.innerHTML = `${listen} · PID ${nx.pid ?? "?"} · RSS ${nx.rss_mb ?? "?"} MB · Up ${up}`;
+        nxEl.innerHTML = `${listen} · PID ${escapeHtml(nx.pid ?? "?")} · RSS ${escapeHtml(nx.rss_mb ?? "?")} MB · Up ${up}`;
       }
 
       // Alerts
@@ -1359,9 +1360,9 @@
       if (llmEl) {
         const o = m.ollama || {};
         if (o.reachable) {
-          llmEl.innerHTML = `<span class="ok">online</span> · ${_unk(o.preferred)} · ${(o.models || []).length} Modelle`;
+          llmEl.innerHTML = `<span class="ok">online</span> · ${escapeHtml(_unk(o.preferred))} · ${(o.models || []).length} Modelle`;
         } else if (o && (o.error || o.url)) {
-          llmEl.innerHTML = `<span class="bad">offline</span> · ${_unk(o.error || o.url)}`;
+          llmEl.innerHTML = `<span class="bad">offline</span> · ${escapeHtml(_unk(o.error || o.url))}`;
         } else {
           llmEl.innerHTML = '<span class="unknown">UNKNOWN</span>';
         }
@@ -1377,7 +1378,7 @@
             brEl.innerHTML = '<span class="ok">UP</span> · Auth required (401) · Funnel not assumed';
           } else if (br.ok) {
             const bj = await br.json().catch(() => ({}));
-            brEl.innerHTML = `<span class="ok">UP</span> · ${_unk(bj.version || bj.protocol_version)} · ${_unk(bj.process_level)}`;
+            brEl.innerHTML = `<span class="ok">UP</span> · ${escapeHtml(_unk(bj.version || bj.protocol_version))} · ${escapeHtml(_unk(bj.process_level))}`;
           } else {
             brEl.innerHTML = `<span class="bad">HTTP ${br.status}</span>`;
           }
@@ -1406,7 +1407,7 @@
           alEl.innerHTML = '<li class="ok">Keine Alerts</li>';
         } else {
           alEl.innerHTML = alerts.map(a =>
-            `<li class="${a.level || "info"}">[${(a.level || "").toUpperCase()}] ${a.message_de || a.code}</li>`
+            `<li class="${escapeHtml(a.level || "info")}">[${escapeHtml((a.level || "").toUpperCase())}] ${escapeHtml(a.message_de || a.code)}</li>`
           ).join("");
         }
       }
@@ -1970,7 +1971,7 @@
       const tile = document.createElement("button");
       tile.type = "button";
       tile.className = "media-tile" + (cur && cur.path === it.path ? " active" : "");
-      tile.innerHTML = '<div class="mt-icon">🎵</div><div class="mt-name">' + (it.name || it.path) + '</div><div class="mt-meta">' + Math.round((it.size||0)/1024) + ' KB</div>';
+      tile.innerHTML = '<div class="mt-icon">🎵</div><div class="mt-name">' + escapeHtml(it.name || it.path) + '</div><div class="mt-meta">' + Math.round((it.size||0)/1024) + ' KB</div>';
       tile.onclick = () => playMusicTrack(idx, it);
       list.appendChild(tile);
     });
@@ -2006,7 +2007,7 @@
       const tile = document.createElement("button");
       tile.type = "button";
       tile.className = "media-tile";
-      tile.innerHTML = '<div class="mt-icon">🎬</div><div class="mt-name">' + (it.name || it.path) + '</div><div class="mt-meta">' + (it.source || "video") + '</div>';
+      tile.innerHTML = '<div class="mt-icon">🎬</div><div class="mt-name">' + escapeHtml(it.name || it.path) + '</div><div class="mt-meta">' + escapeHtml(it.source || "video") + '</div>';
       tile.onclick = () => playLocalVideo(it);
       list.appendChild(tile);
     });
@@ -2142,7 +2143,7 @@
         grid.appendChild(a);
       });
     } catch (e) {
-      grid.innerHTML = '<div class="streams-note">Galerie-Fehler: ' + e + "</div>";
+      grid.innerHTML = '<div class="streams-note">Galerie-Fehler: ' + escapeHtml(e) + "</div>";
     }
   }
 
@@ -2206,7 +2207,7 @@
     list.innerHTML = "";
     if (preview) { preview.classList.add("hide"); preview.textContent = ""; }
     if (!data.success) {
-      list.innerHTML = '<div class="streams-note">' + (data.error || "Fehler") + "</div>";
+      list.innerHTML = '<div class="streams-note">' + escapeHtml(data.error || "Fehler") + "</div>";
       return;
     }
     const items = data.items || [];
@@ -2218,8 +2219,8 @@
       const row = document.createElement("div");
       row.className = "file-row";
       const rel = (filesCursor ? filesCursor.replace(/\\/g, "/").replace(/\/$/, "") + "/" : "") + it.name;
-      row.innerHTML = '<span class="name">' + (it.is_dir ? "📁 " : "📄 ") + it.name + '</span>' +
-        '<span class="meta">' + (it.is_dir ? "Ordner" : (it.size + " B")) + "</span>";
+      row.innerHTML = '<span class="name">' + (it.is_dir ? "📁 " : "📄 ") + escapeHtml(it.name) + '</span>' +
+        '<span class="meta">' + (it.is_dir ? "Ordner" : escapeHtml(it.size + " B")) + "</span>";
       const openBtn = document.createElement("button");
       openBtn.type = "button";
       openBtn.className = "primary";
@@ -2261,8 +2262,8 @@
       const row = document.createElement("div");
       row.className = "project-row";
       const active = data.active && (data.active === p.id);
-      row.innerHTML = '<span class="name">' + (active ? "★ " : "") + (p.name || p.id) + '</span>' +
-        '<span class="meta">' + (p.description || p.id || "") + "</span>";
+      row.innerHTML = '<span class="name">' + (active ? "★ " : "") + escapeHtml(p.name || p.id) + '</span>' +
+        '<span class="meta">' + escapeHtml(p.description || p.id || "") + "</span>";
       const act = document.createElement("button");
       act.type = "button";
       act.className = "primary";
@@ -2302,7 +2303,7 @@
       const row = document.createElement("div");
       row.className = "file-row";
       const label = it.name || it.url || it.id || JSON.stringify(it);
-      row.innerHTML = '<span class="name">' + label + '</span><span class="meta">' + (it.status || it.state || "") + "</span>";
+      row.innerHTML = '<span class="name">' + escapeHtml(label) + '</span><span class="meta">' + escapeHtml(it.status || it.state || "") + "</span>";
       list.appendChild(row);
     });
   }
@@ -2520,9 +2521,9 @@
       const stClass = app.status === "connected" ? "connected" : app.status === "stub" ? "stub" : "available";
       const stLabel = app.status === "connected" ? "verbunden" : app.status === "stub" ? "Stub" : "verfügbar";
       card.innerHTML =
-        "<h4>" + app.name + "</h4>" +
-        '<div class="cat">' + (app.category || "") + "</div>" +
-        '<div class="desc">' + (app.desc || "") + "</div>" +
+        "<h4>" + escapeHtml(app.name) + "</h4>" +
+        '<div class="cat">' + escapeHtml(app.category || "") + "</div>" +
+        '<div class="desc">' + escapeHtml(app.desc || "") + "</div>" +
         '<div class="status ' + stClass + '">' + stLabel + "</div>" +
         '<div class="row"></div>';
       const row = card.querySelector(".row");
@@ -2734,7 +2735,7 @@
     (data.streams || []).forEach((s) => {
       const row = document.createElement("div");
       row.className = "stream-item" + (s.id === data.active ? " active" : "");
-      row.innerHTML = "<strong>" + (s.title || s.id) + "</strong><br/><small>" + s.url + "</small>";
+      row.innerHTML = "<strong>" + escapeHtml(s.title || s.id) + "</strong><br/><small>" + escapeHtml(s.url) + "</small>";
       // uiwork13: Zeile nur Auswahl, Abspielen nur per Button
       row.onclick = (ev) => {
         if (ev.target && ev.target.closest && ev.target.closest("button")) return;
