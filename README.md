@@ -55,7 +55,7 @@ python -m pytest -q
 
 ## Sicherheitshinweise
 
-- `python run_server.py` lauscht standardmäßig nur auf `127.0.0.1`. Die Startskripte (`start_nexus.ps1`, `start_nexus.sh`) setzen bewusst `NEXUS_HOST=0.0.0.0`, damit das Handy (`/m`) im LAN/Tailscale zugreifen kann. Gib den Server nicht ungeschützt ins Internet frei.
+- Standard ist `127.0.0.1` (nur dieser Rechner). Für Handy-Zugriff (`/m`) über LAN/Tailscale explizit `NEXUS_HOST=0.0.0.0 ./start_nexus.sh` bzw. `.\start_nexus.ps1 -HostAddr 0.0.0.0` setzen — nur in vertrauenswürdigen Netzen, da viele API-Routen noch keine Anmeldung haben.
 - POST-Requests von fremden Webseiten werden abgelehnt (CSRF-Schutz über `Origin`/`Sec-Fetch-Site`). Weitere Browser-Origins nur explizit über `NEXUS_CORS_ORIGINS` (kommagetrennt) freigeben.
 - Zocker-Modus: Skriptpfad über `NEXUS_ZOCKER_SCRIPT`, Standard ist `zocker_bombe.ps1` im Ordner über dem Repo.
 - Geheimnisse wie Tokens, App-Passwörter und Geräteadressen gehören ausschließlich in `.env`. Diese Datei wird nicht committet.

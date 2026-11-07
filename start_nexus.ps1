@@ -2,7 +2,7 @@
 param(
   [string]$Root = $PSScriptRoot,
   [int]$Port = 8299,
-  [string]$HostAddr = "0.0.0.0"
+  [string]$HostAddr = "127.0.0.1"
 )
 $ErrorActionPreference = "Stop"
 if (-not $env:NEXUS_BRIDGE_PROCESS_LEVEL) { $env:NEXUS_BRIDGE_PROCESS_LEVEL = "SAFE_WRITE" }
