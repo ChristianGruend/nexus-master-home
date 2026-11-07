@@ -41,7 +41,12 @@ jobs:
             if curl -fsS http://127.0.0.1:8299/api/health >/dev/null; then echo "up nach ${i}s"; exit 0; fi
             sleep 1
           done
-          docker compose logs; exit 1
+          echo "::group::Diagnose"; docker compose ps -a
+          docker inspect -f 'State={{json .State}}' $(docker compose ps -aq nexus) || true
+          docker compose logs
+          docker compose run --rm -T nexus python -c "import nexus.chat.server; print('import ok')" || true
+          docker compose run --rm -T nexus sh -c 'id; ls -ld /app /app/workspace; timeout 20 python -u run_server.py; echo exit=$?' || true
+          echo "::endgroup::"; exit 1
       - name: Smoke-Test
         run: |
           set -e
