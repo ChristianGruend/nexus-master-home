@@ -44,7 +44,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 MODEL_DIR = ROOT / "models" / "vosk" / "vosk-model-small-de-0.15"
 CFG_PATH = ROOT / "workspace" / "voice" / "wakeword.json"
-LOG_PATH = ROOT / "logs" / "wakeword.log"
+LOG_PATH = ROOT / "workspace" / "logs" / "wakeword.log"
 VERSION = "heynexus-20261006"
 SR = 16000
 BLOCK = 1600  # 100 ms

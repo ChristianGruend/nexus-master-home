@@ -27,7 +27,7 @@ from urllib.parse import quote
 ROOT = Path(__file__).resolve().parents[1]  # nexus/phone_actions.py -> nexus-ai/
 CONFIG_PATH = ROOT / "workspace" / "voice" / "phone_actions.json"
 CONTACTS_PATH = ROOT / "workspace" / "apex" / "contacts.json"
-LOG_PATH = ROOT / "logs" / "voice_commands.jsonl"
+LOG_PATH = ROOT / "workspace" / "logs" / "voice_commands.jsonl"
 
 # Tailscale-IP des Handys; per Env ueberschreibbar, falls Tailscale neu vergibt.
 PHONE_TAILSCALE_IP = os.environ.get("NEXUS_PHONE_TAILSCALE_IP", "192.0.2.10")

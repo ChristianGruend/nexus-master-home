@@ -28,7 +28,7 @@ try:
     from nexus.common.paths import BRIDGE_LOGS as _BRIDGE_LOGS
     _default_log = str(_BRIDGE_LOGS)
 except Exception:
-    _default_log = str(Path(__file__).resolve().parents[2] / "logs" / "bridge")
+    _default_log = str(Path(__file__).resolve().parents[2] / "workspace" / "logs" / "bridge")
 LOG_DIR = os.environ.get("NEXUS_GATEWAY_LOG_DIR", _default_log)
 MAX_BODY = int(os.environ.get("NEXUS_GATEWAY_MAX_BODY", str(1 * 1024 * 1024)))
 RATE_PER_MIN = int(os.environ.get("NEXUS_GATEWAY_RATE_PER_MIN", "60"))
