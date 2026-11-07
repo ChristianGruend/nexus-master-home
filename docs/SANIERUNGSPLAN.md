@@ -37,11 +37,11 @@ Stand 2026-11-07 · Basis: Branch `fix/backend-security` (3 Commits vor `main`) 
 
 ## Grundsatzentscheidung
 
-**Windows und Linux sind beide vollwertige Zielplattformen.** Windows-Code wird nicht entfernt, sondern hinter eine Plattform-Schicht gelegt; jede Stufe muss auf beiden Systemen grün sein (CI-Matrix ab Stufe 0).
+**Windows und Linux sind beide vollwertige Zielplattformen.** Windows-Code wird nicht entfernt. Der Kern läuft als Docker-Container auf beiden Systemen identisch; alles Plattformspezifische wandert in einen nativen Host-Agent (siehe Zielarchitektur); jede Stufe muss auf beiden Systemen grün sein (CI-Matrix ab Stufe 0).
 
 **Kein Neuschreiben, sondern Umbau nach Strangler-Muster.** 939 grüne Tests sind das wertvollste Asset – sie sichern jeden Schritt ab. Reihenfolge: erst Zugang dicht, dann Ausführung einsperren, dann Plattform, dann Struktur, dann Aufräumen. Jede Stufe endet mit grüner Testsuite und einem Commit auf einem eigenen Branch.
 
-Modellwahl je Schritt: **H** = haiku, **S** = sonnet, **O** = opus (Planung/Review im Hauptthread).
+Modellwahl je Schritt: **L** = lokales Modell zuerst (`hermes-qwen3.8-27b-coder` über `.local-learning/local_first.py`), Claude prüft und korrigiert; jeder Lauf landet als Trainingsdatum in `.local-learning/data/runs.jsonl` · **H** = haiku, **S** = sonnet, **O** = opus (Planung/Review im Hauptthread).
 
 ---
 
@@ -63,32 +63,49 @@ Modellwahl je Schritt: **H** = haiku, **S** = sonnet, **O** = opus (Planung/Revi
 | 1.1 | **Routing-Tabelle** statt if-Ketten: `@route("POST", "/api/shell/run", policy=...)`; Handler bleiben, nur die Verteilung wird deklarativ. Mechanisch, Route für Route | O plant, S führt aus | Alle ~150 Routen registriert, Tests grün |
 | 1.2 | **Auth-Middleware, deny by default:** jede `/api/*` braucht Session-Cookie (UI) oder Bearer (Handy/Bridge); Ausnahmen explizit in der Tabelle. Loopback über Peer-Adresse, nie über Header | S | Test: jede Route ohne Credentials → 401, außer Allowlist |
 | 1.3 | Host-Header-Allowlist (DNS-Rebinding), Body-Limit, 400 bei kaputtem JSON, generische Fehlerantworten + Request-ID | S | Tests für alle vier |
-| 1.4 | Static/File-Serving auf `Path.resolve()` + `is_relative_to` | H | Traversal-Test |
+| 1.4 | ✅ `e0928e2` – Static/File-Serving auf `Path.resolve()` + `is_relative_to` | L | Traversal-Test |
 | 1.5 | XSS: alle `innerHTML` mit Fremddaten → `textContent`/`createElement`; strikte CSP auf allen UI-Seiten | S | grep findet keine unescapte Verkettung; CSP-Header gesetzt |
 | 1.6 | Off-Schalter der Guards entfernen (`NEXUS_AGENT_GUARD`, `NEXUS_PHASE2_*`) | H | Flags weg, Tests grün |
 
-## Stufe 2 – Ausführung einsperren (3–4 Tage)
+## Zielarchitektur (ab Stufe 2)
+
+```
+Browser / Handy ──Token──► nexus-core        (Docker, Linux-Image, auf Windows + Linux identisch)
+                              │  Web/API, Agenten, Policy, Memory, LLM-Client, piper-TTS
+                              ├──► Ollama            (nativ auf dem Host – GPU)            host.docker.internal:11434
+                              ├──► nexus-runner      (Docker, ohne Internet, ohne Secrets) Terminal, Code-Ausführung, Autobuild-Tests
+                              └──► nexus-host-agent  (nativ, Windows bzw. Linux)            Desktop, Apps, Audio, adb, Host-Shell
+```
+
+- **Core** bekommt **keinen** Docker-Socket und keine Host-Rechte. Alles, was den Rechner anfasst, geht über den Host-Agent – mit Token, Capability-Liste und Freigabe.
+- **Runner** ist die eine Sandbox für beide Betriebssysteme (ersetzt bubblewrap/AppContainer): `cap_drop: ALL`, `no-new-privileges`, Read-only-Rootfs, nur `/work` beschreibbar, Limits für CPU/RAM/PIDs, nur über ein internes Netz mit Core verbunden.
+- **Host-Agent** ist die Plattform-Schicht als eigener Prozess: einziger Ort mit `os.name`/`sys.platform`-Weichen, Backends `windows.py` / `posix.py`. Fehlt er (z. B. reiner Server), läuft Core mit reduzierten Fähigkeiten weiter.
+- Voraussetzung Windows: Docker Desktop mit WSL2 (oder Podman). Workspace als **benanntes Volume**, nicht als NTFS-Bind-Mount (Performance, Dateirechte).
+
+## Stufe 2 – Container & Ausführung einsperren (4–5 Tage)
 
 | # | Schritt | Modell | Fertig wenn |
 |---|---|---|---|
-| 2.1 | **Eine Policy-Engine** statt drei: Tool-Registry mit Schema + Stufe (READ / SAFE_WRITE / EXEC / DANGER), Konfig außerhalb des beschreibbaren Workspace | O plant, S baut | `bridge/permissions`, `terminal/guard`, swarm-Level delegieren dorthin |
-| 2.2 | **Terminal:** argv statt `sh -c`, Allowlist (Binary + Argumentmuster via `shlex`), alles andere nur per Freigabe. getrennte Allowlists für POSIX-Shell und PowerShell. Sandbox je Plattform: Linux **bubblewrap** (Mount-NS, nur Workspace rw, Netz optional aus), Windows **AppContainer + Job Object** (vorhandenes `bridge/appcontainer.py` ausbauen) | S | Tests je Plattform: `sudo`/`rm -rf`/`$(…)` bzw. `Remove-Item -Recurse`/`Start-Process -Verb RunAs`/`iex` → Freigabe/Block |
-| 2.3 | **Autobuild:** Pfad-Allowlist (`nexus/` minus `safety/`, `terminal/guard`, `autobuild/`), jede Änderung als Commit in einem **Git-Worktree**, Tests dort in der Plattform-Sandbox aus 2.2 ohne Netz/Secrets, Merge nur durch dich | O plant, S baut | Autobuild kann Guard-Dateien nachweislich nicht ändern |
-| 2.4 | Kindprozesse mit minimalem Env (Allowlist), Bridge-Token nicht mehr in `os.environ`, Secret-Dateien `0600` erzwingen | S | Test: Subprozess sieht keinen Token |
-| 2.5 | `downloads/`: SSRF-Schutz (private Netze sperren), Streaming, Größenlimit – oder in `nexusall` aufgehen lassen | H | Test gegen 127.0.0.1/192.168.x |
+| 2.1 | **Eine Policy-Engine** statt drei: Tool-Registry mit Schema + Stufe (READ / SAFE_WRITE / EXEC / DANGER) und **Ziel** (`runner` / `host`), Konfig außerhalb des beschreibbaren Workspace | O plant, S baut | `bridge/permissions`, `terminal/guard`, swarm-Level delegieren dorthin |
+| 2.2 | **Core-Image + `compose.yaml`:** `python:3.11-slim`, Non-root-User, `NEXUS_HOME=/data` (Volume), Port nur `127.0.0.1:8299`, Ollama über `host.docker.internal` (Linux: `extra_hosts: host-gateway`), Healthcheck, `restart: unless-stopped` | L → S prüft | `docker compose up -d` startet Core auf Linux; Windows-Lauf in CI |
+| 2.3 | **Runner-Container** mit kleiner Exec-API (Token, nur internes Netz, ohne Internet); Terminal und `code_sandbox` führen dort aus statt per `sh -c` auf dem Host. Runner jederzeit per `compose restart` zurücksetzbar | O plant, S baut | Test: Befehl im Runner sieht weder Host-Dateisystem noch Netz noch Secrets |
+| 2.4 | **Autobuild im Runner:** Git-Worktree auf dem Volume, Pfad-Allowlist (`nexus/` minus `safety/`, Policy, `autobuild/`), Tests im Runner, Ergebnis als Branch – **Merge nur durch dich** | O plant, S baut | Autobuild kann Guard-Dateien nachweislich nicht ändern |
+| 2.5 | Secrets nur im Core (Compose-Secrets / `env_file`), Runner bekommt keine; Bridge-Token nicht mehr in `os.environ`; Kindprozesse mit Env-Allowlist | L → S prüft | Test: Runner-Prozess sieht keinen Token |
+| 2.6 | `downloads/`: SSRF-Schutz (private Netze sperren), Streaming, Größenlimit – oder in `nexusall` aufgehen lassen | L | Test gegen 127.0.0.1/192.168.x |
 
-## Stufe 3 – Plattform-Schicht Windows + Linux (4–5 Tage)
+## Stufe 3 – Host-Agent Windows + Linux (5–6 Tage)
 
 | # | Schritt | Modell | Fertig wenn |
 |---|---|---|---|
-| 3.1 | **Zentrale Config** (eine dataclass, lädt `.env`, validiert beim Start); alle ~47 verstreuten `os.environ`-Zugriffe darauf umstellen; Modell/Ollama-URL nur dort | S | grep `11434`/`qwen3.5` nur noch in Config |
-| 3.2 | **Plattform-Schicht** `nexus/platform/` mit Backends `windows.py` / `posix.py`: ProcessRunner, Shell (PowerShell-Worker bzw. bash), Prozess-Kill (`taskkill` bzw. `killpg`), App-Start (`os.startfile` bzw. `xdg-open`), Desktop-Automation, Secrets (DPAPI bzw. `keyring`/Secret Service). Aller Code mit `os.name`/`sys.platform` (56 Stellen) zieht dorthin | O plant, S baut | keine Plattform-Weiche mehr außerhalb `nexus/platform/` |
-| 3.2b | **Geschützte Pfade statt C:-Sperre:** `safety/paths.py` bekommt pro Plattform konfigurierbare `protected_roots` (Windows: `C:\Windows`, Profile …; Linux: `/etc`, `/usr`, `~/.ssh` …) und `allowed_roots` (Workspace), geprüft mit `resolve()` + `is_relative_to` | S | Gruppe B (~14 Fails) auf beiden Plattformen grün |
-| 3.3 | Abhängigkeiten in `pyproject.toml`: Kern + Extras (`[voice]`, `[studio]`, `[mail]`), Windows-Pakete mit Marker (`pywin32; sys_platform=='win32'`); Imports von `cv2`/`scipy`/`win32crypt` lazy | H | 0 Collection-Errors auf beiden Plattformen |
-| 3.4 | Tests isolieren: `NEXUS_ROOT`/Workspace per Fixture auf `tmp_path`, Marker `integration`/`ollama`/`windows_only`/`posix_only` (skip statt fail auf der falschen Plattform); Windows-Tests (PowerShell-Worker, C:-Logik) bleiben und laufen im Windows-CI-Job | S | Gruppen A+C behoben, Lauf ohne echten `workspace/` |
-| 3.5 | **Betrieb mit gleichem Funktionsumfang:** Linux systemd-User-Units (nexus, gateway, wakeword, `Restart=on-failure`) + `*_all.sh` mit gleichen Funktionen wie die `.ps1`; Windows behält `*_all.ps1`, optional Aufgabenplanung für Autostart. `health_watch` ruft plattformabhängig das richtige Restart. Workspace über `NEXUS_HOME` (`platformdirs`: `%LOCALAPPDATA%\nexus` bzw. `~/.local/share/nexus`) | S | Start/Stop/Status/Restart auf beiden Systemen identisch |
-| 3.6 | Offline-TTS als Backend in der Plattform-Schicht: **piper** auf beiden Systemen (gleiche Stimme), SAPI bleibt Windows-Fallback; SAPI-Dublette (`tts.py`/`speak_pc.py`) zusammenlegen | H | TTS ohne Internet auf beiden |
-| 3.7 | Hartkodierte Pfade (`C:\Users\gustl\…`, `G:\meine-ki\…`, WinGet-ffmpeg) → Config bzw. `shutil.which` | H | grep findet keine Benutzer-/Laufwerkspfade im Code |
+| 3.1 | **Zentrale Config** (eine dataclass, lädt `.env`, validiert beim Start) für Core und Host-Agent; ~47 verstreute `os.environ`-Zugriffe darauf umstellen; Modell/Ollama-URL nur dort | S | grep `11434`/`qwen3.5` nur noch in Config |
+| 3.2 | **Host-Agent-Gerüst** `nexus_host/`: eigener Prozess, Token-Auth, Capability-Endpoint (`/caps`), Backends `windows.py`/`posix.py`. Bindet an Loopback bzw. auf Linux an die Docker-Bridge-IP, nie an `0.0.0.0` | O plant, S baut | Core fragt `/caps` ab, Agent läuft auf beiden Systemen |
+| 3.3 | **Fähigkeiten umziehen** (je ein Schritt): Desktop/Maus/Tastatur/Zwischenablage (`computer/`), Apps & URLs (`os_actions`), Medientasten, adb (`phone_actions` + `nexus_os` – ein adb-Client), Audio-Ein/Ausgabe + Wakeword (`voice/`), Host-Shell nur mit Allowlist + Freigabe (PowerShell bzw. bash) | L → S prüft, je Fähigkeit | Core enthält keine Plattform-Weiche mehr |
+| 3.4 | **Geschützte Pfade statt C:-Sperre** im Host-Agent: `protected_roots`/`allowed_roots` je Plattform, `resolve()` + `is_relative_to` | L → S prüft | ehemalige Gruppe-B-Fails grün auf beiden Systemen |
+| 3.5 | **TTS:** piper im Core erzeugt Audio, Wiedergabe über Host-Agent; SAPI bleibt Fallback im Windows-Agent; SAPI-Dublette (`tts.py`/`speak_pc.py`) zusammenlegen | L → S prüft | Sprachausgabe ohne Internet auf beiden |
+| 3.6 | Abhängigkeiten: Core komplett im Image; Host-Agent schlank mit Extras je OS (`pywin32; sys_platform=='win32'`); `cv2`/`scipy`/`win32crypt` lazy | L | 0 Collection-Errors |
+| 3.7 | Tests isolieren: Workspace per Fixture auf `tmp_path`, Marker `integration`/`ollama`/`windows_only`/`posix_only`; CI: Core-Tests **im Container**, Host-Agent-Tests in der Matrix Ubuntu + Windows | S | Gruppen A+C behoben, Lauf ohne echten `workspace/` |
+| 3.8 | **Betrieb:** `docker compose up -d` auf beiden Systemen; Host-Agent-Autostart per systemd-User-Unit bzw. Windows-Aufgabenplanung; `start/stop/status_nexus.{sh,ps1}` werden dünne Wrapper um compose + Agent; `health_watch` entfällt (Compose-Healthcheck + Restart) | L → S prüft | Start/Stop/Status identisch auf beiden Systemen |
+| 3.9 | Hartkodierte Pfade (`C:\Users\gustl\…`, `G:\meine-ki\…`, WinGet-ffmpeg) → Config bzw. `shutil.which` | L | grep findet keine Benutzer-/Laufwerkspfade |
 
 ## Stufe 4 – Struktur (1–2 Wochen, inkrementell)
 
@@ -114,3 +131,5 @@ Modellwahl je Schritt: **H** = haiku, **S** = sonnet, **O** = opus (Planung/Revi
 ## Entschieden
 
 - 2026-11-07: **Windows und Linux vollwertig.** Kein Windows-Code wird gelöscht; Abstraktion über `nexus/platform/`, CI-Matrix auf beiden Systemen. PRs nach upstream (`Eddylike/nexus-master-home`) bleiben möglich.
+- 2026-11-07: **Docker-Kern + nativer Host-Agent.** Core und Sandbox (Runner) als Container, Desktop/Audio/adb/Host-Shell über einen Host-Agent je OS. Ersetzt bubblewrap + AppContainer durch eine Sandbox für beide Systeme.
+- 2026-11-07: **Lokal zuerst:** Ausführbare Schritte zuerst an das lokale Qwen, Claude prüft; Läufe werden als SFT/DPO-Daten gesammelt.
