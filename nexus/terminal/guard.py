@@ -433,7 +433,7 @@ def ui_secret() -> str:
 
 
 def ui_cookie() -> str:
-    return f"{COOKIE_NAME}={ui_secret()}; Path=/api/terminal; HttpOnly; SameSite=Strict"
+    return f"{COOKIE_NAME}={ui_secret()}; Path=/api; HttpOnly; SameSite=Strict"  # Terminal- und Bridge-Freigaben
 
 
 def check_ui_cookie(cookie_header: str | None) -> bool:

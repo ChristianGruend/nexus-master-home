@@ -93,6 +93,27 @@ def token_ok(headers) -> bool:
     return hmac.compare_digest(value.encode("utf-8"), api_token().encode("utf-8"))
 
 
+def human_approval(headers) -> tuple[bool, str]:
+    """Freigaben nur durch einen Menschen im Browser-UI (Stufe 2.1a).
+
+    Ein Agent hat Bridge-Token bzw. API-Token, aber keinen HttpOnly-UI-Cookie und kann aus dem
+    Browser keine same-origin-Anfrage stellen. Verlangt: Sec-Fetch-Site same-origin, Header
+    X-NEXUS-UI: approve und einen gueltigen Cookie (lokal nx_term_ui, entfernt nx_session nach /login).
+    """
+    if headers.get("Sec-Fetch-Site") != "same-origin" or headers.get("X-NEXUS-UI") != "approve":
+        return False, "NUR_UI"
+    cookie = headers.get("Cookie")
+    try:
+        from nexus.terminal import guard as _tg
+        if _tg.check_ui_cookie(cookie):
+            return True, "UI_COOKIE"
+    except Exception:
+        pass
+    if has_session(cookie):
+        return True, "SESSION"
+    return False, "KEIN_UI_COOKIE"
+
+
 def is_public(path: str) -> bool:
     if path in PUBLIC_EXACT:
         return True

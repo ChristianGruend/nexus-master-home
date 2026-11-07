@@ -111,6 +111,6 @@ def test_gpt_run_tool_and_tool_ask(monkeypatch):
 
 def test_server_wiring():
     src = (service.ROOT / "nexus" / "chat" / "server.py").read_text(encoding="utf-8")
-    assert "check_ui_cookie" in src and "/api/gpt/tool" in src and "Set-Cookie" in src
+    assert "api_auth.human_approval" in src and "/api/gpt/tool" in src and "Set-Cookie" in src
     html = (service.ROOT / "nexus" / "chat" / "static" / "index.html").read_text(encoding="utf-8")
     assert "__nxStableLoad(function(){" in html and html.count("__nxStableLoad(") >= 2 and "nxStableJs" in html

@@ -279,6 +279,18 @@ def handle_post(handler, path: str, body: dict) -> None:
         mid = p[len("/api/bridge/approvals/"):]
         aid = mid[: -len("/approve")] if approve else mid[: -len("/deny")]
         aid = aid.strip("/")
+        # Stufe 2.1a: Bridge-Token allein reicht nicht – sonst genehmigt ein Agent seine eigene Anfrage
+        from nexus.common.api_auth import human_approval
+        human, why = human_approval(handler.headers)
+        if not human:
+            try:
+                from nexus.terminal import guard as _tg
+                _tg.audit("bridge_approval_rejected_not_ui", approval_id=aid, reason=why,
+                          ua=str(handler.headers.get("User-Agent"))[:120])
+            except Exception:
+                pass
+            return handler._json(403, {"success": False, "error": "HUMAN_APPROVAL_REQUIRED", "reason": why,
+                                       "message": "Freigabe nur im Browser-UI (/approvals)"})
         try:
             rec = approvals().decide(aid, approve=approve, decided_by=str(body.get("by") or "local_ui"))
         except BridgeError as e:

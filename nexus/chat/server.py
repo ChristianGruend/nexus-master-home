@@ -496,7 +496,7 @@ class Handler(BaseHTTPRequestHandler):
         if bridge_api is not None and bridge_api.is_maintenance_path(path):
             return bridge_api.handle_maintenance_get(self, path, qs)
         try:
-            if path in ("/", "/index.html"):
+            if path in ("/", "/index.html", "/approvals", "/approvals.html"):
                 try:  # NEXUS-Terminal: UI-Geheimnis nur fuer lokale Browser-Navigation (Same-Origin-Cookie)
                     if (self.client_address[0] in ("127.0.0.1", "::1") and not self.headers.get("X-Forwarded-For")
                             and not self.headers.get("Tailscale-User-Login") and self.headers.get("Sec-Fetch-Mode") == "navigate"
@@ -505,7 +505,8 @@ class Handler(BaseHTTPRequestHandler):
                         self._nx_set_cookie = _tg.ui_cookie()
                 except Exception:
                     pass
-                return self._bytes(200, (STATIC_DIR / "index.html").read_bytes(), "text/html; charset=utf-8")
+                page = "approvals.html" if path.startswith("/approvals") else "index.html"
+                return self._bytes(200, (STATIC_DIR / page).read_bytes(), "text/html; charset=utf-8")
             if path in ("/m", "/m/", "/m.html"):
                 return self._bytes(200, (STATIC_DIR / "m.html").read_bytes(), "text/html; charset=utf-8")
             if path in ("/m-classic", "/m-classic/"):  # NEXUS OS GPT 3.0: alte /m-Ansicht bleibt erreichbar
@@ -899,8 +900,7 @@ class Handler(BaseHTTPRequestHandler):
                 if path == "/api/terminal/approve":
                     from nexus.terminal import guard as _tg
                     # nur aus dem Browser-UI (same-origin fetch mit UI-Header), nicht per Agent-API
-                    if (not _tg.check_ui_cookie(self.headers.get("Cookie")) or self.headers.get("X-NEXUS-UI") != "approve"
-                            or self.headers.get("Sec-Fetch-Site") != "same-origin"):
+                    if not api_auth.human_approval(self.headers)[0]:
                         _tg.audit("approval_rejected_not_ui", approval_id=str(b.get("approval_id")), ua=str(self.headers.get("User-Agent"))[:120])
                         return self._json(403, {"success": False, "error": "NUR_EDDIE_UI"})
                     return self._json(200, _tg.decide(str(b.get("approval_id") or ""), b.get("approve", True) is not False))
