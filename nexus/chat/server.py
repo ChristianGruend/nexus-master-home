@@ -1761,11 +1761,13 @@ def main() -> None:
         print(f"NEXUS OS status monitor not started: {type(e).__name__}", flush=True)
 
     try:
-        # Selbstbau-Engine: startet automatisch (Stop: POST /api/autobuild/stop oder workspace/autobuild/STOP)
-        from nexus.autobuild.loop import STOP_FILE as _AB_STOP, get_autobuild as _get_ab
-        if not _AB_STOP.exists():
-            _get_ab().start()
-            print("NEXUS Autobuild loop started", flush=True)
+        # Selbstbau-Engine: nur bei NEXUS_AUTOBUILD=1 automatisch starten (Standard aus).
+        # Manuell jederzeit über POST /api/autobuild/start. Stop: POST /api/autobuild/stop oder workspace/autobuild/STOP.
+        if os.environ.get("NEXUS_AUTOBUILD", "0") == "1":
+            from nexus.autobuild.loop import STOP_FILE as _AB_STOP, get_autobuild as _get_ab
+            if not _AB_STOP.exists():
+                _get_ab().start()
+                print("NEXUS Autobuild loop started (NEXUS_AUTOBUILD=1)", flush=True)
     except Exception as e:
         print(f"Autobuild not started: {type(e).__name__}", flush=True)
 
