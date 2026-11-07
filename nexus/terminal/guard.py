@@ -89,6 +89,16 @@ _READ_FIRST = re.compile(r"(?i)^\s*(get-[a-z]+|gci|ls|dir|cat|type|gc|select-str
                          r"hostname|whoami|ping|ipconfig|tasklist|findstr|where\.exe|compare-object|convertto-json|convertfrom-json|out-string|"
                          r"\$psversiontable|pwd|cd|set-location|sl|push-location|pop-location)\b")
 _OTHER_DRIVE = re.compile(r"(?i)(?<![a-z0-9])([abd-fh-z]):[\\/]")
+# POSIX (Linux/macOS): System, Rechte, Pakete, Prozesse, Netz-Tunnel, verschachtelte Shells (Stufe 2.2a)
+_PRIV_POSIX = re.compile(r"(?<![\w./-])(sudo|su|doas|pkexec|chmod|chown|chgrp|chattr|setfacl|dd|mkfs(\.\w+)?|fdisk|parted|wipefs|mount|umount|"
+                         r"systemctl|service|loginctl|journalctl\s+--vacuum|kill|pkill|killall|shutdown|reboot|poweroff|halt|"
+                         r"apt(-get)?|dpkg|pacman|yay|paru|dnf|yum|zypper|snap|flatpak|brew|pipx|cargo\s+install|"
+                         r"crontab|useradd|usermod|userdel|passwd|visudo|iptables|nft|ufw|firewall-cmd|"
+                         r"ssh|scp|sftp|rsync|nc|ncat|netcat|socat|telnet|ftp|"
+                         r"(ba|z|da|k|c|tc|fi)?sh\s+-c|eval|exec|source|xargs|nohup|setsid|disown|docker|podman|kubectl)(?![\w./-])")
+# Geheime Dateien/Orte: Lesen ist nie "nur lesen" (Stufe 2.2a)
+_SECRET_PATH = re.compile(r"(?i)(\.ssh/|\.gnupg/|\.aws/|\.config/gh/|\.netrc|\.git-credentials|\.hermes/\.env|\.kimi-code|"
+                          r"workspace[\\/]secrets|(^|[\s'\"\\/=])\.env\b|\bid_(rsa|ed25519|ecdsa)|/etc/shadow|\.token\b|api_token\.txt|ui_secret\.txt)")
 
 
 # --- 2026-11-02 16:34 Eddie: Loeschen ausserhalb workspace\sandbox nur mit approval_id (alle Agenten) ---
@@ -142,6 +152,10 @@ def required_level(command: str) -> tuple[str, str]:
         return gh_lvl
     if _PRIV.search(cmd):
         return "PRIVILEGED", "System/Netz/Installation/Prozesse"
+    if _PRIV_POSIX.search(cmd):
+        return "PRIVILEGED", "System/Rechte/Pakete/Prozesse/Netz (POSIX)"
+    if _SECRET_PATH.search(cmd):
+        return "PRIVILEGED", "Zugriff auf geheime Dateien"
     parts = [p for p in re.split(r"[;\n|]|&&|\|\|", cmd) if p.strip()]
     if not _WRITE.search(cmd) and parts and all(_READ_FIRST.search(p) for p in parts):
         return "READ_ONLY", "nur lesen"
