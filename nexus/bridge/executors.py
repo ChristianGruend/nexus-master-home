@@ -17,6 +17,7 @@ from nexus.bridge.errors import (
     BridgeError,
     PATH_DENIED,
     PATH_TRAVERSAL,
+    PROTECTED_PATH,
     INVALID_REQUEST,
     SCRIPT_DENIED,
     ACTION_DENIED,
@@ -36,6 +37,18 @@ _ACTIONS_DIR = WORKSPACE / "scripts" / "bridge_actions"
 _ACTIONS_REGISTRY = _ACTIONS_DIR / "registry.json"
 _SECRET_NAMES = {".token", ".bridge_token", "assistant_token.txt", "openai.env", ".env"}
 BACKUP_DIR = WORKSPACE / "backups"  # Snapshot bestehender Dateien vor Änderung (Repair-Sicherung)
+
+
+def _deny_protected(fp: Path, *, tree: bool = False) -> None:
+    """Stufe 2.1b: geschuetzte Pfade (Secrets, Policy, Tokens) fuer Agenten sperren.
+
+    tree=True: auch Verzeichnisse ablehnen, die geschuetzte Eintraege enthalten
+    (move/copy/delete ganzer Baeume).
+    """
+    from nexus.safety.protected import is_protected
+    from nexus.safety.protected_tree import tree_has_protected
+    if is_protected(fp) or (tree and fp.is_dir() and tree_has_protected(fp)):
+        raise BridgeError(PROTECTED_PATH, "PROTECTED_PATH: geschuetzter Pfad", http_status=403)
 
 
 def _safe_path(rel_or_abs: str, *, must_exist: bool = False, allow_new: bool = False) -> Path:
@@ -67,6 +80,7 @@ def _safe_path(rel_or_abs: str, *, must_exist: bool = False, allow_new: bool = F
             http_status=403,
             details={"root": root_s},
         )
+    _deny_protected(fp)  # vor must_exist: Existenz geschuetzter Dateien nicht verraten
     if must_exist and not fp.exists():
         raise BridgeError(INVALID_REQUEST, f"path not found: {fp}", http_status=404)
     if fp.name.lower() in _SECRET_NAMES or "secret" in {x.lower() for x in fp.parts}:
@@ -332,6 +346,7 @@ def exec_search_log(params: dict[str, Any], rec: TaskRecord) -> dict[str, Any]:
     root_s, fp_s = str(_LOG_ROOT), str(fp)
     if not fp_s.startswith(root_s + os.sep):
         raise BridgeError(PATH_DENIED, "log path outside workspace/logs", http_status=403)
+    _deny_protected(fp)
     if not fp.is_file() or fp.suffix.lower() not in _LOG_SUFFIXES:
         raise BridgeError(PATH_DENIED, "only .log/.jsonl files under workspace/logs are allowed", http_status=403)
     matches: deque[dict[str, Any]] = deque(maxlen=max_lines)
@@ -356,7 +371,9 @@ def exec_list_files(params: dict[str, Any], rec: TaskRecord) -> dict[str, Any]:
     if not fp.is_dir():
         raise BridgeError(INVALID_REQUEST, "not a directory", http_status=400)
     try:
-        children = sorted(fp.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+        from nexus.safety.protected import is_protected
+        children = sorted((c for c in fp.iterdir() if not is_protected(c)),
+                          key=lambda p: (not p.is_dir(), p.name.lower()))
     except Exception as e:
         raise BridgeError(INVALID_REQUEST, f"list failed: {e}", http_status=400) from e
     entries = []
@@ -451,6 +468,7 @@ def exec_patch_file(params: dict[str, Any], rec: TaskRecord) -> dict[str, Any]:
 def exec_move_file(params: dict[str, Any], rec: TaskRecord) -> dict[str, Any]:
     src = _safe_path(str(params.get("src") or params.get("from") or ""), must_exist=True)
     dst = _safe_path(str(params.get("dst") or params.get("to") or ""), allow_new=True)
+    _deny_protected(src, tree=True)
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(src), str(dst))
     return {"src": _rel(src), "dst": _rel(dst), "moved": True}
@@ -471,6 +489,7 @@ def exec_copy_file(params: dict[str, Any], rec: TaskRecord) -> dict[str, Any]:
             raise BridgeError(INVALID_REQUEST, "SOURCE_NOT_FOUND", http_status=404) from e
         raise
     dst = _safe_path(str(destination_value), allow_new=True)
+    _deny_protected(src, tree=True)
     dst.parent.mkdir(parents=True, exist_ok=True)
     try:
         if src.is_dir():
@@ -484,6 +503,7 @@ def exec_copy_file(params: dict[str, Any], rec: TaskRecord) -> dict[str, Any]:
 
 def exec_delete_file(params: dict[str, Any], rec: TaskRecord) -> dict[str, Any]:
     fp = _safe_path(str(params.get("path") or params.get("file") or ""), must_exist=True)
+    _deny_protected(fp, tree=True)
     confirm = bool(params.get("confirm"))
     if not confirm:
         raise BridgeError(INVALID_REQUEST, "confirm=true required for delete", http_status=400)
@@ -1242,10 +1262,14 @@ def _phase_source(rel: str, *, directory: bool | None = None) -> Path:
         raise BridgeError(INVALID_REQUEST, "source is not a directory", http_status=400)
     if directory is False and not fp.is_file():
         raise BridgeError(INVALID_REQUEST, "source is not a file", http_status=400)
+    _deny_protected(fp)
     return fp
 
 
 def _phase_allowed_file(fp: Path) -> bool:
+    from nexus.safety.protected import is_protected
+    if is_protected(fp):
+        return False
     low = fp.name.lower()
     if low in _PHASE_A_SKIP_NAMES or "secret" in low or "token" in low or "api_key" in low or "apikey" in low:
         return False

@@ -27,6 +27,15 @@ class FileDocs:
             return None
         return fp
 
+    def _protected(self, fp: Path | None) -> bool:
+        """Stufe 2.1b: geschuetzte Pfade (Secrets, Policy, Tokens) nie ausliefern/aendern."""
+        from nexus.safety.protected import is_protected
+        return fp is not None and is_protected(fp)
+
+    @staticmethod
+    def _denied(rel: str) -> dict:
+        return envelope(False, error="PROTECTED_PATH", message="geschuetzter Pfad", details={"path": rel})
+
     def list(self, sub: str = "") -> dict:
         if sub:
             base = self._safe(sub)
@@ -34,12 +43,16 @@ class FileDocs:
                 return envelope(False, error="ungueltiger_pfad", message="ungueltiger Pfad", details={"path": sub}, items=[])
         else:
             base = self.root
+        if self._protected(base):
+            return {**self._denied(sub), "items": []}
         if not base.exists():
             return envelope(False, error="pfad_nicht_gefunden", message="Pfad nicht gefunden", details={"path": sub or ""}, items=[])
         if not base.is_dir():
             return envelope(False, error="kein_verzeichnis", message="kein Verzeichnis", details={"path": sub or ""}, items=[])
         items = []
         for p in sorted(base.iterdir()):
+            if self._protected(p):
+                continue
             items.append({
                 "name": p.name,
                 "is_dir": p.is_dir(),
@@ -55,6 +68,8 @@ class FileDocs:
         fp = self._safe(rel)
         if fp is None:
             return envelope(False, error="ungueltiger_pfad", message="ungueltiger Pfad", details={"path": rel})
+        if self._protected(fp):
+            return self._denied(rel)
         if not fp.is_file():
             return envelope(False, error="datei_nicht_gefunden", message="Datei nicht gefunden", details={"path": rel})
         data = fp.read_bytes()[:max_bytes]
@@ -68,6 +83,8 @@ class FileDocs:
         fp = self._safe(rel)
         if fp is None:
             return envelope(False, error="ungueltiger_pfad", message="ungueltiger Pfad", details={"path": rel})
+        if self._protected(fp):
+            return self._denied(rel)
         try:
             fp.parent.mkdir(parents=True, exist_ok=True)
             fp.write_text(content if isinstance(content, str) else str(content), encoding="utf-8")

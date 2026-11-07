@@ -140,6 +140,9 @@ def _inside(root: Path, rel: str) -> Path | None:
         return None
     if base.is_symlink():
         return None
+    from nexus.safety.protected import is_protected  # Stufe 2.1b
+    if is_protected(target):
+        return None
     return target
 
 
@@ -452,6 +455,9 @@ def copy_project(source: Path, dest: Path, *, max_files: int = 40, max_bytes: in
     copied, total = [], 0
     for item in sorted(source.rglob("*")):
         if item.is_symlink() or not item.is_file():
+            continue
+        from nexus.safety.protected import is_protected  # Stufe 2.1b
+        if is_protected(item):
             continue
         rel = item.relative_to(source).as_posix()
         if rel.startswith(".") or item.suffix.lower().lstrip(".") not in CODE_EXT:

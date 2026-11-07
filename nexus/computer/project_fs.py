@@ -34,9 +34,13 @@ class ProjectFS:
         try:
             sec = str(self._secrets)
             s = str(fp.resolve())
-            return s == sec or s.startswith(sec + os.sep)
+            if s == sec or s.startswith(sec + os.sep):
+                return True
         except Exception:
             return False
+        # Stufe 2.1b: zentrale Schutzliste (Policy, Tokens, .git, Credentials ...)
+        from nexus.safety.protected import is_protected
+        return is_protected(fp)
 
     def list(self, sub: str = "") -> dict:
         if sub:
@@ -54,8 +58,7 @@ class ProjectFS:
         items = []
         for p in sorted(base.iterdir()):
             if self._is_secrets(p):
-                items.append({"name": p.name, "is_dir": True, "size": 0, "blocked": True})
-                continue
+                continue  # Stufe 2.1b: geschuetzte Eintraege nicht auflisten
             items.append({
                 "name": p.name,
                 "is_dir": p.is_dir(),

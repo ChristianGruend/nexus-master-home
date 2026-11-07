@@ -137,6 +137,9 @@ def screenshot(path: str | None = None, region: tuple[int, int, int, int] | None
             str(time.time_ns()).encode()).hexdigest()[:6] + ".png"))
     if not target.is_absolute():
         target = SCREENS_DIR / target
+    from nexus.safety.protected import is_protected  # Stufe 2.1b: nie Policy/Secrets ueberschreiben
+    if is_protected(target):
+        return {"success": False, "error": "PROTECTED_PATH", "action": "screenshot", "verified": False}
     target.parent.mkdir(parents=True, exist_ok=True)
 
     mod, why = _pyautogui()

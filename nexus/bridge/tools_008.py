@@ -27,10 +27,14 @@ def exec_search_files(params: dict[str, Any], rec: Any) -> dict[str, Any]:
     pattern = str(params.get("glob") or "*")
     content = bool(params.get("content", True))
     limit = min(int(params.get("limit") or 50), 200)
+    from nexus.safety.protected import is_protected  # Stufe 2.1b: Geschuetztes ueberspringen
     ql = q.lower(); hits: list[dict[str, Any]] = []; scanned = 0
     for dp, dns, fns in os.walk(root):
-        dns[:] = [d for d in dns if d.lower() not in _SKIP and not d.startswith(".")]
+        dns[:] = [d for d in dns if d.lower() not in _SKIP and not d.startswith(".")
+                  and not is_protected(os.path.join(dp, d))]
         for fn in fns:
+            if is_protected(os.path.join(dp, fn)):
+                continue
             if not fnmatch.fnmatch(fn.lower(), pattern.lower()):
                 continue
             fp = os.path.join(dp, fn)

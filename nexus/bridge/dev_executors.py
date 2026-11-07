@@ -155,6 +155,9 @@ def nexus_target_allowed(path: str) -> str | None:
     if value.rsplit(".", 1)[-1].lower() not in PATCH_EXT or "__pycache__" in value or ".bak" in value:
         return None
     low = value.lower()
+    from nexus.safety.protected import is_protected  # Stufe 2.1b: zentrale Schutzliste
+    if is_protected(ROOT / value):
+        return None
     if value in PROTECTED or value.startswith(PROTECTED_PREFIX) or any(w in low for w in PROTECTED_WORDS):
         return None
     target = (ROOT / value).resolve()

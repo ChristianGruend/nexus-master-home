@@ -105,6 +105,9 @@ class ShellExecutor:
             return None
         if not p.is_file():
             return None
+        from nexus.safety.protected import is_protected  # Stufe 2.1b: keine Skripte aus geschuetzten Pfaden
+        if is_protected(p):
+            return None
         return p
 
     def _blocked(self, command: str) -> str | None:

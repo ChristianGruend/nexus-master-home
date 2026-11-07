@@ -61,7 +61,10 @@ def _is_secret_path(p: Any) -> bool:
         q = Path(str(p))
         q = q.resolve() if q.is_absolute() else (ROOT / q).resolve()
         sec = SECRETS_DIR.resolve()
-        return q == sec or sec in q.parents or bool(_SECRET_FILE_RE.search(q.name))
+        if q == sec or sec in q.parents or bool(_SECRET_FILE_RE.search(q.name)):
+            return True
+        from nexus.safety.protected import is_protected  # Stufe 2.1b: zentrale Schutzliste
+        return is_protected(q)
     except Exception:
         return bool(_SECRET_FILE_RE.search(Path(str(p)).name))
 
@@ -93,7 +96,8 @@ def _safe_path(p: str, base: Path = ROOT) -> Path:
 
 def t_list_files(path: str = ".", limit: int = 50) -> dict:
     p = _safe_path(path)
-    items = sorted(x.name + ("/" if x.is_dir() else "") for x in p.iterdir())[: min(int(limit), 200)]
+    items = sorted(x.name + ("/" if x.is_dir() else "") for x in p.iterdir()
+                   if not _is_secret_path(x))[: min(int(limit), 200)]
     return {"path": str(p), "items": items}
 
 
@@ -162,6 +166,9 @@ def _sandbox_path(p: str) -> Path:
             raise PermissionError("SANDBOX_SYMLINK")
     if not q.resolve().is_relative_to(base) or q.resolve() == base:
         raise PermissionError("SANDBOX_ESCAPE")
+    from nexus.safety.protected import is_protected  # Stufe 2.1b
+    if is_protected(q.resolve()):
+        raise PermissionError("SECRET_FILE_DENIED")
     return q.resolve()
 
 

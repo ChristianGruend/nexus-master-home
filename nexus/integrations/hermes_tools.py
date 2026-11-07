@@ -124,6 +124,10 @@ def safe_path(p: str, wd: Path, write: bool = False) -> Path:
     if SECRET.search(q.name):
         raise PermissionError(f"SECRET_FILE_BLOCKED: {q.name}")
 
+    # Stufe 2.1b: zentrale Schutzliste (Secrets, Policy, Tokens) - Lesen wie Schreiben.
+    from nexus.safety.protected import ensure_allowed
+    ensure_allowed(q)
+
     if write:
         base = wd.resolve()
         try:
@@ -158,11 +162,15 @@ def run_tool(name: str, args: dict, wd: Path) -> str:
         return p.read_text(encoding="utf-8-sig", errors="replace")[:MAX_READ]
     if name in ("list_directory", "list_files"):
         p = safe_path(args.get("path", "."), wd)
-        return "\n".join(sorted((x.name + ("/" if x.is_dir() else "")) for x in p.iterdir())[:200])
+        from nexus.safety.protected import is_protected
+        return "\n".join(sorted((x.name + ("/" if x.is_dir() else "")) for x in p.iterdir()
+                                 if not is_protected(x))[:200])
     if name == "search_files":
         p = safe_path(args.get("path", "."), wd)
         pat = args.get("pattern", "*")
-        hits = [str(x.relative_to(ROOT)) for x in p.rglob("*") if x.is_file() and fnmatch.fnmatch(x.name, pat)][:100]
+        from nexus.safety.protected import is_protected
+        hits = [str(x.relative_to(ROOT)) for x in p.rglob("*")
+                if x.is_file() and fnmatch.fnmatch(x.name, pat) and not is_protected(x)][:100]
         return "\n".join(hits) or "(keine Treffer)"
     if name == "write_file":
         p = safe_path(args.get("path", ""), wd, write=True)
@@ -194,6 +202,8 @@ def run_tool(name: str, args: dict, wd: Path) -> str:
 
         if SECRET.search(target.name):
             raise PermissionError("SECRET_FILE_BLOCKED")
+        from nexus.safety.protected import ensure_allowed
+        ensure_allowed(target)
 
         content = args.get("content")
         if not isinstance(content, str):

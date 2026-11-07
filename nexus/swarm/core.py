@@ -85,7 +85,9 @@ def n_scout(s: dict) -> dict:
         q = safe_path(rel if not p.lower().startswith("nexus") else p, WS)
         if q.is_dir():
             listing = run_tool("list_directory", {"path": str(q)}, WS)
-            files = sorted([x for x in q.iterdir() if x.is_file()], key=lambda x: -x.stat().st_mtime)
+            from nexus.safety.protected import is_protected  # Stufe 2.1b
+            files = sorted([x for x in q.iterdir() if x.is_file() and not is_protected(x)],
+                           key=lambda x: -x.stat().st_mtime)
             heads = []
             for f in files[:6]:
                 if f.suffix.lower() in (".md", ".txt", ".json", ".log", ".csv"):

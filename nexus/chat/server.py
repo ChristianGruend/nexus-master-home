@@ -699,7 +699,7 @@ class Handler(BaseHTTPRequestHandler):
                     "context": ENGINE.master.corrections.context_snippets()})
             if path == "/api/files":
                 sub = (qs.get("path") or [""])[0]
-                return self._json(200, ENGINE.master.files.list(sub))
+                return self._files_json(ENGINE.master.files.list(sub))
             if path == "/api/media":
                 return self._json(200, {"success": True, "state": ENGINE.master.media.state()})
             if path == "/api/media/library":
@@ -1338,9 +1338,9 @@ class Handler(BaseHTTPRequestHandler):
 
             # Files
             if path == "/api/files/read":
-                return self._json(200, ENGINE.master.files.read(body.get("path", "")))
+                return self._files_json(ENGINE.master.files.read(body.get("path", "")))
             if path == "/api/files/write":
-                return self._json(200, ENGINE.master.files.write(body.get("path", ""), body.get("content", "")))
+                return self._files_json(ENGINE.master.files.write(body.get("path", ""), body.get("content", "")))
 
             # Code
             if path == "/api/code/run":
@@ -1723,11 +1723,19 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._bytes(200, fp.read_bytes(), ctype)
 
+    def _files_json(self, result: dict) -> None:
+        """Datei-API-Antwort; geschuetzte Pfade (Stufe 2.1b) -> 403 statt 200."""
+        code = 403 if isinstance(result, dict) and result.get("error") == "PROTECTED_PATH" else 200
+        return self._json(code, result)
+
     def _serve_file(self, root: Path, rel: str) -> None:
         root = root.resolve()
         fp = (root / rel).resolve()
         if not _is_within(root, fp) or not fp.is_file():
             return self._json(404, {"success": False, "error": "not found"})
+        from nexus.safety.protected import is_protected  # Stufe 2.1b
+        if is_protected(fp):
+            return self._json(403, {"success": False, "error": "PROTECTED_PATH"})
         ctype = mimetypes.guess_type(str(fp))[0] or "application/octet-stream"
         self._bytes(200, fp.read_bytes(), ctype)
 

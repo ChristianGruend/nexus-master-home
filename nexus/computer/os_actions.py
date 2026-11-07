@@ -291,6 +291,10 @@ class OSActions:
         except Exception:
             p = Path(_expand(raw))
 
+        from nexus.safety.protected import is_protected  # Stufe 2.1b
+        if is_protected(p):
+            return _fail("open_path", "PROTECTED_PATH", target=str(p), reply="PROTECTED_PATH: geschuetzter Pfad")
+
         if not p.exists():
             return _fail(
                 "open_path",
@@ -450,11 +454,17 @@ class OSActions:
             p = p.resolve(strict=False)
         except Exception:
             pass
+        from nexus.safety.protected import is_protected  # Stufe 2.1b
+        if is_protected(p):
+            return _fail("list_dir_os", "PROTECTED_PATH", target=str(p), items=[],
+                         reply="PROTECTED_PATH: geschuetzter Pfad")
         if not p.exists() or not p.is_dir():
             return _fail("list_dir_os", "not_dir", target=str(p), reply=f"Kein Ordner: {p}", items=[])
         items = []
         try:
             for child in sorted(p.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())):
+                if is_protected(child):
+                    continue
                 try:
                     items.append(
                         {
