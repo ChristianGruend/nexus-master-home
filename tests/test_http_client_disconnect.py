@@ -44,8 +44,8 @@ class HttpClientDisconnectTests(unittest.TestCase):
         # components and would make this transport regression test stateful.
         source = ROOT / "nexus" / "chat" / "server.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))
-        nodes = [node for node in tree.body if isinstance(node, ast.ClassDef)
-                 and node.name in ("_ClientDisconnected", "Handler")]
+        nodes = [node for node in tree.body if isinstance(node, (ast.ClassDef, ast.FunctionDef))
+                 and node.name in ("_ClientDisconnected", "_BadRequest", "_host_allowed", "Handler")]
         self.traceback = SimpleNamespace(print_exc=Mock())
         self.engine = SimpleNamespace(health=Mock(return_value={"success": True}),
                                       chat_stream=Mock(return_value=iter([
@@ -57,7 +57,8 @@ class HttpClientDisconnectTests(unittest.TestCase):
                       "parse_qs": parse_qs, "urlparse": urlparse,
                       "traceback": self.traceback, "ENGINE": self.engine,
                       "bridge_api": None, "automation_api": None,
-                      "multimodal_api": None}
+                      "multimodal_api": None,
+                      "_ALLOWED_HOSTS": frozenset(), "_MAX_BODY_BYTES": 64 * 1024 * 1024}
         exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), "exec"), self.scope)
         nexus = ModuleType("nexus")
         nexus.nexus_os = SimpleNamespace(note_client=Mock())

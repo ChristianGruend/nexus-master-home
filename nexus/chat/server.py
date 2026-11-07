@@ -24,6 +24,8 @@ from nexus.common.paths import STATIC_DIR, MEDIA_DIR, DOWNLOADS_DIR, SCREENS_DIR
 HOST = Config.HOST
 PORT = Config.PORT
 _CORS_ORIGINS = frozenset(o.strip() for o in os.environ.get("NEXUS_CORS_ORIGINS", "").split(",") if o.strip())
+_MAX_BODY_BYTES = int(os.environ.get("NEXUS_MAX_BODY_BYTES") or 64 * 1024 * 1024)
+_ALLOWED_HOSTS = frozenset(h.strip().lower() for h in os.environ.get("NEXUS_ALLOWED_HOSTS", "").split(",") if h.strip())
 ENGINE = NexusEngine()
 SHARED_ROOM = SharedRoom()
 
@@ -156,6 +158,38 @@ def _preview_list() -> dict:
                     "check_task_id": info.get("check_task_id"), "publish_task_id": info.get("publish_task_id"),
                     "published_at": info.get("published_at"), "stage": info.get("stage")})
     return {"success": True, "previews": out}
+
+
+class _BadRequest(Exception):
+    def __init__(self, code: int, error: str) -> None:
+        super().__init__(error)
+        self.code = code
+        self.error = error
+
+
+def _host_allowed(host_header: str, extra: frozenset = frozenset()) -> bool:
+    """Schutz gegen DNS-Rebinding: nur Hostnamen, die kein Fremder per öffentlichem DNS kontrollieren kann.
+
+    Erlaubt: leerer Host (Nicht-Browser), IP-Literale, Namen ohne Punkt (localhost, MagicDNS-Kurzname),
+    *.ts.net, *.local sowie explizit freigegebene Namen (NEXUS_ALLOWED_HOSTS).
+    """
+    import ipaddress
+    h = (host_header or "").strip().lower()
+    if not h:
+        return True
+    if h.startswith("["):
+        name = h[1:h.find("]")] if "]" in h else h[1:]
+    else:
+        name = h.rsplit(":", 1)[0] if h.count(":") == 1 else h
+    name = name.rstrip(".")
+    try:
+        ipaddress.ip_address(name)
+        return True
+    except ValueError:
+        pass
+    if "." not in name or name.endswith(".ts.net") or name.endswith(".local"):
+        return True
+    return name in extra
 
 
 def _is_within(root: Path, candidate: Path) -> bool:
@@ -316,14 +350,22 @@ class Handler(BaseHTTPRequestHandler):
         self._write_response_data(data)
 
     def _read_json(self) -> dict:
-        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            raise _BadRequest(400, "BAD_CONTENT_LENGTH")
         if length <= 0:
             return {}
+        if length > _MAX_BODY_BYTES:
+            raise _BadRequest(413, "BODY_TOO_LARGE")
         raw = self.rfile.read(length)
         try:
-            return json.loads(raw.decode("utf-8"))
-        except Exception:
-            return {}
+            data = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            raise _BadRequest(400, "INVALID_JSON")
+        if not isinstance(data, dict):
+            raise _BadRequest(400, "JSON_OBJECT_REQUIRED")
+        return data
 
 
     def _assistant_authorized(self) -> bool:
@@ -372,6 +414,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
+        if not _host_allowed(self.headers.get("Host", ""), _ALLOWED_HOSTS):
+            return self._json(421, {"success": False, "error": "HOST_NOT_ALLOWED"})
         try:  # NEXUS OS live link evidence (memory only): last request per client IP
             from nexus import nexus_os as _nos
             _nos.note_client(self.client_address[0], path)
@@ -725,6 +769,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
+        if not _host_allowed(self.headers.get("Host", ""), _ALLOWED_HOSTS):
+            return self._json(421, {"success": False, "error": "HOST_NOT_ALLOWED"})
         if self._cross_site_blocked():
             try:
                 from nexus.terminal.guard import audit
@@ -737,7 +783,11 @@ class Handler(BaseHTTPRequestHandler):
             _nos.note_client(self.client_address[0], path)
         except Exception:
             pass
-        body = self._read_json()
+        try:
+            body = self._read_json()
+        except _BadRequest as e:
+            self.close_connection = True
+            return self._json(e.code, {"success": False, "error": e.error})
         try:  # Live-Monitor (20261028): Agent-Auftraege sichtbar machen
             from nexus.common import live_events as _le
             if path == "/api/live/emit":
