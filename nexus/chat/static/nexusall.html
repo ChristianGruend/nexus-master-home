@@ -104,6 +104,7 @@ video{aspect-ratio:16/9;object-fit:contain;max-height:23vh;margin:0 auto}
 </section></main>
 <dialog id="dlg"><div id="dlgTxt" style="margin-bottom:14px"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button id="dlgNo">Abbrechen</button><button class="pri" id="dlgYes">OK</button></div></dialog>
 <script>
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=s=>document.querySelector(s);let tabs=[],cur=-1,curItem=null,lastSave=0,libTab="filme";
 function norm(v){v=v.trim();if(!v)return"";if(/^https?:\/\//i.test(v))return v;if(/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(v))return"https://"+v;return"https://duckduckgo.com/html/?q="+encodeURIComponent(v)}
 function startVis(){const t=tabs[cur];$("#start").style.display=(t&&t.url)?"none":"flex"}
@@ -158,7 +159,7 @@ document.querySelectorAll(".ltab").forEach(b=>b.onclick=()=>{libTab=b.dataset.ta
 async function loadLib(){const box=$("#lib");const q=($("#search").value||"").toLowerCase();
 if(libTab==="papierkorb"){const r=await api("/api/nexusall/trash");box.innerHTML="";const its=(r.items||[]).filter(i=>!q||(i.origin||i.trash_id).toLowerCase().includes(q));
 if(!its.length)box.innerHTML='<div class="empty">Papierkorb ist leer.</div>';
-its.forEach(it=>{const d=document.createElement("div");d.className="card";d.innerHTML='<div class="th">'+ICO.trash+'</div><div class="n"></div><div class="m"><span>'+it.size_mb+' MB</span><span><button class="sm" data-a="r">↺</button> <button class="sm dan" data-a="p">✕</button></span></div>';
+its.forEach(it=>{const d=document.createElement("div");d.className="card";d.innerHTML='<div class="th">'+ICO.trash+'</div><div class="n"></div><div class="m"><span>'+esc(it.size_mb)+' MB</span><span><button class="sm" data-a="r">↺</button> <button class="sm dan" data-a="p">✕</button></span></div>';
 d.querySelector(".n").textContent=(it.origin||it.trash_id).split("/").pop();d.querySelector('[data-a="r"]').title="Wiederherstellen";d.querySelector('[data-a="p"]').title="Endgültig löschen";
 d.querySelector('[data-a="r"]').onclick=async e=>{e.stopPropagation();const x=await api("/api/nexusall/trash/restore",{trash_id:it.trash_id});msg(x.success?"Wiederhergestellt":"Fehler: "+x.error,x.success?"var(--ok)":"var(--er)");loadLib()};
 d.querySelector('[data-a="p"]').onclick=async e=>{e.stopPropagation();if(!await confirmBox("„"+d.querySelector(".n").textContent+"“ endgültig löschen? Das kann nicht rückgängig gemacht werden.","Endgültig löschen"))return;const x=await api("/api/nexusall/trash/purge",{trash_id:it.trash_id,confirm:"ENDGUELTIG"});msg(x.success?"Endgültig gelöscht":"Fehler: "+x.error,x.success?"var(--ok)":"var(--er)");loadLib()};
@@ -166,7 +167,7 @@ box.appendChild(d)});return}
 const r=await api("/api/nexusall/library?type="+(libTab==="musik"?"audio":"video")+"&q="+encodeURIComponent(q));box.innerHTML="";
 if(!(r.items||[]).length)box.innerHTML='<div class="empty">'+(q?"Nichts gefunden.":(libTab==="musik"?"Noch keine Musik – „Musik mp3/m4a“ wählen und herunterladen.":"Noch keine Filme."))+'</div>';
 (r.items||[]).forEach(it=>{const d=document.createElement("div");d.className="card";d.dataset.id=it.id;
-d.innerHTML='<div class="th">'+(it.kind==="audio"?ICO.musik:ICO.film)+(it.thumb?'<img loading="lazy" alt="" src="'+it.thumb+'" onerror="this.remove()">':"")+(it.duration?'<span class="du">'+fmtDur(it.duration)+'</span>':"")+'</div><div class="n"></div><div class="m"><span>'+it.size_mb+' MB</span><button class="sm dan" title="In den Papierkorb">🗑</button></div>';
+d.innerHTML='<div class="th">'+(it.kind==="audio"?ICO.musik:ICO.film)+(it.thumb?'<img loading="lazy" alt="" src="'+esc(it.thumb)+'" onerror="this.remove()">':"")+(it.duration?'<span class="du">'+fmtDur(it.duration)+'</span>':"")+'</div><div class="n"></div><div class="m"><span>'+esc(it.size_mb)+' MB</span><button class="sm dan" title="In den Papierkorb">🗑</button></div>';
 d.querySelector(".n").textContent=it.name;d.title=it.name;d.onclick=()=>play(it);
 d.querySelector("button").onclick=async e=>{e.stopPropagation();if(!await confirmBox("„"+it.name+"“ in den Papierkorb verschieben? (Wiederherstellen jederzeit möglich)","In Papierkorb"))return;const x=await api("/api/nexusall/delete",{id:it.id,confirm:true});msg(x.success?"In den Papierkorb verschoben":"Fehler: "+x.error,x.success?"var(--ok)":"var(--er)");loadLib()};
 box.appendChild(d)})}
@@ -178,7 +179,7 @@ const STL={queued:"wartet",running:"lädt",done:"fertig",failed:"Fehler",cancell
 let doneSeen=new Set();async function loadQ(){const r=await api("/api/nexusall/queue");const box=$("#q");box.innerHTML="";let newDone=false;const js=(r.jobs||[]).slice(0,20);
 if(!js.length)box.innerHTML='<div class="empty">Keine Downloads.</div>';
 js.forEach(j=>{const d=document.createElement("div");d.className="job";d.dataset.job=j.id;const pct=Math.max(0,Math.min(100,j.progress||0));
-d.innerHTML='<span class="u"></span><span><span class="st-'+j.status+'">'+(STL[j.status]||j.status)+'</span> <button class="sm" data-a></button></span>'+((j.status==="running"||j.status==="queued")?'<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><i style="width:'+pct+'%"></i></div><div class="stat">'+pct.toFixed(1)+' % · '+fmtB(j.downloaded)+' / '+fmtB(j.total)+' · '+(j.speed?fmtB(j.speed)+"/s":"–")+' · Rest '+fmtEta(j.eta)+'</div>':"")+(j.error?'<div class="stat err"></div>':"");
+d.innerHTML='<span class="u"></span><span><span class="st-'+esc(j.status)+'">'+esc(STL[j.status]||j.status)+'</span> <button class="sm" data-a></button></span>'+((j.status==="running"||j.status==="queued")?'<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><i style="width:'+pct+'%"></i></div><div class="stat">'+pct.toFixed(1)+' % · '+fmtB(j.downloaded)+' / '+fmtB(j.total)+' · '+(j.speed?fmtB(j.speed)+"/s":"–")+' · Rest '+fmtEta(j.eta)+'</div>':"")+(j.error?'<div class="stat err"></div>':"");
 d.querySelector(".u").textContent=(j.file||j.url).split("/").pop().slice(0,90);d.querySelector(".u").title=j.file||j.url;if(j.error)d.querySelector(".err").textContent=j.error.slice(0,160);
 const b=d.querySelector("[data-a]");if(j.status==="running"||j.status==="queued"){b.textContent="Abbrechen";b.onclick=async()=>{await api("/api/nexusall/queue/"+j.id+"/cancel",{});loadQ()}}
 else if(j.status==="failed"||j.status==="cancelled"){b.textContent="Erneut";b.onclick=async()=>{await api("/api/nexusall/queue/"+j.id+"/retry",{});loadQ()}}else{b.textContent="✕";b.title="Aus Liste entfernen (Datei bleibt)";b.onclick=async()=>{await api("/api/nexusall/queue/"+j.id+"/remove",{});loadQ()}}

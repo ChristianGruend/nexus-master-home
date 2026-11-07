@@ -81,7 +81,7 @@ function pick(id){const i=S.items.find(x=>x.id==id)||S.sel;S.sel=i;S.rect=null;$
 $("#imgB").src=`/api/studio/img/${id}/original`;const v=i.versions.at(-1);$("#imgA").src=v?`/api/studio/img/${id}/v${v.n}`:`/api/studio/img/${id}/original`;$("#aftLb").textContent=v?`Nachher (v${v.n} ${v.op})`:"Nachher (noch keine Version)";
 $("#selInfo").innerHTML=`<b>${esc(i.name)}</b><br>${i.width}×${i.height} · ${esc(i.date)} · Qualität ${i.quality.score}/100 (Schärfe ${i.quality.sharpness})<br>${esc(i.category||"unkategorisiert")} / ${esc(i.subcategory||"")}<br><span class=sub>${esc(i.description)}</span>`;
 $("#kw").innerHTML=(i.keywords||[]).map(k=>`<span class=tag>${esc(k)}</span>`).join("");
-$("#vlist").innerHTML=`<img title="Original" src="/api/studio/img/${id}/thumb" onclick="showV(0)">`+i.versions.map(v=>`<img title="v${v.n} ${v.op}" src="/api/studio/img/${id}/v${v.n}" onclick="showV(${v.n})">`).join("");
+$("#vlist").innerHTML=`<img title="Original" src="/api/studio/img/${esc(id)}/thumb" onclick="showV(0)">`+i.versions.map(v=>`<img title="v${esc(v.n)} ${esc(v.op)}" src="/api/studio/img/${esc(id)}/v${esc(v.n)}" onclick="showV(${esc(v.n)})">`).join("");
 document.querySelectorAll(".ph").forEach(p=>p.classList.toggle("sel",p.getAttribute("onclick").includes(id)))}
 function showV(n){const id=S.sel.id;$("#imgA").src=n?`/api/studio/img/${id}/v${n}`:`/api/studio/img/${id}/original`;$("#aftLb").textContent=n?`Nachher (v${n})`:"Original"}
 async function refreshSel(){const r=await api("/api/studio/library");S.items=r.items;pick(S.sel.id);status()}

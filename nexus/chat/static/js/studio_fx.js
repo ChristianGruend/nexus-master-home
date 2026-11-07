@@ -28,11 +28,12 @@ async function preview(){if(!S.sel)return;let r;
  if(r.success){document.querySelector("#imgA").src=r.preview;document.querySelector("#aftLb").textContent="Vorschau ("+(FX.filter||"Regler")+")";if(r.histogram)hist(r.histogram)}else log("Vorschau: "+r.error)}
 const deb=()=>{clearTimeout(FX.t);FX.t=setTimeout(preview,250)};
 api("/api/studio/fx").then(d=>{if(!d.success)return;
- document.querySelector("#fxFilters").innerHTML=Object.entries(d.filters).map(([k,l])=>`<button class="btn g" data-fx="${k}">${l}</button>`).join("");
+ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ document.querySelector("#fxFilters").innerHTML=Object.entries(d.filters).map(([k,l])=>`<button class="btn g" data-fx="${esc(k)}">${esc(l)}</button>`).join("");
  document.querySelectorAll("[data-fx]").forEach(b=>b.onclick=()=>{if(!need())return;FX.filter=b.dataset.fx;document.querySelectorAll("[data-fx]").forEach(x=>x.classList.toggle("sel",x===b));preview()});
- document.querySelector("#fxSliders").innerHTML=d.adjust.map(k=>`<label class="sub" style="display:flex;align-items:center;gap:8px">${labels[k]||k}<input type="range" min="-100" max="100" value="0" data-adj="${k}" style="flex:1"><span id="adjv_${k}">0</span></label>`).join("");
+ document.querySelector("#fxSliders").innerHTML=d.adjust.map(k=>`<label class="sub" style="display:flex;align-items:center;gap:8px">${esc(labels[k]||k)}<input type="range" min="-100" max="100" value="0" data-adj="${esc(k)}" style="flex:1"><span id="adjv_${esc(k)}">0</span></label>`).join("");
  document.querySelectorAll("[data-adj]").forEach(s=>s.oninput=()=>{if(!need())return;FX.filter=null;document.querySelectorAll("[data-fx]").forEach(x=>x.classList.remove("sel"));FX.adj[s.dataset.adj]=+s.value;document.querySelector("#adjv_"+s.dataset.adj).textContent=s.value;deb()});
- const opt=(sel,arr)=>document.querySelector(sel).innerHTML=arr.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+ const opt=(sel,arr)=>document.querySelector(sel).innerHTML=arr.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");
  opt("#soFmt",Object.entries(d.formats).map(([k,v])=>[k,k+" "+v.join("\u00d7")]));opt("#soTpl",d.templates.map(t=>[t,t]));opt("#soFont",d.fonts.map(t=>[t,t]))});
 document.querySelector("#fxReset").onclick=()=>{FX.filter=null;FX.adj={};document.querySelectorAll("[data-adj]").forEach(s=>{s.value=0;document.querySelector("#adjv_"+s.dataset.adj).textContent="0"});document.querySelectorAll("[data-fx]").forEach(x=>x.classList.remove("sel"));if(S.sel)preview()};
 document.querySelector("#fxSave").onclick=async()=>{if(!need())return;const r=FX.filter?await api("/api/studio/filter",{id:S.sel.id,name:FX.filter}):await api("/api/studio/adjust",{id:S.sel.id,params:FX.adj});

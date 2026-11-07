@@ -32,10 +32,11 @@ input{flex:1;min-width:260px}button{cursor:pointer;border-color:var(--c)}
 <button>Swarm starten</button></form>
 <div id="meta"></div><div id="out"></div>
 </main><script>
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const N=["security","scout","planner","builder","debugger","verifier","learning"],L={security:"Security",scout:"Scout",planner:"Planner",builder:"Builder",debugger:"Debugger",verifier:"Verifier",learning:"Learning"};
 const g=document.getElementById("graph");
 g.innerHTML=N.map((n,i)=>(i?'<span class="arrow">→</span>':'')+`<div class="node" id="n-${n}"><b>${L[n]}</b><small>wartet</small></div>`).join("");
-fetch("/api/swarm/status").then(r=>r.json()).then(s=>{document.getElementById("agents").innerHTML=Object.entries(s.agents).map(([k,v])=>`<span><b>${k}</b> ${v.role}</span>`).join("");if(s.recent&&s.recent[0])poll(s.recent[0].id,true)});
+fetch("/api/swarm/status").then(r=>r.json()).then(s=>{document.getElementById("agents").innerHTML=Object.entries(s.agents).map(([k,v])=>`<span><b>${esc(k)}</b> ${esc(v.role)}</span>`).join("");if(s.recent&&s.recent[0])poll(s.recent[0].id,true)});
 function paint(r){N.forEach(n=>{const e=document.getElementById("n-"+n);const t=(r.trace||[]).filter(x=>x.node==n).pop();e.className="node"+(t?" "+t.status:"")+(r.active==n?" active":"");e.querySelector("small").textContent=t?(t.status+(t.sec!=null?" · "+t.sec+"s":"")):"wartet"});
 document.getElementById("meta").textContent=`Run ${r.id} · ${r.mode} · Status ${r.status}`+(r.vote_reason?` · ${r.vote_reason}`:"");
 document.getElementById("out").textContent=r.answer||(r.plan?"Plan:\n"+r.plan:"")}
