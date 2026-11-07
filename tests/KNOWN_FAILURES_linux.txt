@@ -1,0 +1,73 @@
+# Stand 2026-11-07, Linux, Python 3.14.9 — erwartete Fehlschläge vor der Sanierung
+tests/test_aether_supervisor.py::test_sandbox_free_and_confined
+tests/test_aether_supervisor.py::test_shell_run_c_blocked
+tests/test_aether_supervisor.py::test_shell_run_readonly_sandbox
+tests/test_autobuild_fnmode.py::test_open_studio_items_have_function_anchors
+tests/test_autobuild.py::test_bad_patch_and_c_drive
+tests/test_autobuild.py::test_c_drive_blocked
+tests/test_bridge_outcomes.py::OutcomesTest::test_every_registered_executor_has_an_explicit_rule
+tests/test_build_scripts_decide.py::TestDecideBuildScripts::test_baue_shader_force_tools
+tests/test_build_scripts_decide.py::TestScriptsExist::test_templates
+tests/test_build_scripts_decide.py::TestShellRunScriptResolve::test_resolve_by_name
+tests/test_chat06_stream_ctx.py::TPrompt::test_compact_prompt_small_and_stable
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_agent_routes_reject_non_loopback_before_provider
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_backend_provenance_wins_over_selected_partner
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_direct_aether_failure_remains_separate_and_failed
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_direct_http_routes_persist_each_actual_provider_once
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_direct_routes_without_explicit_chat_id_do_not_change_history
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_direct_turn_does_not_use_hermes_cli_session_as_chat_id
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_engine_and_http_sse_preserve_cloud_provenance
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_finalized_identity_survives_disk_reload
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_guard_failure_keeps_origin_without_success
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_invalid_explicit_chat_is_rejected_before_provider_import
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_master_voice_turn_keeps_identity_and_actual_default_voice_metadata
+tests/test_chat_speaker_identity.py::ChatSpeakerIdentityTests::test_master_voice_turn_without_speech_keeps_cloud_provenance
+tests/test_code_order.py::CodeOrderRunTests::test_disabled_executor_never_reports_pass
+tests/test_code_order.py::CodeOrderRunTests::test_resume_reuses_state_without_rewriting
+tests/test_fixer_actions.py::T::test_ack_requires_health_and_start
+tests/test_fixer_actions.py::T::test_rotate_zips_then_removes_old_only
+tests/test_gesamtausbau_008.py
+tests/test_github_tool.py::test_classify[git clone https://github.com/o/x.git G:\\other\\x-SAFE_WRITE]
+tests/test_hermes_exe_runtime.py::test_exe_resolves_installed_runtime_not_ps_shim
+tests/test_hermes_g_cli.py::GPathAdapterTests::test_output_paths_are_relative_and_other_paths_unchanged
+tests/test_hermes_lessons_prompt.py::test_lessons_file_exists_and_block
+tests/test_hermes_lessons_prompt.py::test_nexus_order_select_prompt_includes_lessons
+tests/test_hermes_lessons_prompt.py::test_system_context_includes_lessons
+tests/test_hermes_tools.py::HermesToolsSafety::test_blocks_outside_workspace
+tests/test_list_hermes_files.py
+tests/test_mail_store.py
+tests/test_maintenance_stop_contract.py::test_stop_contract
+tests/test_master_home_start_guards.py::test_health_deadline_guards
+tests/test_master_home_start_guards.py::test_start_guards
+tests/test_order_classes.py::HStateIsolation::test_same_order_running_twice_is_refused_other_order_is_not_blocked
+tests/test_pc_pairing.py::PCPairingTests::test_cli_refuses_noninteractive_start_without_creating_state
+tests/test_pc_pairing.py::PCPairingTests::test_cli_replacement_needs_local_literal_confirmation
+tests/test_phone_005d.py::Reconnect::test_lan_fails_tailscale_used
+tests/test_phone_005d.py::Reconnect::test_parse_and_candidates
+tests/test_phone_005d.py::Reconnect::test_success_lan_first_and_no_forbidden_cmds
+tests/test_safety_paths.py::test_autobuild_shim_same_exception
+tests/test_safety_paths.py::test_c_blocked_both_scopes
+tests/test_safety_paths.py::test_nexus_patch_outside_root
+tests/test_shell_worker.py::test_broken_json
+tests/test_shell_worker.py::test_hermes_native_loop_uses_shell_readonly
+tests/test_shell_worker.py::test_hermes_tool_returns_stdout_or_error
+tests/test_shell_worker.py::test_ok_cat_and_audit
+tests/test_shell_worker.py::test_security_regressions_all_denied
+tests/test_shell_worker.py::test_selftest_ok
+tests/test_shell_worker.py::test_timeout_is_enforced
+tests/test_studio_fx.py
+tests/test_studio.py::test_api_loopback_only
+tests/test_studio.py::test_duplicates_and_search
+tests/test_studio.py::test_errors_blocked_and_rect
+tests/test_studio.py::test_import_hash_readonly_and_restart
+tests/test_studio.py::test_permissions_source_and_approval
+tests/test_terminal_finish.py::test_nexus_chat_blocked_paths_and_level_mode
+tests/test_terminal_guard.py::test_audit_all_actions
+tests/test_terminal_guard.py::test_c_and_destructive_still_blocked
+tests/test_terminal.py::test_blocked[cd C:]
+tests/test_terminal.py::test_blocked[dir c:/]
+tests/test_terminal.py::test_blocked[Get-ChildItem $env:USERPROFILE]
+tests/test_terminal.py::test_blocked_is_logged_and_not_run
+tests/test_terminal.py::test_blocked[Remove-Item C:\\Windows\\x]
+tests/test_terminal.py::test_cwd_only_g
+tests/test_tools_fix_20261029.py::ConfigKeepAlive::test_ai_models_keep_alive_30m
