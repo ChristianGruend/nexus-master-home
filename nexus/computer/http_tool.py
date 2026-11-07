@@ -67,6 +67,12 @@ def request(method: str, url: str, *, headers: dict[str, str] | None = None,
     if parsed.username or parsed.password:
         return {"success": False, "error": "http_credentials_in_url_not_allowed",
                 "action": "http_request"}
+    from nexus.common.net_guard import BlockedURL, check_url
+    try:
+        check_url(raw_url)
+    except BlockedURL as exc:
+        return {"success": False, "error": "http_target_not_allowed", "reason": str(exc),
+                "action": "http_request", "verified": True}
 
     data: bytes | None = None
     send_headers = {str(k): str(v) for k, v in (headers or {}).items()}
@@ -84,8 +90,9 @@ def request(method: str, url: str, *, headers: dict[str, str] | None = None,
         return blocked
 
     req = urllib.request.Request(raw_url, data=data, method=method, headers=send_headers)
+    from nexus.common.net_guard import _GuardedRedirect
     try:
-        with urllib.request.urlopen(req, timeout=max(1.0, min(float(timeout or 30.0), 180.0))) as resp:
+        with urllib.request.build_opener(_GuardedRedirect).open(req, timeout=max(1.0, min(float(timeout or 30.0), 180.0))) as resp:
             status = int(getattr(resp, "status", 0) or 0)
             payload = resp.read(20000).decode("utf-8", "replace")
             resp_headers = _redact_headers(getattr(resp, "headers", {}))
@@ -99,6 +106,9 @@ def request(method: str, url: str, *, headers: dict[str, str] | None = None,
                 "status_code": int(getattr(exc, "code", 0) or 0),
                 "headers": _redact_headers(getattr(exc, "headers", {})),
                 "body": payload[:20000], "action": "http_request", "verified": True}
+    except BlockedURL as exc:
+        return {"success": False, "error": "http_target_not_allowed", "reason": str(exc),
+                "action": "http_request", "verified": True}
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         return {"success": False, "error": "http_transport_" + type(exc).__name__,
                 "message": str(exc)[:300], "action": "http_request", "verified": False}

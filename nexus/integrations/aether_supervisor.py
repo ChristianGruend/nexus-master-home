@@ -288,19 +288,18 @@ def t_web_search(query: str, limit: int = 5) -> dict:
 
 
 def t_fetch_url(url: str, max_chars: int = 4000) -> dict:
-    import urllib.parse, ipaddress, socket
+    import urllib.parse
     u = str(url)
     pr = urllib.parse.urlparse(u)
     if pr.scheme not in ("http", "https") or not pr.hostname or _SECRET_RE.search(u) or pr.username or pr.password:
         raise PermissionError("URL_DENIED")
+    from nexus.common.net_guard import BlockedURL, _GuardedRedirect, check_url
     try:
-        ip = ipaddress.ip_address(socket.gethostbyname(pr.hostname))
-        if ip.is_private or ip.is_loopback or ip.is_link_local:
-            raise PermissionError("PRIVATE_NET_DENIED")
-    except (socket.gaierror, ValueError):
-        raise PermissionError("DNS_FAIL")
+        check_url(u)
+    except BlockedURL as exc:
+        raise PermissionError("DNS_FAIL" if str(exc) == "DNS_FAILED" else "PRIVATE_NET_DENIED") from None
     req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0 NEXUS-Aether"})
-    with urllib.request.urlopen(req, timeout=WEB_TIMEOUT) as r:
+    with urllib.request.build_opener(_GuardedRedirect).open(req, timeout=WEB_TIMEOUT) as r:
         raw = r.read(600_000).decode("utf-8", errors="replace")
     txt = re.sub(r"(?s)<(script|style)[^>]*>.*?</\1>", " ", raw)
     txt = re.sub(r"<[^>]+>", " ", txt); txt = re.sub(r"\s+", " ", txt)
