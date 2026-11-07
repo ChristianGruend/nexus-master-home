@@ -15,21 +15,12 @@ def test_c_drive_blocked():
 
 
 @pytest.fixture()
-def sandbox(monkeypatch):
-    root = Path(guard.ROOT) / "workspace" / "autobuild" / "_test"
-    root.mkdir(parents=True, exist_ok=True)
-    target = root / "mod.py"
-    target.write_text("X = 1\n", encoding="utf-8")
-    monkeypatch.setattr(loop, "DIR", root)
-    monkeypatch.setattr(loop, "BACKLOG", root / "backlog.json")
-    monkeypatch.setattr(loop, "CYCLES", root / "cycles.jsonl")
-    monkeypatch.setattr(loop, "PROGRESS", root / "progress.md")
-    monkeypatch.setattr(loop, "STOP_FILE", root / "STOP")
-    rel = str(target.relative_to(guard.ROOT)).replace("\\", "/")
-    (root / "backlog.json").write_text(json.dumps([{"id": "T1", "title": "t", "status": "offen", "file": rel}]), encoding="utf-8")
-    yield root, target, rel
-    import shutil
-    shutil.rmtree(root, ignore_errors=True)
+def sandbox(monkeypatch, tmp_path):
+    from tests._ab_env import make_env
+    rel = "nexus/mod.py"
+    root = make_env(tmp_path, monkeypatch, {rel: "X = 1\n"},
+                    [{"id": "T1", "title": "t", "status": "offen", "file": rel}])
+    yield tmp_path / "ab", root / rel, rel
 
 
 def _ab(edits, ok=True):
@@ -42,17 +33,21 @@ def test_apply_and_rollback(sandbox):
     root, target, rel = sandbox
     r = _ab([{"file": rel, "find": "X = 1", "replace": "X = 2"}], ok=False).cycle()
     assert r["result"] == "ROLLBACK" and target.read_text() == "X = 1\n"
+    from tests._ab_env import git
     r = _ab([{"file": rel, "find": "X = 1", "replace": "X = 2"}], ok=True).cycle()
-    assert r["result"] == "UEBERNOMMEN" and target.read_text() == "X = 2\n"
+    # Live-Repo bleibt unberuehrt; Ergebnis ist ein Branch mit der Aenderung
+    assert r["result"] == "BRANCH:autobuild/t1" and r["success"] and target.read_text() == "X = 1\n"
+    assert git(target.parents[1], "status", "--porcelain") == ""
+    assert git(target.parents[1], "show", "autobuild/t1:" + rel) == "X = 2\n"
+    assert json.loads((root / "backlog.json").read_text())[0]["status"] == "branch_bereit"
 
 
 def test_bad_patch_and_c_drive(sandbox):
     root, target, rel = sandbox
     assert _ab([{"file": rel, "find": "nope", "replace": "y"}]).cycle()["result"] == "ROLLBACK"
-    json.loads((root / "backlog.json").read_text())[0]
     (root / "backlog.json").write_text(json.dumps([{"id": "T2", "title": "t", "status": "offen", "file": rel}]), encoding="utf-8")
     r = _ab([{"file": "C:/Windows/evil.py", "find": "a", "replace": "b"}]).cycle()
-    assert "C_DRIVE_BLOCKED" in r["reason"]
+    assert r["result"] != "BRANCH:autobuild/t2" and ("SCOPE" in r["reason"] or "C_DRIVE_BLOCKED" in r["reason"])
 
 
 def test_paused_when_busy(sandbox):
@@ -141,7 +136,7 @@ def test_correction_round_not_counted(sandbox):
     ab = loop.Autobuild(tests_runner=lambda a, t: {"ok": True, "summary": "x"}, planner=planner,
                         hermes=lambda c, t: {"ok": True, "path": "p"}, busy=lambda: None)
     r = ab.cycle()
-    assert r["result"] == "UEBERNOMMEN" and "NO_EDITS" in r["korrektur"] and target.read_text() == "X = 3\n"
+    assert r["result"].startswith("BRANCH:") and "NO_EDITS" in r["korrektur"]
     assert seen[0] is None and "NO_EDITS" in seen[1][1] and "_korrektur" not in json.loads((root / "backlog.json").read_text())[0]
     assert not json.loads((root / "backlog.json").read_text())[0].get("attempts")
 

@@ -21,6 +21,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from nexus.autobuild.guard import CDriveBlocked, check_write, child_env
+from nexus.autobuild.scope import check_path
+from nexus.autobuild.workcopy import WorkCopy
 from nexus.common.paths import ROOT
 
 DIR = ROOT / "workspace" / "autobuild"
@@ -102,11 +104,12 @@ def system_busy() -> str | None:
     return None
 
 
-def _excerpt(item: dict) -> tuple[str, str]:
+def _excerpt(item: dict, root: Path | None = None) -> tuple[str, str]:
+    root = root or ROOT
     f = item.get("file")
     if not f:
         return "", ""
-    text = (ROOT / f).read_text(encoding="utf-8")
+    text = (root / f).read_text(encoding="utf-8")
     lines = text.splitlines()
     idx = 0
     if item.get("anchor"):
@@ -120,6 +123,18 @@ def _excerpt(item: dict) -> tuple[str, str]:
             return f, ax
     a, b = max(0, idx - 15), min(len(lines), idx + 35)
     return f, "\n".join(lines[a:b])
+
+
+class _ScopeViolation(Exception):
+    """Pfad ausserhalb der Autobuild-Allowlist (nexus.autobuild.scope) -> Zyklus scheitert mit SCOPE:<grund>."""
+
+
+def _scope(rel, enforce: bool = True) -> None:
+    if not enforce:
+        return
+    ok, why = check_path(str(rel))
+    if not ok:
+        raise _ScopeViolation(f"{rel}: {why}")
 
 
 class _TestsFailed(Exception):
@@ -141,7 +156,8 @@ def _syntax_check(text: str, name: str) -> None:
         raise ValueError(f"{type(se).__name__}:{se.msg} ({name}, Zeile {n})\nAusschnitt nach Patch:\n{ex}") from None
 
 
-def _compute_edits(edits: list) -> dict:
+def _compute_edits(edits: list, root: Path | None = None, enforce_scope: bool = False) -> dict:
+    root = root or ROOT
     if not edits:
         raise ValueError("NO_EDITS")
     new_texts: dict[Path, str] = {}
@@ -153,7 +169,8 @@ def _compute_edits(edits: list) -> dict:
                     e[key] = e.pop(alias)
         if isinstance(e, dict) and "file" in e and not ({"find", "replace"} <= set(e)) and \
                 any(k in e for k in ("function", "funktion", "name", "imports")):  # Funktionsmodus (20261030)
-            target = check_write(ROOT / e["file"])
+            _scope(e["file"], enforce_scope)
+            target = check_write(root / e["file"])
             cur = new_texts.get(target) or target.read_text(encoding="utf-8")
             new_texts[target] = _apply_fn_edit(cur, e, e["file"])
             continue
@@ -162,7 +179,8 @@ def _compute_edits(edits: list) -> dict:
         for k in ("find", "replace"):
             e[k] = str(e[k]).replace("\r\n", "\n").replace("\r", "\n")  # Ausschnitt-Kopfzeilen ("# --- Betroffen: ...") sind kein Dateiinhalt
             e[k] = "\n".join(x for x in str(e[k]).split("\n") if not x.lstrip().startswith("# --- "))
-        target = check_write(ROOT / e["file"])
+        _scope(e["file"], enforce_scope)
+        target = check_write(root / e["file"])
         cur = new_texts.get(target) or target.read_text(encoding="utf-8")
         n = cur.count(e["find"])
         if n == 0:  # tolerant: Zeilen mit abweichender Einrueckung/Leerzeichen am Ende eindeutig zuordnen
@@ -492,13 +510,14 @@ def hermes_review(item: dict, plan: dict, timeout: int = REVIEW_TIMEOUT_SEC) -> 
     return {"status": "ISSUES", "reply": reply[:1500]}
 
 
-def fn_mode_applicable(item: dict) -> bool:
+def fn_mode_applicable(item: dict, root: Path | None = None) -> bool:
+    root = root or ROOT
     """Funktionsmodus fuer Python-Ziele, deren Ankerfunktion klein ist (Stub/kleine Funktion)."""
     f = str(item.get("file") or "")
     if not f.endswith(".py") or item.get("auto_key") or item.get("fn_mode") is False:
         return False
     try:
-        text = (ROOT / f).read_text(encoding="utf-8")
+        text = (root / f).read_text(encoding="utf-8")
         lines = text.splitlines()
         idx = next(i for i, ln in enumerate(lines) if _anchor_hit(item.get("anchor") or "", ln))
         name, src = _function_excerpt(text, idx)
@@ -507,10 +526,11 @@ def fn_mode_applicable(item: dict) -> bool:
     return bool(name) and len(src.splitlines()) <= FN_MAX_LINES
 
 
-def plan_function(item: dict, ask: Callable[[str], str] | None = None) -> dict:
+def plan_function(item: dict, ask: Callable[[str], str] | None = None, root: Path | None = None) -> dict:
+    root = root or ROOT
     ask = ask or _gpt_text
     f = item["file"]
-    text = (ROOT / f).read_text(encoding="utf-8")
+    text = (root / f).read_text(encoding="utf-8")
     lines = text.splitlines()
     idx = next(i for i, ln in enumerate(lines) if _anchor_hit(item.get("anchor") or "", ln))
     name, src = _function_excerpt(text, idx)
@@ -519,8 +539,8 @@ def plan_function(item: dict, ask: Callable[[str], str] | None = None) -> dict:
     others = ", ".join(n.name for n in ast.parse(text).body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name != name)
     acc = ""
     a = item.get("acceptance")
-    if a and (ROOT / a).is_file():
-        acc = (ROOT / a).read_text(encoding="utf-8")[:2500]
+    if a and (root / a).is_file():
+        acc = (root / a).read_text(encoding="utf-8")[:2500]
     prompt = (f"Du bist NEXUS GPT. Implementiere eine Python-Funktion vollstaendig.\nAufgabe: {item['title']}\nZiel: {item.get('goal','')}\n{_notes_text(item)}"
               f"Datei: {f}\nVorhandene Imports:\n```\n{heads}\n```\nAndere Funktionen in der Datei (nicht aendern): {others or '-'}\n"
               f"Aktuelle Funktion `{name}` (wird KOMPLETT ersetzt):\n```\n{src}\n```\n"
@@ -560,10 +580,11 @@ PATCH_RULES = ("\nPflicht: Liefere IMMER einen konkreten Patch (mind. 1 Edit) - 
                "enthaelt die vollstaendigen betroffenen Funktionen/Klassen samt Imports - das genuegt.")
 
 
-def _focus_text(item: dict) -> str:
+def _focus_text(item: dict, root: Path | None = None) -> str:
+    root = root or ROOT
     """Fehlerstelle + umgebende Funktion benennen: Patch soll dort ansetzen, nicht in Prompt-/Stringtexten."""
     try:
-        text = (ROOT / item["file"]).read_text(encoding="utf-8")
+        text = (root / item["file"]).read_text(encoding="utf-8")
         lines = text.splitlines()
         idx = next(i for i, ln in enumerate(lines) if _anchor_hit(item["anchor"], ln))
         fn = next((n.name for n in ast.walk(ast.parse(text)) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -672,10 +693,11 @@ def locate_source(item: dict) -> tuple[str, str] | None:
     return None
 
 
-def plan_edits(item: dict) -> dict:
-    if fn_mode_applicable(item):  # 20261030_fnmode
-        return plan_function(item)
-    f, ex = _excerpt(item)
+def plan_edits(item: dict, root: Path | None = None) -> dict:
+    root = root or ROOT
+    if fn_mode_applicable(item, root):  # 20261030_fnmode
+        return plan_function(item, root=root)
+    f, ex = _excerpt(item, root)
     if f and item.get("auto_key"):
         tpath = item["regression_test"]
         prompt = (f"Du bist NEXUS GPT. Behebe einen wiederkehrenden Fehler der NEXUS-Selbstbau-Engine/Hermes.\n"
@@ -686,7 +708,7 @@ def plan_edits(item: dict) -> dict:
                   "Fehlerfall nachstellt (Netz/Modelle per monkeypatch ersetzen, kein tmp_path) und nach dem Patch besteht. "
                   "Antworte NUR als JSON: {\"edits\": [{\"file\": \"" + f + "\", \"find\": \"...\", \"replace\": \"...\"}], "
                   "\"test\": {\"path\": \"" + tpath + "\", \"content\": \"...\"}, \"begruendung\": \"...\"}")
-        prompt += PATCH_RULES + _korrektur_text(item) + _focus_text(item)
+        prompt += PATCH_RULES + _korrektur_text(item) + _focus_text(item, root)
         if item.get("last_test_output"):
             prompt += ("\nDein letzter Versuch scheiterte mit diesen Testfehlern, vermeide sie (Imports pruefen, "
                        "nur vorhandene Funktionen nutzen):\n" + item["last_test_output"])
@@ -715,7 +737,7 @@ def plan_edits(item: dict) -> dict:
     prompt += PATCH_RULES + _korrektur_text(item)
     acc = ""
     for t in item.get("tests") or []:
-        tp = ROOT / t
+        tp = root / t
         if tp.is_file() and "placeholder" in tp.name or (tp.is_file() and item.get("acceptance") == t):
             acc = tp.read_text(encoding="utf-8")[:1800]
             break
@@ -731,29 +753,67 @@ def plan_edits(item: dict) -> dict:
     raise last
 
 
-def _run_tests(args: list[str], timeout: int) -> dict:
+def _run_tests(args: list[str], timeout: int, root: Path | None = None) -> dict:
+    """pytest in der Arbeitskopie `root`: im Runner (NEXUS_RUNNER_SOCKET gesetzt, fail-closed) oder nativ."""
+    root = Path(root or ROOT)
     t0 = time.time()
     try:
-        p = subprocess.run([sys.executable, "-B", "-m", "pytest", "-q", "-p", "no:cacheprovider", *args], cwd=str(ROOT),
-                           stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout, env=child_env(),
-                           creationflags=BELOW_NORMAL if sys.platform == "win32" else 0)
+        from nexus.runner import client as _rc
+        use_runner = sys.platform != "win32" and _rc.socket_path() is not None
+    except Exception:
+        use_runner = False
+    argv = ["python", "-B", "-m", "pytest", "-q", "-p", "no:cacheprovider", *args]
+
+    def _rec(**kw) -> None:
         try:  # NEXUS-Terminal (20261031): nur protokollieren
             from nexus.terminal.service import record as _trec
-            _trec("Autobuild", ["pytest", "-q", *args], cwd=ROOT, rc=p.returncode, stdout=(p.stdout or "")[-6000:],
-                  stderr=(p.stderr or "")[-3000:], sec=round(time.time() - t0, 2), kind="pytest")
+            _trec("Autobuild", ["pytest", "-q", *args], cwd=root, kind="pytest", **kw)
         except Exception:
             pass
-        tail = (p.stdout or "").strip().splitlines()[-1:] or [""]
-        errs = [ln for ln in (p.stdout or "").splitlines() if ln.startswith(("E ", "ERROR", "FAILED")) or "Error" in ln]
-        return {"ok": p.returncode == 0, "rc": p.returncode, "summary": tail[0][-300:], "sec": round(time.time() - t0),
-                "detail": "\n".join(errs[-12:])[-1200:]}
+
+    if use_runner:
+        rcwd = _rc.to_runner_cwd(root)
+        if rcwd is None:
+            return {"ok": False, "rc": None, "summary": "RUNNER_CWD", "sec": 0}
+        out: list[str] = []
+        err: list[str] = []
+        rc = None
+        timed_out = False
+        try:
+            for ev in _rc.exec_stream(argv=argv, cwd=rcwd, timeout=timeout):
+                t = ev.get("t")
+                if t == "out":
+                    out.append(str(ev.get("text", "")))
+                elif t == "err":
+                    err.append(str(ev.get("text", "")))
+                elif t == "end":
+                    rc = ev.get("rc")
+                    timed_out = bool(ev.get("timeout"))
+        except Exception as e:  # RunnerError, OSError ... -> kein stiller Rueckfall auf lokal
+            _rec(rc=None, stderr=f"RUNNER_ERROR {e}"[:3000], sec=round(time.time() - t0, 2), ok=False)
+            return {"ok": False, "rc": None, "summary": "RUNNER_ERROR", "sec": round(time.time() - t0), "detail": str(e)[:300]}
+        sout = "\n".join(out)
+        if timed_out:
+            _rec(rc=None, stderr=f"TIMEOUT nach {timeout}s", sec=timeout, ok=False)
+            return {"ok": False, "rc": None, "summary": "TIMEOUT", "sec": timeout}
+        _rec(rc=rc, stdout=sout[-6000:], stderr="\n".join(err)[-3000:], sec=round(time.time() - t0, 2))
+        return _test_result(rc, sout, t0)
+    try:
+        p = subprocess.run([sys.executable, *argv[1:]], cwd=str(root),
+                           stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout, env=child_env(),
+                           creationflags=BELOW_NORMAL if sys.platform == "win32" else 0)
+        _rec(rc=p.returncode, stdout=(p.stdout or "")[-6000:], stderr=(p.stderr or "")[-3000:], sec=round(time.time() - t0, 2))
+        return _test_result(p.returncode, p.stdout or "", t0)
     except subprocess.TimeoutExpired:
-        try:  # NEXUS-Terminal (20261031)
-            from nexus.terminal.service import record as _trec
-            _trec("Autobuild", ["pytest", "-q", *args], cwd=ROOT, rc=None, stderr=f"TIMEOUT nach {timeout}s", sec=timeout, kind="pytest", ok=False)
-        except Exception:
-            pass
+        _rec(rc=None, stderr=f"TIMEOUT nach {timeout}s", sec=timeout, ok=False)
         return {"ok": False, "rc": None, "summary": "TIMEOUT", "sec": timeout}
+
+
+def _test_result(rc, stdout: str, t0: float) -> dict:
+    tail = stdout.strip().splitlines()[-1:] or [""]
+    errs = [ln for ln in stdout.splitlines() if ln.startswith(("E ", "ERROR", "FAILED")) or "Error" in ln]
+    return {"ok": rc == 0, "rc": rc, "summary": tail[0][-300:], "sec": round(time.time() - t0),
+            "detail": "\n".join(errs[-12:])[-1200:]}
 
 
 PENDING = DIR / "hermes_pending.json"
@@ -874,7 +934,8 @@ def _static_check(path: Path) -> list[str]:
     return errs
 
 
-def acceptance_check(item: dict, http_get: Callable[[str], tuple[int, str]] | None = None) -> dict:
+def acceptance_check(item: dict, http_get: Callable[[str], tuple[int, str]] | None = None, root: Path | None = None) -> dict:
+    root = root or ROOT
     """Abnahme: item['accept'] = [{"http": url, "status": 200, "contains": [...]}, {"static": "pfad"}].
     Ohne accept: HTML/JS-Zieldateien werden automatisch statisch geprueft. ok nur wenn ALLE Checks bestanden."""
     def _get(url):
@@ -896,7 +957,7 @@ def acceptance_check(item: dict, http_get: Callable[[str], tuple[int, str]] | No
             miss = [x for x in (c.get("contains") or []) if x not in body]
             e = [] if st == int(c.get("status", 200)) and not miss else [f"HTTP:{c['http']}:{st}:missing={miss}"]
         elif c.get("static"):
-            e = _static_check(ROOT / c["static"])
+            e = [f"SYMLINK:{c['static']}"] if (root / c["static"]).is_symlink() else _static_check(root / c["static"])
         else:
             e = [f"ACCEPT_UNKNOWN:{c}"]
         results.append({"check": c, "ok": not e, "errors": e}); errs += e
@@ -911,8 +972,9 @@ class Autobuild:
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
-        self.tests_runner = tests_runner or _run_tests
-        self.planner = planner or plan_edits
+        self._root: Path | None = None  # Wurzel der Arbeitskopie des laufenden Zyklus
+        self.tests_runner = tests_runner or (lambda a, t: _run_tests(a, t, self._root))
+        self.planner = planner or (lambda item: plan_edits(item, self._root))
         self.hermes = hermes or _hermes_report
         self.busy = busy or system_busy
         self.reviewer = reviewer or hermes_review
@@ -979,7 +1041,7 @@ class Autobuild:
         items = load_backlog()
         # 2026-10-28 chatplan: Phase-2-Items erst freigeben, wenn alle Phase-1-Items erledigt (PASS) sind
         p1 = [i for i in items if i.get("phase") == 1]
-        if p1 and all(i.get("status") == "erledigt" for i in p1):
+        if p1 and all(i.get("status") in ("erledigt", "branch_bereit", "patch_bereit") for i in p1):
             for i in items:
                 if i.get("phase") == 2 and i.get("status") == "wartet_phase1":
                     i["status"] = "offen"
@@ -999,6 +1061,19 @@ class Autobuild:
                 item["tests"] = [item["regression_test"], "tests/test_autobuild.py"]
                 _emit("NEXUS", "plan", f"{item['id']}: Quelle ermittelt {loc[0]}", data={"anchor": loc[1][:120]})
                 save_backlog(items)
+        try:
+            wc = WorkCopy.create(cid, ROOT)
+        except Exception as e:
+            return self._fail(items, item, rec, f"WORKCOPY_FAILED:{str(e)[:200]}")
+        self._root = wc.dst
+        try:
+            return self._cycle_item(items, item, rec, cid, wc, full_suite)
+        finally:
+            self._root = None
+            wc.remove()
+
+    def _cycle_item(self, items, item, rec, cid, wc, full_suite) -> dict:
+        root = wc.dst
         _emit("NEXUS", "plan", f"Selbstbau {cid}: gewaehlt {item['id']} â€“ {item['title']}")
         try:
             _emit("NEXUS", "delegate", "Entwurf an NEXUS GPT", data={"item": item["id"]})
@@ -1013,14 +1088,12 @@ class Autobuild:
             save_backlog(items)
             return self._finish(rec)
         rec["begruendung"] = plan["result"].get("begruendung")
-        bdir = DIR / "backups" / cid
         correction_used = False
         tests_retry_used = False
         review_used = False
         while True:
-            backups: list[tuple[Path, Path | None]] = []
             try:
-                new_texts = _compute_edits(plan["result"].get("edits") or [])
+                new_texts = _compute_edits(plan["result"].get("edits") or [], root, enforce_scope=True)
                 if plan.get("fn_mode") and not review_used:  # 20261030_lookup: Hermes prueft vor dem Testlauf
                     review_used = True
                     _emit("NEXUS", "delegate", f"{item['id']}: Entwurf an Hermes zur Pruefung")
@@ -1035,7 +1108,7 @@ class Autobuild:
                             item["_korrektur"] = (json.dumps(plan["result"], ensure_ascii=False)[:2500],
                                                   "HERMES-REVIEW fand Probleme:\n" + str(rv.get("reply"))[:1200])
                             plan2 = self.planner(item)
-                            _compute_edits(plan2["result"].get("edits") or [])  # nur uebernehmen, wenn anwendbar
+                            _compute_edits(plan2["result"].get("edits") or [], root, enforce_scope=True)  # nur uebernehmen, wenn anwendbar
                             plan = plan2
                             rec["review"]["nachgebessert"] = True
                             rec["begruendung"] = plan["result"].get("begruendung")
@@ -1043,29 +1116,21 @@ class Autobuild:
                             rec["review"]["nachbesserung_fehler"] = str(e2)[:200]
                         finally:
                             item.pop("_korrektur", None)
-                        new_texts = _compute_edits(plan["result"].get("edits") or [])
+                        new_texts = _compute_edits(plan["result"].get("edits") or [], root, enforce_scope=True)
                 tst = plan["result"].get("test") if item.get("auto_key") else None
-                if tst:  # Regressionstest VOR Anwendung kompilieren
+                if tst:  # Regressionstest VOR Anwendung pruefen/kompilieren
+                    _scope(item["regression_test"])
                     compile(str(tst.get("content") or ""), item["regression_test"], "exec")
-                for target, text in new_texts.items():
-                    b = check_write(bdir / target.relative_to(ROOT))
-                    b.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(target, b)
-                    backups.append((target, b))
+                for target, text in new_texts.items():  # nur in der Arbeitskopie, Live-Repo bleibt unberuehrt
                     _write(target, text)
                 if tst:
-                    tp = check_write(ROOT / item["regression_test"])  # Pfad fest vorgegeben, nur tests/
-                    if tp.exists():
-                        b = check_write(bdir / tp.relative_to(ROOT)); b.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copy2(tp, b); backups.append((tp, b))
-                    else:
-                        backups.append((tp, None))
+                    tp = check_write(root / item["regression_test"])  # Pfad fest vorgegeben, nur tests/test_auto_*.py
                     _write(tp, str(tst.get("content") or ""))
                     new_texts[tp] = tp.read_text(encoding="utf-8")
                     col = self.tests_runner(["--collect-only", item["regression_test"]], 120)
                     if not col.get("ok"):
                         raise ValueError("TEST_COLLECT_FAILED:" + (col.get("detail") or col.get("summary") or "")[:600])
-                rec["changed"] = [str(t.relative_to(ROOT)) for t in new_texts]
+                rec["changed"] = [str(t.relative_to(root)) for t in new_texts]
                 _emit("NEXUS", "action", f"Patch angewendet: {', '.join(rec['changed'])}", ok=True)
                 _emit("NEXUS", "test", f"Tests: {item.get('tests') or 'tests'}")
                 t1 = self.tests_runner(list(item.get("tests") or ["tests"]), 600)
@@ -1075,11 +1140,13 @@ class Autobuild:
                 if not (t1["ok"] and (t2 is None or t2["ok"])):
                     raise _TestsFailed(((t2 or t1) or {}).get("detail", "") or ((t2 or t1) or {}).get("summary", ""))
                 break
+            except _ScopeViolation as e:
+                return self._fail(items, item, rec, f"SCOPE:{e}")
             except CDriveBlocked as e:
-                self._rollback(backups)
+                wc.reset()
                 return self._fail(items, item, rec, f"APPLY_FAILED:{e}")
             except _TestsFailed as e:
-                self._rollback(backups)
+                wc.reset()
                 rec["rollback"] = True
                 item["last_test_output"] = str(e)[:1200]
                 if not tests_retry_used:  # 1 Korrekturrunde mit Testfehlern vor endgueltigem Rollback
@@ -1099,7 +1166,7 @@ class Autobuild:
                     continue
                 return self._fail(items, item, rec, "TESTS_FAILED")
             except Exception as e:
-                self._rollback(backups)
+                wc.reset()
                 err = f"{type(e).__name__}:{e}"
                 if not correction_used:  # 1 Korrekturrunde, zaehlt NICHT als Fehlversuch
                     correction_used = True
@@ -1115,27 +1182,36 @@ class Autobuild:
                     rec["begruendung"] = plan["result"].get("begruendung")
                     continue
                 return self._fail(items, item, rec, f"APPLY_FAILED:{err}")
-        acc = acceptance_check(item)
+        acc = acceptance_check(item, root=root)
         rec["accept"] = {k: acc[k] for k in ("ok", "n", "error")}
         item["last_accept"] = rec["accept"]
         if not acc["ok"]:
-            self._rollback(backups)
             rec["rollback"] = True
             return self._fail(items, item, rec, "ACCEPT_FAILED:" + acc["error"])
-        item["status"] = "erledigt"
-        rec["result"] = "UEBERNOMMEN"
-        _emit("NEXUS", "done", f"Selbstbau {item['id']} uebernommen ({(rec.get('test_full') or rec['test_target'])['summary']})", ok=True)
+        # Allowlist Stufe (b): alles, was in der Kopie geaendert wurde (auch durch Tests/Code nebenbei), muss erlaubt sein
+        try:
+            bad = wc.violations()  # Allowlist + .git*-Eintraege + Symlinks
+        except Exception as e:
+            return self._fail(items, item, rec, f"SCOPE:CHANGED_FAILED:{str(e)[:200]}")
+        if bad:
+            return self._fail(items, item, rec, "SCOPE:" + "; ".join(bad)[:250])
+        try:
+            sha = wc.commit(f"autobuild: {item['id']} {item.get('title', '')}"[:200])
+            slug = re.sub(r"[^a-z0-9]+", "-", str(item["id"]).lower()).strip("-") or "item"
+            pub = wc.publish(f"autobuild/{slug}")
+        except Exception as e:
+            return self._fail(items, item, rec, f"PUBLISH_FAILED:{str(e)[:200]}")
+        rec["commit"] = sha
+        if pub.get("branch"):
+            item["status"], item["branch"], rec["result"] = "branch_bereit", pub["branch"], "BRANCH:" + pub["branch"]
+            hint = f"Branch `{pub['branch']}` bereit. Merge nur durch Eddie/Chris: git merge {pub['branch']}"
+        else:
+            item["status"], item["patch"], rec["result"] = "patch_bereit", pub["patch"], "PATCH:" + pub["patch"]
+            hint = f"Patch `{pub['patch']}` bereit. Anwenden nur durch Eddie/Chris: git am"
+        rec["hinweis"] = hint
+        _emit("NEXUS", "done", f"Selbstbau {item['id']}: {hint} ({(rec.get('test_full') or rec['test_target'])['summary']})", ok=True)
         save_backlog(items)
         return self._finish(rec)
-
-    def _rollback(self, backups) -> None:
-        for target, b in backups:
-            if b is None:
-                target.unlink(missing_ok=True)  # neu angelegte Datei (z.B. Regressionstest) entfernen
-            else:
-                shutil.copy2(b, target)
-        if backups:
-            _emit("NEXUS", "rollback", f"Rollback: {len(backups)} Datei(en) wiederhergestellt", ok=True)
 
     def _fail(self, items, item, rec, reason) -> dict:
         item["attempts"] = int(item.get("attempts") or 0) + 1
@@ -1161,9 +1237,9 @@ class Autobuild:
         _write(PENDING, json.dumps(rest, ensure_ascii=False))
 
     def _finish(self, rec: dict) -> dict:
-        rec["success"] = rec.get("result") in ("UEBERNOMMEN", "ANALYSIERT", "PAUSIERT", "NICHTS_OFFEN")
+        rec["success"] = str(rec.get("result")).startswith(("BRANCH:", "PATCH:")) or rec.get("result") in ("UEBERNOMMEN", "ANALYSIERT", "PAUSIERT", "NICHTS_OFFEN")
         line = (f"\n## Zyklus {rec['cycle']} ({rec['ts']})\n- Punkt: {rec.get('item','-')} {rec.get('title','')}\n"
-                f"- Ergebnis: **{rec.get('result')}** {rec.get('reason','')}\n- Geaendert: {rec.get('changed', [])}\n"
+                f"- Ergebnis: **{rec.get('result')}** {rec.get('reason','')} {rec.get('hinweis','')}\n- Geaendert: {rec.get('changed', [])}\n"
                 f"- Tests Ziel: {(rec.get('test_target') or {}).get('summary','-')} | Suite: {(rec.get('test_full') or {}).get('summary','-')}\n")
         if rec.get("analyse"):
             line += "- Analyse NEXUS GPT: " + json.dumps(rec["analyse"], ensure_ascii=False)[:1500] + "\n"

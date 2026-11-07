@@ -1,27 +1,17 @@
-import json
-from pathlib import Path
 
 import pytest
 
-from nexus.autobuild import guard, loop
+from nexus.autobuild import loop
 
 SRC = "def f(a):\n    x = a + 1\n    return x\n"
 
 
 @pytest.fixture()
-def sb(monkeypatch):
-    root = Path(guard.ROOT) / "workspace" / "autobuild" / "_test_apply"
-    root.mkdir(parents=True, exist_ok=True)
-    target = root / "mod.py"
-    target.write_text(SRC, encoding="utf-8")
-    for k, v in (("DIR", root), ("BACKLOG", root / "backlog.json"), ("CYCLES", root / "cycles.jsonl"),
-                 ("PROGRESS", root / "progress.md"), ("STOP_FILE", root / "STOP")):
-        monkeypatch.setattr(loop, k, v)
-    rel = str(target.relative_to(guard.ROOT)).replace("\\", "/")
-    (root / "backlog.json").write_text(json.dumps([{"id": "T1", "title": "t", "status": "offen", "file": rel}]), encoding="utf-8")
-    yield root, target, rel
-    import shutil
-    shutil.rmtree(root, ignore_errors=True)
+def sb(monkeypatch, tmp_path):
+    from tests._ab_env import make_env
+    rel = "nexus/mod.py"
+    root = make_env(tmp_path, monkeypatch, {rel: SRC}, [{"id": "T1", "title": "t", "status": "offen", "file": rel}])
+    yield tmp_path / "ab", root / rel, rel
 
 
 # (1) whitespace-/einrueckungstolerant, CRLF, Schluessel-Aliase
@@ -62,9 +52,11 @@ def test_syntax_retry_then_adopted(sb):
     ab = _ab([[{"file": rel, "find": "    return x", "replace": "      return x"}],
               [{"file": rel, "find": "    return x", "replace": "    return x * 2"}]], lambda a, t: {"ok": True, "summary": "ok"}, seen)
     r = ab.cycle()
-    assert r["result"] == "UEBERNOMMEN" and len(seen) == 2
+    assert r["result"].startswith("BRANCH:") and len(seen) == 2
     assert "Ausschnitt" in seen[1]["_korrektur"][1]
-    assert "return x * 2" in target.read_text(encoding="utf-8")
+    from tests._ab_env import git
+    assert "return x * 2" in git(target.parents[1], "show", r["result"][7:] + ":" + rel)
+    assert target.read_text(encoding="utf-8") == SRC
 
 
 # (3) TESTS_FAILED -> 1 Korrekturrunde mit Testfehlern
@@ -77,9 +69,10 @@ def test_tests_failed_retry_then_adopted(sb):
     ab = _ab([[{"file": rel, "find": "x = a + 1", "replace": "x = a + 9"}],
               [{"file": rel, "find": "x = a + 1", "replace": "x = a + 2"}]], runner, seen)
     r = ab.cycle()
-    assert r["result"] == "UEBERNOMMEN" and len(seen) == 2
+    assert r["result"].startswith("BRANCH:") and len(seen) == 2
     assert "TESTS_FAILED" in seen[1]["_korrektur"][1] and "test_y" in seen[1]["_korrektur"][1]
-    assert "x = a + 2" in target.read_text(encoding="utf-8")
+    from tests._ab_env import git
+    assert "x = a + 2" in git(target.parents[1], "show", r["result"][7:] + ":" + rel)
 
 
 def test_tests_failed_twice_rolls_back(sb):

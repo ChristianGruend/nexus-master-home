@@ -84,7 +84,7 @@ def test_hooks_present_without_behavior_change():
     loop = (ROOT / "nexus/autobuild/loop.py").read_text(encoding="utf-8")
     ex = (ROOT / "nexus/bridge/executors.py").read_text(encoding="utf-8")
     srv = (ROOT / "nexus/chat/server.py").read_text(encoding="utf-8")
-    assert loop.count('_trec("Autobuild"') == 2
+    assert loop.count('_trec("Autobuild"') >= 1  # Stufe 2.4: ein gemeinsamer Aufruf für Runner/nativ
     assert ex.count('_trec("Hermes"') == 1 and 'agent="Hermes"' in ex
     for r in ("/api/terminal/stream", "/api/terminal/history", "/api/terminal/run", "/api/terminal/sessions", "/api/terminal/reset"):
         assert r in srv

@@ -97,6 +97,29 @@ jobs:
           assert r["stdout"].strip() == "runner-ok", r
           print("runner ok")
           PY
+      - name: Autobuild-Arbeitskopie (Stufe 2.4)
+        run: |
+          set -e
+          docker compose exec -T nexus python - <<'PY'
+          from pathlib import Path
+          from nexus.autobuild import loop
+          from nexus.autobuild.workcopy import WorkCopy
+          from nexus.runner.client import exec_stream
+
+          wc = WorkCopy.create("ci")
+          assert wc.changed() == [] and not (wc.dst / ".git").exists(), "Kopie nicht sauber"
+          (wc.dst / "tests/test_auto_ci.py").write_text("def test_ok():\n    assert True\n")
+          r = loop._run_tests(["tests/test_auto_ci.py"], 120, root=wc.dst)
+          assert r["ok"], r
+          assert wc.violations() == [], wc.violations()
+          # Angriff aus dem Runner: eingeschleuste .git-config + Symlink duerfen Core nicht erreichen
+          list(exec_stream(command="mkdir -p autobuild/ci/.git && printf '[core]\\n\\tfsmonitor = touch /work/pwned\\n' > autobuild/ci/.git/config && ln -s /etc/passwd autobuild/ci/nexus/link.py", timeout=20))
+          v = wc.violations()
+          assert any(x.startswith("SYMLINK:") for x in v) and any(x.startswith(".git:") for x in v), v
+          assert not Path("/app/workspace/runner/pwned").exists(), "fsmonitor ausgefuehrt"
+          wc.remove()
+          print("autobuild ok")
+          PY
       - name: Logs
         if: always()
         run: docker compose logs --tail=200
