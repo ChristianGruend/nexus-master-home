@@ -23,9 +23,9 @@ from datetime import datetime
 from pathlib import Path
 
 from nexus.common.paths import ROOT
+from nexus.policy import engine as _engine
 
-LEVELS = ("READ_ONLY", "SAFE_WRITE", "PRIVILEGED")
-_RANK = {k: i for i, k in enumerate(LEVELS)}
+LEVELS = _engine.LEVELS  # Stufenachse zentral in nexus.policy.engine
 DEFAULT_AGENT_LEVELS = {"NEXUS": "SAFE_WRITE", "Claude": "SAFE_WRITE", "Hermes": "SAFE_WRITE",
                         "NEXUS-GPT": "SAFE_WRITE", "Autobuild": "SAFE_WRITE", "Eddie": "PRIVILEGED",
                         "AETHER": "SAFE_WRITE"}
@@ -55,7 +55,7 @@ def agent_levels() -> dict:
     fp = _perm_file()
     try:
         if fp.exists():
-            data = json.loads(fp.read_text(encoding="utf-8"))
+            data = json.loads(fp.read_text(encoding="utf-8-sig"))
             for k, v in (data.get("agents") or {}).items():
                 if v in LEVELS:
                     lv[str(k)] = v
@@ -341,7 +341,7 @@ def authorize(agent: str, command: str, shell: str = "session", approval_id: str
         aid = request_approval(agent, command, why, run_spec)
         return {"allowed": False, "status": "APPROVAL_REQUIRED", "approval_id": aid,
                 "error": "PRIVILEGED: Freigabe durch Eddie im Terminal-UI noetig (approval_id " + aid + ")", **base}
-    if _RANK[have] < _RANK[need]:
+    if not _engine.allows(need, have):
         return {"allowed": False, "status": "LEVEL_DENIED",
                 "error": f"Rechtestufe {have} reicht nicht (braucht {need}: {why})", **base}
     return {"allowed": True, "status": "OK", **base}

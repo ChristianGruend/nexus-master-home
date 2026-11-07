@@ -223,7 +223,7 @@ def run_tool(name: str, args: dict, wd: Path) -> str:
             if not reason:
                 raise ValueError("APPROVAL_REASON_REQUIRED")
 
-            approval_id = guard.request_action(
+            approval_id = guard.request_action_approval(
                 agent="Hermes",
                 action="project_write_file",
                 params=params,
@@ -243,7 +243,7 @@ def run_tool(name: str, args: dict, wd: Path) -> str:
         if not approval_id:
             raise PermissionError("APPROVAL_ID_REQUIRED")
 
-        approved = guard.consume_action(
+        approved = guard.consume_action_approval(
             approval_id=approval_id,
             agent="Hermes",
             action="project_write_file",

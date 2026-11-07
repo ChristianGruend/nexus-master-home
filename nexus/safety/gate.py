@@ -11,8 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from nexus.bridge.permissions import TASK_PERMISSIONS, PermissionLevel, allows, process_level
-
-_RANK = {PermissionLevel.READ_ONLY: 0, PermissionLevel.SAFE_WRITE: 1, PermissionLevel.PRIVILEGED: 2}
+from nexus.policy import engine
 
 
 def enabled() -> bool:
@@ -45,7 +44,7 @@ def check(agent: str, action: str, params: dict[str, Any] | None = None,
         from nexus.terminal import guard
         lvl, why = guard.required_level_shell(str(params.get("command", "")), str(params.get("shell", "session")))
         ag = guard.agent_level(agent)
-        return Verdict(_RANK[to_level(ag)] >= _RANK[to_level(lvl)], lvl, ag, why)
+        return Verdict(engine.allows(to_level(lvl), to_level(ag)), lvl, ag, why)
     req = TASK_PERMISSIONS.get(action)
     if req is None:
         return Verdict(False, "UNKNOWN", (granted or process_level()).value, "UNKNOWN_TASK")

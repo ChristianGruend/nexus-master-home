@@ -27,9 +27,10 @@ def master(tmp_path, monkeypatch):
     (ws / "terminal").mkdir()
     (ws / "terminal" / "permissions.json").write_text(json.dumps({"agents": {"NEXUS": "SAFE_WRITE", "Gast": "READ_ONLY"}}))
     import nexus.integrations.hermes_tools as ht
+    from nexus.terminal import service
     monkeypatch.setattr(ht, "WS", ws); monkeypatch.setattr(ht, "ROOT", tmp_path)
     monkeypatch.setattr(ht, "_log", lambda e: None, raising=False)
-    monkeypatch.setattr(core, "WS", ws); monkeypatch.setattr(core, "PERMS", ws / "terminal" / "permissions.json")
+    monkeypatch.setattr(core, "WS", ws); monkeypatch.setattr(service, "TERM_DIR", ws / "terminal")  # Stufen kommen aus terminal.guard
     monkeypatch.setattr(core, "SWARM_DIR", ws / "swarm")
     calls = []
     def fake(prompt, system="", timeout=0, temperature=0.3):

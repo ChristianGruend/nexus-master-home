@@ -4,6 +4,8 @@ from __future__ import annotations
 import os
 from enum import Enum
 
+from nexus.policy import engine as _engine
+
 
 class PermissionLevel(str, Enum):
     READ_ONLY = "READ_ONLY"
@@ -121,12 +123,8 @@ DEFAULT_PROCESS_LEVEL = _parse_level(os.environ.get("NEXUS_BRIDGE_PROCESS_LEVEL"
 
 def allows(required: PermissionLevel, granted: PermissionLevel | None = None) -> bool:
     granted = granted or DEFAULT_PROCESS_LEVEL
-    order = {
-        PermissionLevel.READ_ONLY: 0,
-        PermissionLevel.SAFE_WRITE: 1,
-        PermissionLevel.PRIVILEGED: 2,
-    }
-    return order[granted] >= order[required]
+    # Stufenvergleich liegt zentral in nexus.policy.engine (Enum-Werte werden dort normalisiert)
+    return _engine.allows(required, granted)
 
 
 def process_level() -> PermissionLevel:

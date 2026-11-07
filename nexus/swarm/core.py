@@ -16,7 +16,6 @@ from nexus.swarm import experience
 ROOT = Path(__file__).resolve().parents[2]
 WS = ROOT / "workspace"
 SWARM_DIR = WS / "swarm"
-PERMS = WS / "terminal" / "permissions.json"
 OLLAMA = "http://127.0.0.1:11434"
 MODEL = "qwen3.5:9b"
 
@@ -55,10 +54,9 @@ LLM = _llm  # in Tests ersetzbar
 
 
 def agent_level(agent: str) -> str:
-    try:
-        return json.loads(PERMS.read_text(encoding="utf-8-sig")).get("agents", {}).get(agent, "READ_ONLY")
-    except Exception:
-        return "READ_ONLY"
+    """Rechtestufe des Agenten - eine Quelle: nexus.terminal.guard (permissions.json + Defaults)."""
+    from nexus.terminal import guard
+    return guard.agent_level(agent)
 
 
 # ---------------- Agenten-Knoten ----------------

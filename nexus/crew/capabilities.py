@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from nexus.policy import engine as _engine
+
 # Bridge-aligned permission classes (same names as nexus.bridge.permissions)
 READ_ONLY = "READ_ONLY"
 SAFE_WRITE = "SAFE_WRITE"
@@ -137,11 +139,13 @@ ORCHESTRATOR_ROLES: dict[str, dict[str, str]] = {
     },
 }
 
+# Die drei Standardstufen kommen aus der Policy-Engine; ELEVATED_LOCAL bleibt Crew-intern
+# (zwischen SAFE_WRITE und PRIVILEGED), PRIVILEGED rutscht dadurch um eins nach oben.
 _LEVEL_ORDER = {
-    READ_ONLY: 0,
-    SAFE_WRITE: 1,
-    ELEVATED_LOCAL: 2,
-    PRIVILEGED: 3,
+    READ_ONLY: _engine.RANK[READ_ONLY],
+    SAFE_WRITE: _engine.RANK[SAFE_WRITE],
+    ELEVATED_LOCAL: _engine.RANK[PRIVILEGED],
+    PRIVILEGED: _engine.RANK[PRIVILEGED] + 1,
 }
 
 
