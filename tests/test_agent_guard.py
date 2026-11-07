@@ -37,6 +37,6 @@ def test_remote_enabled_without_token_fails_closed(monkeypatch):
     assert not G.allow("192.0.2.12", H())[0]
 
 
-def test_guard_rollback_flag(monkeypatch):
+def test_guard_ignores_old_rollback_flag(monkeypatch):
     monkeypatch.setenv("NEXUS_AGENT_GUARD", "0")
-    assert G.allow("192.0.2.12", H()) == (True, "GUARD_DISABLED")
+    assert G.allow("192.0.2.12", H())[0] is False

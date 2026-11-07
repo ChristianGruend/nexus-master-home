@@ -1,19 +1,19 @@
 """Phase 2 (02.11.2026): In-Process-Aufruf ueber die Bridge-Registry.
 
 run_task(name, params) holt den Executor aus bridge.executors (eine Registry)
-und fuehrt ihn lokal aus (rec=None = In-Process). Schalter:
-NEXUS_PHASE2_REGISTRY=0 -> pc_remote/terminal nutzen wieder den Direktweg.
+und fuehrt ihn lokal aus (rec=None = In-Process).
+Kein Off-Schalter.
 """
 from __future__ import annotations
 
-import os
 from typing import Any
 
 _REG: dict | None = None
 
 
 def enabled() -> bool:
-    return os.environ.get("NEXUS_PHASE2_REGISTRY", "1").strip() != "0"
+    """Immer aktiv (Off-Schalter NEXUS_PHASE2_REGISTRY entfernt)."""
+    return True
 
 
 class _Collector:

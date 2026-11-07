@@ -2,7 +2,7 @@
 
 Standard: nur Loopback ohne Proxy-/Tailscale-Header. Optional fuer bewusste
 Fernnutzung: NEXUS_AGENT_REMOTE=1 plus Bearer NEXUS_AGENT_TOKEN.
-Not-Aus: NEXUS_AGENT_GUARD=0 (nur fuer Rollback, nicht empfohlen).
+Kein Not-Aus: der Guard ist immer aktiv.
 """
 from __future__ import annotations
 
@@ -11,10 +11,6 @@ import os
 
 LOCAL_IPS = {"127.0.0.1", "::1", "::ffff:127.0.0.1"}
 PROXY_HEADERS = ("X-Forwarded-For", "Tailscale-User-Login", "X-Forwarded-Host", "Forwarded")
-
-
-def enabled() -> bool:
-    return os.environ.get("NEXUS_AGENT_GUARD", "1").strip() != "0"
 
 
 def remote_enabled() -> bool:
@@ -38,8 +34,6 @@ def token_ok(headers) -> bool:
 
 def allow(ip: str, headers) -> tuple[bool, str]:
     """(erlaubt, grund). Fail-closed: ohne Loopback und ohne Token -> False."""
-    if not enabled():
-        return True, "GUARD_DISABLED"
     if is_loopback(ip, headers):
         return True, "LOOPBACK"
     if remote_enabled() and token_ok(headers):

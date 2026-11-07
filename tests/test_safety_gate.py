@@ -31,8 +31,6 @@ def test_shell_equivalence():
                 assert v.allowed == (rank[guard.agent_level(agent)] >= rank[lvl]), (agent, sh, c)
 
 
-def test_switch(monkeypatch):
+def test_gate_cannot_be_disabled(monkeypatch):
     monkeypatch.setenv("NEXUS_PHASE2_GATE", "0")
-    assert gate.enabled() is False
-    monkeypatch.setenv("NEXUS_PHASE2_GATE", "1")
     assert gate.enabled() is True

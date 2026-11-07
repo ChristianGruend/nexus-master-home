@@ -31,7 +31,7 @@ def test_bridge_calls_rejected():
     assert executors.exec_shell_run({"command": "dir"}, object())["error"] == "IN_PROCESS_ONLY"
 
 
-def test_shell_run_switch(monkeypatch):
+def test_shell_run_ignores_old_switch(monkeypatch):
     from nexus.terminal import service
     seen = []
     monkeypatch.setattr(service, "execute", lambda c, **kw: seen.append((c, kw)) or {"ok": True})

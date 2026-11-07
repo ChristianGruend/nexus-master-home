@@ -2,12 +2,11 @@
 
 Eine Stelle fuer Rechte-Entscheidungen. Delegiert unveraendert an
 bridge.permissions (Task-Stufen) und terminal.guard (Shell-Klassifikation,
-Freigaben, Audit). Feature-Schalter: NEXUS_PHASE2_GATE=0 -> Aufrufer nutzen
-wieder den alten Direktweg.
+Freigaben, Audit).
+Kein Off-Schalter.
 """
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -17,7 +16,8 @@ _RANK = {PermissionLevel.READ_ONLY: 0, PermissionLevel.SAFE_WRITE: 1, Permission
 
 
 def enabled() -> bool:
-    return os.environ.get("NEXUS_PHASE2_GATE", "1").strip() != "0"
+    """Immer aktiv (Off-Schalter NEXUS_PHASE2_GATE entfernt)."""
+    return True
 
 
 @dataclass
