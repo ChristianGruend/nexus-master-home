@@ -434,6 +434,7 @@ class Handler(BaseHTTPRequestHandler):
     def _login(self, qs: dict) -> None:
         """Browser-Login für Fernzugriff: /login?token=<API-Token>[&next=/m] setzt das Session-Cookie."""
         import hmac as _hmac
+        from html import escape as html_escape
         token = (qs.get("token") or [""])[0].strip()
         nxt = (qs.get("next") or ["/"])[0]
         if not nxt.startswith("/") or nxt.startswith("//") or "\\" in nxt:
@@ -450,7 +451,7 @@ class Handler(BaseHTTPRequestHandler):
         html = ("<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
                 "<title>NEXUS Login</title><body style='font-family:sans-serif;max-width:28em;margin:3em auto'>"
                 "<h1>NEXUS Login</h1>" + ("<p style='color:#c00'>Token ungültig.</p>" if token else "")
-                + "<form method=get action=/login><input type=hidden name=next value='/'>"
+                + "<form method=get action=/login><input type=hidden name=next value='" + html_escape(nxt, quote=True) + "'>"
                 "<input name=token type=password placeholder='API-Token' style='width:100%' autofocus> "
                 "<button>Anmelden</button></form>"
                 "<p>Token anzeigen: <code>python -m nexus.common.api_auth</code></p></body>")

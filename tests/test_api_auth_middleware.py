@@ -114,3 +114,9 @@ def test_json_responses_have_security_headers(handler_cls):
     _, hdrs, _ = _req(handler_cls, "/api/does-not-exist", ip="127.0.0.1")
     assert hdrs.get("referrer-policy") == "no-referrer"
     assert hdrs.get("x-content-type-options") == "nosniff"
+
+
+def test_login_form_keeps_escaped_next(handler_cls):
+    _, _, body = _req(handler_cls, "/login?next=/m%27%3E%3Cscript%3E")
+    html = body.decode()
+    assert "<script>" not in html and "value='/m&#x27;&gt;&lt;script&gt;'" in html
