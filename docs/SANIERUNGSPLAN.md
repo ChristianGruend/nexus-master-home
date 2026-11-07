@@ -49,23 +49,25 @@ Modellwahl je Schritt: **L** = lokales Modell zuerst (`hermes-qwen3.8-27b-coder`
 
 | # | Schritt | Modell | Fertig wenn |
 |---|---|---|---|
-| 0.1 | `start_nexus.sh` **und** `start_nexus.ps1` (`$HostAddr`, Z. 5): Default `127.0.0.1`, LAN/Tailscale-Bind nur explizit | H | beide Skripte, README angepasst |
-| 0.2 | Autobuild-Autostart aus (`server.py:1745`), nur per Flag `NEXUS_AUTOBUILD=1` | H | Server startet ohne Autobuild-Thread |
-| 0.3 | Test-Baseline festhalten: Liste der 68 Fails als `tests/KNOWN_FAILURES.txt`, `pytest.mark.ollama` registrieren | H | `pytest` reproduzierbar 939/68 |
-| 0.4 | `pyproject.toml` mit `ruff` (nur Fehlerregeln, kein Formatieren) + Baseline | H | `ruff check` läuft, Baseline committet |
-| 0.5 | Phantomordner `G:\meine-ki\…\tmp` löschen, `accept_studio_*` auf `tmp_path` umstellen | H | Ordner weg, kein Neuanlegen |
-| 0.6 | **CI-Matrix** (GitHub Actions `ubuntu-latest` + `windows-latest`, Python 3.11 + 3.14) mit der Baseline aus 0.3 als erwarteten Fails je Plattform | H | beide Jobs laufen |
+| 0.1 | ✅ `e1841c1` – `start_nexus.sh` **und** `start_nexus.ps1` (`$HostAddr`, Z. 5): Default `127.0.0.1`, LAN/Tailscale-Bind nur explizit | H | beide Skripte, README angepasst |
+| 0.2 | ✅ `8cf32f9` – Autobuild-Autostart aus (`server.py:1745`), nur per Flag `NEXUS_AUTOBUILD=1` | H | Server startet ohne Autobuild-Thread |
+| 0.3 | ✅ `3178f13` – Test-Baseline festhalten: Liste der 68 Fails als `tests/KNOWN_FAILURES.txt`, `pytest.mark.ollama` registrieren | H | `pytest` reproduzierbar 939/68 |
+| 0.4 | ✅ `b129ae8` – `pyproject.toml` mit `ruff` (nur Fehlerregeln, kein Formatieren) + Baseline | H | `ruff check` läuft, Baseline committet |
+| 0.5 | ✅ `b428185` – Phantomordner `G:\meine-ki\…\tmp` löschen, `accept_studio_*` auf `tmp_path` umstellen | H | Ordner weg, kein Neuanlegen |
+| 0.6 | ✅ `ee2db13` – **CI-Matrix** (GitHub Actions `ubuntu-latest` + `windows-latest`, Python 3.11 + 3.14) mit der Baseline aus 0.3 als erwarteten Fails je Plattform | H | beide Jobs laufen |
 
-## Stufe 1 – Zugang dicht (2–3 Tage)
+## Stufe 1 – Zugang dicht ✅ (2026-11-07, Branch `sanierung/stufe-1`)
+
+Ergebnis Smoke-Test über LAN-IP ohne Login: UI-Seiten 200, `/api/memory`, `/api/files/list`, `/api/contacts`, `/media/…`, `POST /api/shell/run` → 401; fremder Host → 421; kaputtes JSON → 400; mit Token bzw. nach `/login` → 200. Nebenbei gefunden und behoben: Clipboard-Tool-Absturz (`93c2c2d`).
 
 | # | Schritt | Modell | Fertig wenn |
 |---|---|---|---|
-| 1.1 | **Routing-Tabelle** statt if-Ketten: `@route("POST", "/api/shell/run", policy=...)`; Handler bleiben, nur die Verteilung wird deklarativ. Mechanisch, Route für Route | O plant, S führt aus | Alle ~150 Routen registriert, Tests grün |
-| 1.2 | **Auth-Middleware, deny by default:** jede `/api/*` braucht Session-Cookie (UI) oder Bearer (Handy/Bridge); Ausnahmen explizit in der Tabelle. Loopback über Peer-Adresse, nie über Header | S | Test: jede Route ohne Credentials → 401, außer Allowlist |
-| 1.3 | Host-Header-Allowlist (DNS-Rebinding), Body-Limit, 400 bei kaputtem JSON, generische Fehlerantworten + Request-ID | S | Tests für alle vier |
+| 1.1 | ➡️ **verschoben nach 4.6** (Auth läuft jetzt über eine Pfad-Policy in `api_auth.check`, die Tabelle kommt zusammen mit dem Framework-Wechsel) – **Routing-Tabelle** statt if-Ketten: `@route("POST", "/api/shell/run", policy=...)`; Handler bleiben, nur die Verteilung wird deklarativ. Mechanisch, Route für Route | O plant, S führt aus | Alle ~150 Routen registriert, Tests grün |
+| 1.2 | ✅ `6a0a862, 1b4f50f` – **Auth-Middleware, deny by default:** jede `/api/*` braucht Session-Cookie (UI) oder Bearer (Handy/Bridge); Ausnahmen explizit in der Tabelle. Loopback über Peer-Adresse, nie über Header | S | Test: jede Route ohne Credentials → 401, außer Allowlist |
+| 1.3 | ✅ `70fc2c8` – Host-Header-Allowlist (DNS-Rebinding), Body-Limit, 400 bei kaputtem JSON, generische Fehlerantworten + Request-ID | S | Tests für alle vier |
 | 1.4 | ✅ `e0928e2` – Static/File-Serving auf `Path.resolve()` + `is_relative_to` | L | Traversal-Test |
-| 1.5 | XSS: alle `innerHTML` mit Fremddaten → `textContent`/`createElement`; strikte CSP auf allen UI-Seiten | S | grep findet keine unescapte Verkettung; CSP-Header gesetzt |
-| 1.6 | Off-Schalter der Guards entfernen (`NEXUS_AGENT_GUARD`, `NEXUS_PHASE2_*`) | H | Flags weg, Tests grün |
+| 1.5 | ✅ `4fdd1f4, 231062e, c86b3c7` – XSS: alle `innerHTML` mit Fremddaten → `textContent`/`createElement`; strikte CSP auf allen UI-Seiten | S | grep findet keine unescapte Verkettung; CSP-Header gesetzt |
+| 1.6 | ✅ `5163257` – Off-Schalter der Guards entfernen (`NEXUS_AGENT_GUARD`, `NEXUS_PHASE2_*`) | H | Flags weg, Tests grün |
 
 ## Zielarchitektur (ab Stufe 2)
 
@@ -116,7 +118,7 @@ Browser / Handy ──Token──► nexus-core        (Docker, Linux-Image, auf
 | 4.3 | **Store-Schicht:** SQLite (WAL) für Zustand + Memory (FTS5 statt Voll-Reload-BM25, Vektoren per numpy/sqlite-vec) | O plant, S baut | Memory-Suche ohne Datei-Reload |
 | 4.4 | **`controller.py` zerlegen:** Intent-Routing / Agent-Loop / Tool-Executor / Verifier / Streaming; Tool-Calls über Ollama Function-Calling statt Regex-Parser | O plant, S in Etappen | keine Methode > 150 Zeilen |
 | 4.5 | **Eine Orchestrierung:** Task-Queue + Worker-Pool mit Lifecycle (Stop-Event, join, Prozesse killen); crew/swarm/tasks werden Agent-Profile darauf | O plant, S baut | sauberes Shutdown bei SIGTERM |
-| 4.6 | Optional: Wechsel auf Starlette/FastAPI, sobald die Routing-Tabelle (1.1) steht – dann fast mechanisch | S | – |
+| 4.6 | **Routing-Tabelle + Wechsel auf Starlette/FastAPI** (aus 1.1): Route für Route aus den if-Ketten in Router-Funktionen; `api_auth.check` wird Middleware/Dependency | O plant, S/L in Etappen | `server.py` ohne if-Ketten, Tests grün |
 
 ## Stufe 5 – Aufräumen (laufend)
 
@@ -124,6 +126,7 @@ Browser / Handy ──Token──► nexus-core        (Docker, Linux-Image, auf
 - Dubletten: adb-Wrapper, Netz-Allowlist, Gefahrenwort-Regex, SAPI-Code
 - Tests nach Modul benennen statt `_20261029`/`_008`
 - `app.js` in ES-Module pro Panel aufteilen (kein Build-Schritt nötig)
+- **Strikte CSP:** Inline-`<script>`-Blöcke (7 in `index.html`, je 1–2 in den anderen Seiten) und `onclick`-Attribute in Dateien/`addEventListener` verlegen, dann `'unsafe-inline'` aus `script-src` streichen
 - Hartkodierte Personendaten (`Eddie`, `WoZiPC`, `C:\Users\gustl`) in Config/Prompts verschieben
 
 ---
