@@ -1,0 +1,4 @@
+# Zusätzliche Abhängigkeiten für das Container-Image (Studio, Sprechererkennung)
+numpy>=1.26
+scipy>=1.11
+opencv-python-headless>=4.9

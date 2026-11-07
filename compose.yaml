@@ -1,0 +1,26 @@
+# NEXUS-Kern im Container (Stufe 2.2)
+# Linux: network_mode host – Server lauscht wie bisher auf 127.0.0.1:8299, Ollama auf dem Host ist direkt erreichbar.
+# Windows/macOS (Docker Desktop): Bridge-Modus folgt, sobald alle LLM-Clients die zentrale Config nutzen (Plan 3.1/4.2).
+services:
+  nexus:
+    build: .
+    image: nexus-master-home:local
+    network_mode: host
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NEXUS_HOST: "127.0.0.1"
+    volumes:
+      - nexus-workspace:/app/workspace
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  nexus-workspace: {}

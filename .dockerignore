@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+workspace
+logs
+.local-learning
+.env
+*.env
+!.env.example
+tests/workspace

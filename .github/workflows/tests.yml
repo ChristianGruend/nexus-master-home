@@ -25,3 +25,37 @@ jobs:
         run: python -m pip install -r requirements.txt pytest
       - name: Tests
         run: python -m pytest -q -p no:cacheprovider --continue-on-collection-errors
+
+  container:
+    # Stufe 2.2: Image bauen und den Kern im Container starten (blockierend).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image bauen
+        run: docker compose build
+      - name: Starten
+        run: docker compose up -d
+      - name: Auf Health warten
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8299/api/health >/dev/null; then echo "up nach ${i}s"; exit 0; fi
+            sleep 1
+          done
+          docker compose logs; exit 1
+      - name: Smoke-Test
+        run: |
+          set -e
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8299/)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8299/api/memory)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: evil.example.com' http://127.0.0.1:8299/api/health)" = 421
+          cid=$(docker compose ps -q nexus)
+          test "$(docker inspect -f '{{.Config.User}}' "$cid")" = nexus
+          test "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' "$cid")" = true
+          docker compose exec -T nexus sh -c 'touch /app/x 2>/dev/null && exit 1 || exit 0'
+          docker compose exec -T nexus sh -c 'test -w /app/workspace'
+      - name: Logs
+        if: always()
+        run: docker compose logs --tail=200
+      - name: Aufräumen
+        if: always()
+        run: docker compose down -v
