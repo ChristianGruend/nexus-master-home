@@ -316,10 +316,9 @@ def test_swarm_scout(env, monkeypatch):
     assert any(h["file"] == "ok.txt" for h in out["heads"])
 
 
-# ---------------------------------------------------------------- UI-Dateirouten (chat/server.py)
+# ---------------------------------------------------------------- UI-Dateirouten (chat/routes)
 def test_filedocs_and_routes(env, monkeypatch):
     from nexus.files.docs import FileDocs
-    from nexus.chat import server
     root, ws = env
     fd = FileDocs()
     monkeypatch.setattr(fd, "root", ws)
@@ -331,22 +330,9 @@ def test_filedocs_and_routes(env, monkeypatch):
     assert not names & {"permissions.json", "ui_secret.txt"}
     assert fd.read("files/ok.txt")["success"] is True
 
-    class H:
-        sent: list = []
-
-        def _json(self, code, payload):
-            self.sent.append((code, payload))
-
-        def _bytes(self, code, data, ctype):
-            self.sent.append((code, data))
-
-    h = H()
-    server.Handler._files_json(h, fd.read("terminal/permissions.json"))
-    server.Handler._files_json(h, fd.read("files/ok.txt"))
-    assert [c for c, _ in h.sent] == [403, 200]
-    h.sent.clear()
-    server.Handler._serve_file(h, ws, "terminal/permissions.json")
-    server.Handler._serve_file(h, ws, "terminal/ui_secret.txt")
-    server.Handler._serve_file(h, ws, "files/ok.txt")
-    assert [c for c, _ in h.sent] == [403, 403, 200]
-    assert h.sent[2][1] == b"normal NEEDLE"
+    from pathlib import Path as _P
+    from nexus.chat.routes import system, ui
+    assert [system.files_json(fd.read(rel)).status_code for rel in ("terminal/permissions.json", "files/ok.txt")] == [403, 200]
+    sent = [ui.serve_file(ws, rel) for rel in ("terminal/permissions.json", "terminal/ui_secret.txt", "files/ok.txt")]
+    assert [r.status_code for r in sent] == [403, 403, 200]
+    assert _P(sent[2].path).read_bytes() == b"normal NEEDLE"

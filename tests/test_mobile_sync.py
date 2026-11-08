@@ -6,8 +6,8 @@ STATIC = ROOT / "nexus" / "chat" / "static"
 
 
 def test_server_has_session_rev():
-    src = (ROOT / "nexus" / "chat" / "server.py").read_text(encoding="utf-8")
-    assert 'path == "/api/session/rev"' in src
+    src = (ROOT / "nexus" / "chat" / "routes" / "chat.py").read_text(encoding="utf-8")
+    assert 'Route("/api/session/rev", session_rev' in src
 
 
 def test_master_home_polls_shared_session():

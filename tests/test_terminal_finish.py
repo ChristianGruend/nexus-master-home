@@ -21,7 +21,8 @@ def test_secret_generated_local_not_in_code_or_log():
     assert not guard.check_ui_cookie("nx_term_ui=falsch") and not guard.check_ui_cookie(None) and not guard.check_ui_cookie("")
     assert "HttpOnly" in guard.ui_cookie() and "SameSite=Strict" in guard.ui_cookie()
     root = service.ROOT
-    for f in ("nexus/terminal/guard.py", "nexus/terminal/service.py", "nexus/chat/server.py", "nexus/chat/static/index.html"):
+    for f in ("nexus/terminal/guard.py", "nexus/terminal/service.py", "nexus/chat/server.py", "nexus/chat/routes/ui.py",
+              "nexus/chat/routes/terminal.py", "nexus/chat/static/index.html"):
         assert s1 not in (root / f).read_text(encoding="utf-8")
     guard.audit("x", note="test")
     assert s1 not in guard.audit_file().read_text(encoding="utf-8")
@@ -110,7 +111,8 @@ def test_gpt_run_tool_and_tool_ask(monkeypatch):
 
 
 def test_server_wiring():
-    src = (service.ROOT / "nexus" / "chat" / "server.py").read_text(encoding="utf-8")
+    routes = service.ROOT / "nexus" / "chat" / "routes"
+    src = "".join(p.read_text(encoding="utf-8") for p in sorted(routes.glob("*.py")))
     assert "api_auth.human_approval" in src and "/api/gpt/tool" in src and "Set-Cookie" in src
     html = (service.ROOT / "nexus" / "chat" / "static" / "index.html").read_text(encoding="utf-8")
     assert "__nxStableLoad(function(){" in html and html.count("__nxStableLoad(") >= 2 and "nxStableJs" in html

@@ -13,7 +13,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SERVER = ROOT / "nexus" / "chat" / "server.py"
+SERVER = ROOT / "nexus" / "chat" / "routes" / "chat.py"
 APP_JS = ROOT / "nexus" / "chat" / "static" / "js" / "app.js"
 
 

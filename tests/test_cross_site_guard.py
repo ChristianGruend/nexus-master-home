@@ -6,14 +6,11 @@ import pytest
 from nexus.chat import server
 
 
-class _H:
-    """Minimaler Handler-Stub: nur headers + die zu prüfende Methode."""
-    _cross_site_blocked = server.Handler._cross_site_blocked
-
-    def __init__(self, **hdrs):
-        self.headers = Message()
-        for k, v in hdrs.items():
-            self.headers[k.replace("_", "-")] = v
+def _h(**hdrs):
+    headers = Message()
+    for k, v in hdrs.items():
+        headers[k.replace("_", "-")] = v
+    return headers
 
 
 @pytest.mark.parametrize("hdrs,blocked", [
@@ -26,9 +23,9 @@ class _H:
     ({"Host": "127.0.0.1:8299", "Origin": "null"}, True),               # file:// / sandboxed iframe
 ])
 def test_cross_site_blocked(hdrs, blocked):
-    assert _H(**hdrs)._cross_site_blocked() is blocked
+    assert server._cross_site_blocked(_h(**hdrs)) is blocked
 
 
 def test_allowlisted_origin_passes(monkeypatch):
     monkeypatch.setattr(server, "_CORS_ORIGINS", frozenset({"http://wozipc-nexus:8299"}))
-    assert _H(Host="127.0.0.1:8299", Origin="http://wozipc-nexus:8299")._cross_site_blocked() is False
+    assert server._cross_site_blocked(_h(Host="127.0.0.1:8299", Origin="http://wozipc-nexus:8299")) is False

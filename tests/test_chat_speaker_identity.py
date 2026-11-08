@@ -10,7 +10,6 @@ import tempfile
 import threading
 import unittest
 from datetime import datetime
-from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock, patch
@@ -19,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from nexus.common.atomic import atomic_write_json, file_lock
+from tests._http import nexus_client
 
 
 def _definitions(path, names):
@@ -59,14 +59,16 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
         self.modules = patch.dict(sys.modules, {"nexus.master.evidence": evidence})
         self.modules.start()
         self.addCleanup(self.modules.stop)
-        server_source = ROOT / "nexus" / "chat" / "server.py"
-        self.handler_scope = {**self.scope, "BaseHTTPRequestHandler": BaseHTTPRequestHandler, "Path": Path,
-                              "ENGINE": self.engine, "traceback": SimpleNamespace(print_exc=Mock()),
-                              "bridge_api": None, "automation_api": None, "multimodal_api": None}
-        exec(compile(ast.Module(body=_definitions(server_source, {"_ClientDisconnected", "Handler"}),
-                                type_ignores=[]), str(server_source), "exec"), self.handler_scope)
-        self.handler = self.handler_scope["Handler"].__new__(self.handler_scope["Handler"])
-        self.handler._json = Mock()
+        from nexus.chat.routes import chat
+        self.chat = chat
+        self.enterContext(patch.object(chat, "ENGINE", self.engine))
+        self.print_exc = self.enterContext(patch("nexus.chat.server.traceback.print_exc"))
+        self.enterContext(patch("nexus.common.live_events.emit"))
+
+    def _post(self, path, payload, ip="127.0.0.1", headers=None):
+        with nexus_client(ip, engine=self.engine) as client:
+            r = client.post(path, json=payload, headers=headers)
+        return r.status_code, r.json()
 
     def _hermes(self):
         return {"success": True, "reply": "HERMES antwortet.", "source": "hermes", "agent": "hermes",
@@ -112,10 +114,8 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
         result = {"type": "done", "success": True, "reply": "Analyse.", "mode": "cloud/openai",
                   "source": "openai_orchestrator", "provider": "openai", "response_id": "resp_test"}
         self.engine.master.handle_stream = Mock(return_value=iter([result]))
-        self.handler._sse_start = Mock()
-        self.handler._sse_event = Mock()
-        self.handler._chat_stream({"message": "Analysiere.", "session_id": self.engine.session_id})
-        events = [call.args[0] for call in self.handler._sse_event.call_args_list]
+        chunks = list(self.chat._chat_stream({"message": "Analysiere.", "session_id": self.engine.session_id}))
+        events = [c[6:-2] if c[6:-2] == "[DONE]" else json.loads(c[6:-2]) for c in chunks]
         self.assertEqual(events[-1], "[DONE]")
         done = events[0]
         self.assertEqual(done["partner"], "gpt")
@@ -125,7 +125,7 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
         self.assertEqual(saved["response_id"], "resp_test")
 
     def test_direct_turn_does_not_use_hermes_cli_session_as_chat_id(self):
-        out = self.handler._partner_response({"message": "Hallo", "chat_session_id": self.engine.session_id},
+        out = self.chat._partner_response({"message": "Hallo", "chat_session_id": self.engine.session_id},
                                              self._hermes(), "hermes")
         self.assertEqual(out["session_id"], "hermes-cli-session")
         self.assertEqual(out["chat_session_id"], self.engine.session_id)
@@ -136,7 +136,7 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
         self.assertEqual(saved[-1]["partner"], "hermes")
 
     def test_direct_routes_without_explicit_chat_id_do_not_change_history(self):
-        out = self.handler._partner_response({"message": "Hallo", "session_id": "hermes-cli-session"},
+        out = self.chat._partner_response({"message": "Hallo", "session_id": "hermes-cli-session"},
                                              self._hermes(), "hermes")
         self.assertEqual(out["partner"], "hermes")
         self.assertEqual(self.engine.sessions[self.engine.session_id]["messages"], [])
@@ -160,46 +160,41 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
                 provider = ModuleType(name)
                 call = Mock(return_value=result)
                 setattr(provider, function, call)
-                self.handler._json.reset_mock()
                 with patch.dict(sys.modules, {**modules, name: provider}):
-                    self.handler._do_post_dispatch(path, {"message": "Hallo", "partner": "spoofed",
-                                                        "chat_session_id": self.engine.session_id, **extra})
+                    status, out = self._post(path, {"message": "Hallo", "partner": "spoofed",
+                                                    "chat_session_id": self.engine.session_id, **extra})
                 call.assert_called_once_with("Hallo")
-                status, out = self.handler._json.call_args.args
                 self.assertEqual(status, 200)
                 self.assertEqual(out["partner"], expected)
                 self.assertTrue(out["chat_history_saved"])
                 saved = self.engine._load_sessions()[self.engine.session_id]["messages"][-1]
                 self.assertEqual(saved["partner"], expected)
-        self.handler_scope["traceback"].print_exc.assert_not_called()
+        self.print_exc.assert_not_called()
 
     def test_invalid_explicit_chat_is_rejected_before_provider_import(self):
         for path, body in [("/api/hermes/agent", {}), ("/api/aether/agent", {}),
                            ("/api/chat", {"mode": "cloud"}), ("/api/chat", {"mode": " cloud "})]:
             for invalid in ("hermes-cli-session", None, []):
                 with self.subTest(path=path, invalid=invalid):
-                    self.handler._json.reset_mock()
-                    self.handler._do_post_dispatch(path, {**body, "chat_session_id": invalid})
-                    self.handler._json.assert_called_once_with(
-                        404, {"success": False, "error": "CHAT_SESSION_NOT_FOUND"})
-        self.handler_scope["traceback"].print_exc.assert_not_called()
+                    self.assertEqual(self._post(path, {**body, "chat_session_id": invalid}),
+                                     (404, {"success": False, "error": "CHAT_SESSION_NOT_FOUND"}))
+        self.print_exc.assert_not_called()
 
     def test_agent_routes_reject_non_loopback_before_provider(self):
-        self.handler.client_address = ("192.0.2.11", 1234)
-        self.handler.headers = {}
-        self.handler.path = "/api/aether/agent"
+        # Mit gültigem API-Token kommt die Anfrage durch die Zugangsprüfung; der Agenten-Guard sperrt trotzdem.
+        from nexus.common import api_auth
+        self.enterContext(patch.object(api_auth, "_secrets_dir", lambda: self.path / "secrets"))
+        auth = {"Authorization": "Bearer " + api_auth.api_token()}
         for path in ("/api/aether/agent", "/api/aether/supervisor", "/api/hermes/agent",
                      "/api/hermes/brain", "/api/gpt/agent", "/api/gpt/tool"):
             with self.subTest(path=path):
-                self.handler._json.reset_mock()
-                self.handler._do_post_dispatch(path, {"message": "Hallo"})
-                self.handler._json.assert_called_once_with(
-                    403, {"success": False, "error": "LOOPBACK_OR_TOKEN_REQUIRED"})
+                self.assertEqual(self._post(path, {"message": "Hallo"}, ip="192.0.2.11", headers=auth),
+                                 (403, {"success": False, "error": "LOOPBACK_OR_TOKEN_REQUIRED"}))
 
     def test_direct_aether_failure_remains_separate_and_failed(self):
         result = {"partner": "aether", "provider": "ollama", "model": "qwen35-4b-64k:latest",
                   "success": False, "reply": "", "error": "AETHER_UNAVAILABLE"}
-        out = self.handler._partner_response({"message": "Hallo", "chat_session_id": self.engine.session_id},
+        out = self.chat._partner_response({"message": "Hallo", "chat_session_id": self.engine.session_id},
                                              result, "aether")
         self.assertEqual(out["partner"], "aether")
         self.assertFalse(out["success"])
@@ -224,8 +219,7 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
                                  "pitch": "-2Hz", "volume": "+0%"})
         self.engine.master.voice = SimpleNamespace(tts=tts)
         with patch.dict(sys.modules, self._voice_modules()):
-            self.handler._do_post_dispatch("/api/voice/turn", {"message": "Hallo", "speak": True})
-        status, out = self.handler._json.call_args.args
+            status, out = self._post("/api/voice/turn", {"message": "Hallo", "speak": True})
         self.assertEqual(status, 200)
         self.assertEqual(out["partner"], "hermes")
         for key in ("source", "agent", "provider", "data"):
@@ -238,7 +232,7 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
         self.assertEqual(out["tts_pitch"], "-2Hz")
         self.assertEqual(out["tts_volume"], "+0%")
         tts.assert_called_once_with(result["reply"][:1800])
-        self.handler_scope["traceback"].print_exc.assert_not_called()
+        self.print_exc.assert_not_called()
 
     def test_master_voice_turn_without_speech_keeps_cloud_provenance(self):
         result = {"success": True, "reply": "Analyse.", "mode": "cloud/openai",
@@ -247,15 +241,14 @@ class ChatSpeakerIdentityTests(unittest.TestCase):
         self.engine.chat = Mock(return_value=result)
         self.engine.master.voice = SimpleNamespace(tts=Mock())
         with patch.dict(sys.modules, self._voice_modules()):
-            self.handler._do_post_dispatch("/api/voice/turn", {"message": "Hallo", "speak": False})
-        status, out = self.handler._json.call_args.args
+            status, out = self._post("/api/voice/turn", {"message": "Hallo", "speak": False})
         self.assertEqual(status, 200)
         self.assertEqual(out["partner"], "gpt")
         for key in ("source", "mode", "provider", "response_id", "data"):
             self.assertEqual(out[key], result[key])
         self.engine.master.voice.tts.assert_not_called()
         self.assertNotIn("tts_b64", out)
-        self.handler_scope["traceback"].print_exc.assert_not_called()
+        self.print_exc.assert_not_called()
 
 
 if __name__ == "__main__":

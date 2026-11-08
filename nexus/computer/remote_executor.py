@@ -530,8 +530,8 @@ def _has_query(args) -> bool:
 
 def _in_process_media():
     import sys
-    server = sys.modules.get("nexus.chat.server")
-    engine = getattr(server, "ENGINE", None) if server is not None else None
+    routes = sys.modules.get("nexus.chat.routes")
+    engine = getattr(routes, "ENGINE", None) if routes is not None else None
     master = getattr(engine, "master", None)
     return getattr(master, "media", None)
 

@@ -25,15 +25,17 @@ def test_mh06_chatgpt_off_is_optional_not_unavailable():
 def test_mh08_tiles_have_real_targets():
     assert len(TILES) >= 7  # DEDUPE 20261102: Health-Kachel (doppelt zu Header-Health) entfernt
     from nexus.computer.os_actions import APP_MAP
-    server = (ROOT / "nexus" / "chat" / "server.py").read_text(encoding="utf-8", errors="replace")
-    for tid, action, *_ in TILES:
-        m = re.search(r'window\.open\("(/\w+)"', action)
-        if m:
-            assert f'"{m.group(1)}"' in server, tid
-        m = re.search(r'launch_app", \{ name: "(\w+)"', action)
-        if m:
-            assert m.group(1) in APP_MAP, tid
-        assert "/api/os/" in action or "window.open" in action or "navigate(" in action, tid
+    from _http import nexus_client
+    with nexus_client() as c:
+        for tid, action, *_ in TILES:
+            m = re.search(r'window\.open\("(/\w+)"', action)
+            if m:
+                resp = c.get(m.group(1))
+                assert resp.status_code == 200 and resp.headers["content-type"].startswith("text/html"), tid
+            m = re.search(r'launch_app", \{ name: "(\w+)"', action)
+            if m:
+                assert m.group(1) in APP_MAP, tid
+            assert "/api/os/" in action or "window.open" in action or "navigate(" in action, tid
 
 
 def test_mh12_tiles_do_not_overlap():

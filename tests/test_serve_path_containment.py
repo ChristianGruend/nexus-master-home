@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from nexus.chat.server import _is_within
+from nexus.chat.routes import is_within as _is_within
 
 
 def test_file_directly_in_root(tmp_path):

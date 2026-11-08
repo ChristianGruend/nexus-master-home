@@ -1,4 +1,4 @@
-"""HTTP dispatch helpers for Agent Bridge routes (used by chat.server.Handler)."""
+"""HTTP dispatch helpers for Agent Bridge routes (used by nexus/chat/routes/bridge.py)."""
 from __future__ import annotations
 
 from typing import Any

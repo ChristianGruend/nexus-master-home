@@ -16,6 +16,7 @@ PROTECTED = (
     "nexus/bridge/permissions.py",
     "nexus/bridge/auth.py",
     "nexus/chat/server.py",
+    "nexus/chat/routes/**",
 )
 
 

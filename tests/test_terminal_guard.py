@@ -134,9 +134,14 @@ def test_audit_all_actions(_tmp):
     assert {"run_request", "policy_decision", "run_result", "run_blocked", "approval_requested", "approval_denied"} <= acts
 
 
-def test_server_routes_present():
-    src = open(service.ROOT / "nexus" / "chat" / "server.py", encoding="utf-8").read()
-    for r in ("/api/terminal/cancel", "/api/terminal/approve", "/api/terminal/state", "/api/terminal/audit", "NUR_EDDIE_UI"):
-        assert r in src
+def test_server_routes_present(monkeypatch):
+    from _http import nexus_client
+    monkeypatch.setattr(guard, "audit", lambda *a, **k: None)
+    with nexus_client() as c:
+        for p in ("/api/terminal/state", "/api/terminal/audit"):
+            assert c.get(p).json()["success"] is True, p
+        assert c.post("/api/terminal/cancel", json={"run": "nope"}).status_code == 200
+        r = c.post("/api/terminal/approve", json={"approval_id": "x"})  # ohne UI-Cookie
+        assert r.status_code == 403 and r.json()["error"] == "NUR_EDDIE_UI"
     html = open(service.ROOT / "nexus" / "chat" / "static" / "index.html", encoding="utf-8").read()
     assert 'id="btnTerminal"' in html and "data-cancel" in html and "Freigeben" in html and 'e.type==="verdict"' in html

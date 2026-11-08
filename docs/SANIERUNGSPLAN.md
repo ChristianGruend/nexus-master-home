@@ -123,7 +123,7 @@ Browser / Handy ──Token──► nexus-core        (Docker, Linux-Image, auf
 | 4.3 | **Store-Schicht:** SQLite (WAL) für Zustand + Memory (FTS5 statt Voll-Reload-BM25, Vektoren per numpy/sqlite-vec) | O plant, S baut | Memory-Suche ohne Datei-Reload |
 | 4.4 | **`controller.py` zerlegen:** Intent-Routing / Agent-Loop / Tool-Executor / Verifier / Streaming; Tool-Calls über Ollama Function-Calling statt Regex-Parser | O plant, S in Etappen | keine Methode > 150 Zeilen |
 | 4.5 | **Eine Orchestrierung:** Task-Queue + Worker-Pool mit Lifecycle (Stop-Event, join, Prozesse killen); crew/swarm/tasks werden Agent-Profile darauf | O plant, S baut | sauberes Shutdown bei SIGTERM |
-| 4.6 | **Routing-Tabelle + Wechsel auf Starlette/FastAPI** (aus 1.1): Route für Route aus den if-Ketten in Router-Funktionen; `api_auth.check` wird Middleware/Dependency | O plant, S/L in Etappen | `server.py` ohne if-Ketten, Tests grün |
+| 4.6 | ✅ **erledigt (Branch `sanierung/stufe-4`)**: Starlette + uvicorn, `server.py` 1924 → 236 Zeilen (App-Fabrik, Middleware für Host-Allowlist/Auth/Body-Limit/CSP), Routen flach in `nexus/chat/routes/*.py`; eigenes HTTP-Plumbing entfernt, netto −380 Zeilen. Tests über `tests/_http.py` (TestClient). – **Routing-Tabelle + Wechsel auf Starlette/FastAPI** (aus 1.1): Route für Route aus den if-Ketten in Router-Funktionen; `api_auth.check` wird Middleware/Dependency | O plant, S/L in Etappen | `server.py` ohne if-Ketten, Tests grün |
 
 ## Stufe 5 – Aufräumen (laufend)
 
